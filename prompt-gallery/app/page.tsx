@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount, useDisconnect } from "wagmi";
+import { optimizeImage } from "@/lib/optimize-image";
 import PROMPTS, { CATEGORIES, Prompt } from "./prompts";
 
 function PromptIcon({ type, className = "w-6 h-6" }: { type: string; className?: string }) {
@@ -813,10 +814,11 @@ export default function Home() {
                       if (!file || !address) return;
                       setSaveStatus("saving");
                       try {
+                        const optimized = await optimizeImage(file);
                         const fd = new FormData();
                         fd.append("wallet", address);
                         fd.append("type", "output");
-                        fd.append("file", file);
+                        fd.append("file", optimized);
                         fd.append("prompt_id", selectedPrompt.id);
                         fd.append("prompt_title", selectedPrompt.title);
                         fd.append("token_id", tokenId);

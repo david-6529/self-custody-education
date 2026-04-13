@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAppKit } from "@reown/appkit/react";
 import { useAccount } from "wagmi";
+import { optimizeImage } from "@/lib/optimize-image";
 
 interface SavedItem {
   id: string;
@@ -71,10 +72,11 @@ export default function ProfilePage() {
       setUploading(true);
       const valid = files.filter((f) => f.size <= maxSize);
       for (const file of valid) {
+        const optimized = await optimizeImage(file);
         const fd = new FormData();
         fd.append("wallet", address);
         fd.append("type", type);
-        fd.append("file", file);
+        fd.append("file", optimized);
         await fetch("/api/user", { method: "POST", body: fd }).catch(() => {});
       }
       await fetchData();
