@@ -268,13 +268,38 @@ export default function ProfilePage() {
                         </p>
                       </div>
 
-                      {/* Delete button (hover) */}
-                      <button
-                        onClick={() => deleteItem(item.id, activeTab)}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
+                      {/* Hover actions */}
+                      <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                        <a
+                          href={item.image_url}
+                          download={`${item.prompt_title || item.label || "gvc-image"}.png`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            fetch(item.image_url)
+                              .then((r) => r.blob())
+                              .then((blob) => {
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `${item.prompt_title || item.label || "gvc-image"}.png`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                              })
+                              .catch(() => window.open(item.image_url, "_blank"));
+                          }}
+                          className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-gvc-gold hover:border-gvc-gold/30 flex items-center justify-center"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        </a>
+                        <button
+                          onClick={() => deleteItem(item.id, activeTab)}
+                          className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/30 flex items-center justify-center"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
