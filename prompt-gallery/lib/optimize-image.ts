@@ -1,5 +1,5 @@
-const MAX_DIMENSION = 2048;
-const QUALITY = 0.85;
+const MAX_DIMENSION = 1600;
+const QUALITY = 0.75;
 
 export async function optimizeImage(file: File): Promise<File> {
   // Only process image files
