@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [uploadError, setUploadError] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!address) return;
@@ -59,8 +60,17 @@ export default function ProfilePage() {
     input.onchange = async () => {
       const files = Array.from(input.files || []);
       if (!files.length || !address) return;
+      setUploadError("");
+      const maxSize = 4.5 * 1024 * 1024;
+      const oversized = files.filter((f) => f.size > maxSize);
+      if (oversized.length > 0) {
+        setUploadError(`${oversized.map((f) => `"${f.name}" (${(f.size / 1024 / 1024).toFixed(1)}MB)`).join(", ")} exceeded the 4.5MB limit.`);
+        const valid = files.filter((f) => f.size <= maxSize);
+        if (!valid.length) return;
+      }
       setUploading(true);
-      for (const file of files) {
+      const valid = files.filter((f) => f.size <= maxSize);
+      for (const file of valid) {
         const fd = new FormData();
         fd.append("wallet", address);
         fd.append("type", type);
@@ -196,6 +206,13 @@ export default function ProfilePage() {
                 {uploading ? "Uploading..." : `Upload ${activeTab === "outputs" ? "Output" : "Reference"}`}
               </button>
             </div>
+
+            {uploadError && (
+              <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-body text-sm flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>{uploadError}</span>
+              </div>
+            )}
 
             {/* Grid */}
             {loading ? (
