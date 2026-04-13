@@ -62,10 +62,10 @@ export default function ProfilePage() {
       const files = Array.from(input.files || []);
       if (!files.length || !address) return;
       setUploadError("");
-      const maxSize = 4.5 * 1024 * 1024;
+      const maxSize = 10 * 1024 * 1024;
       const oversized = files.filter((f) => f.size > maxSize);
       if (oversized.length > 0) {
-        setUploadError(`${oversized.map((f) => `"${f.name}" (${(f.size / 1024 / 1024).toFixed(1)}MB)`).join(", ")} exceeded the 4.5MB limit.`);
+        setUploadError(`${oversized.map((f) => `"${f.name}" (${(f.size / 1024 / 1024).toFixed(1)}MB)`).join(", ")} exceeded the 10MB limit.`);
         const valid = files.filter((f) => f.size <= maxSize);
         if (!valid.length) return;
       }

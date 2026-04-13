@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
   // Resolve image URL: either uploaded file or passed URL
   let finalUrl = imageUrl || "";
   if (file && file.size > 0) {
-    if (file.size > 4.5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "File too large (max 4.5MB)" },
+        { error: "File too large (max 10MB)" },
         { status: 400 }
       );
     }
