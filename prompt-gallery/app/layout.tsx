@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import Providers from "./providers";
 
 const brice = localFont({
   src: [
@@ -38,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${brice.variable} ${mundial.variable} font-body`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

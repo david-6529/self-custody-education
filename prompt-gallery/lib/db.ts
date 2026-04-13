@@ -48,6 +48,32 @@ export async function ensureTable() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  // User saved outputs
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_outputs (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      wallet_address TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      prompt_id TEXT,
+      prompt_title TEXT,
+      token_id TEXT,
+      notes TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // User saved reference images
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_references (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      wallet_address TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      label TEXT,
+      token_id TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
   // Seed default categories if empty
   const { rows } = await pool.query("SELECT COUNT(*) as cnt FROM prompt_categories");
   if (parseInt(rows[0].cnt) === 0) {

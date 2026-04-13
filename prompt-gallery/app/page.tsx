@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
+import { useAppKit } from "@reown/appkit/react";
+import { useAccount, useDisconnect } from "wagmi";
 import PROMPTS, { CATEGORIES, Prompt } from "./prompts";
 
 function PromptIcon({ type, className = "w-6 h-6" }: { type: string; className?: string }) {
@@ -95,6 +98,10 @@ function assemblePrompt(template: string, traits: Record<string, string>, skipPr
 }
 
 export default function Home() {
+  const { open } = useAppKit();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
   const [tokenId, setTokenId] = useState("");
   const [tokenMeta, setTokenMeta] = useState<TokenMeta | null>(null);
   const [metadata, setMetadata] = useState<Record<string, TokenMeta> | null>(null);
@@ -109,6 +116,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"popular" | "newest">("popular");
   const [promptGenerated, setPromptGenerated] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   async function downloadImage(url: string, filename: string) {
     try {
@@ -385,6 +393,35 @@ export default function Home() {
       ))}
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Wallet Connect */}
+        <div className="flex justify-end mb-4 gap-2">
+          {isConnected && address ? (
+            <>
+              <Link
+                href="/profile"
+                className="px-4 py-2 rounded-xl border border-white/[0.08] text-white/60 hover:text-gvc-gold hover:border-gvc-gold/30 font-body text-sm transition-all flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                My Profile
+              </Link>
+              <button
+                onClick={() => open()}
+                className="px-4 py-2 rounded-xl bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold font-body text-sm transition-all hover:bg-gvc-gold/20"
+              >
+                {address.slice(0, 6)}...{address.slice(-4)}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => open()}
+              className="px-5 py-2 rounded-xl bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold font-display font-bold text-sm transition-all hover:bg-gvc-gold/25 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 110-6h5.25A2.25 2.25 0 0121 6v6zm0 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18V6a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 6" /></svg>
+              Connect Wallet
+            </button>
+          )}
+        </div>
+
         {/* Header */}
         <div className="text-center mb-10">
           <motion.div
@@ -750,6 +787,50 @@ export default function Home() {
                 <li>Upload <span className="text-white/80 font-semibold">{selectedPrompt.requiresTpose ? "all three images" : "both images"}</span> to the chat</li>
                 <li>Paste the prompt and hit send</li>
               </ol>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Save Output */}
+        <AnimatePresence>
+          {promptGenerated && selectedPrompt && tokenMeta && isConnected && address && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-2xl bg-gvc-dark border border-white/[0.08] p-6 mb-6">
+              <div className="flex items-center gap-3 mb-3">
+                <svg className="w-5 h-5 text-gvc-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                <h3 className="text-base font-display font-bold text-white">Save Your Output</h3>
+              </div>
+              <p className="text-white/40 font-body text-sm mb-4 pl-8">Happy with the result? Upload it to your profile for easy reference.</p>
+              <div className="pl-8">
+                <label className="group flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-dashed border-white/15 text-white/50 font-body text-sm hover:border-gvc-gold/30 hover:text-gvc-gold cursor-pointer transition-all">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.338 3.75 3.75 0 013.467 5.338A3.75 3.75 0 0118 19.5H6.75z" /></svg>
+                  {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved to Profile!" : "Upload Output Image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !address) return;
+                      setSaveStatus("saving");
+                      try {
+                        const fd = new FormData();
+                        fd.append("wallet", address);
+                        fd.append("type", "output");
+                        fd.append("file", file);
+                        fd.append("prompt_id", selectedPrompt.id);
+                        fd.append("prompt_title", selectedPrompt.title);
+                        fd.append("token_id", tokenId);
+                        const res = await fetch("/api/user", { method: "POST", body: fd });
+                        if (!res.ok) throw new Error();
+                        setSaveStatus("saved");
+                        setTimeout(() => setSaveStatus("idle"), 3000);
+                      } catch {
+                        setSaveStatus("idle");
+                      }
+                    }}
+                  />
+                </label>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
