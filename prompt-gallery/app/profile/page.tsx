@@ -212,7 +212,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
                 <AnimatePresence>
                   {items.map((item) => (
                     <motion.div
@@ -225,13 +225,13 @@ export default function ProfilePage() {
                     >
                       {/* Image */}
                       <div
-                        className="aspect-square cursor-pointer"
+                        className="cursor-pointer"
                         onClick={() => setLightboxUrl(item.image_url)}
                       >
                         <img
                           src={item.image_url}
                           alt={item.prompt_title || item.label || "Saved image"}
-                          className="w-full h-full object-cover"
+                          className="w-full h-auto"
                         />
                       </div>
 
