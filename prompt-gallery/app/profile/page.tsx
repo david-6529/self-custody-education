@@ -28,6 +28,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!address) return;
@@ -69,6 +71,28 @@ export default function ProfilePage() {
       setUploading(false);
     };
     input.click();
+  }
+
+  async function renameItem(id: string, type: "outputs" | "references") {
+    if (!address || !editName.trim()) {
+      setEditingId(null);
+      return;
+    }
+    await fetch("/api/user", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, wallet: address, type, name: editName.trim() }),
+    });
+    // Update local state
+    const updater = (prev: SavedItem[]) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, ...(type === "references" ? { label: editName.trim() } : { prompt_title: editName.trim() }) }
+          : item
+      );
+    if (type === "outputs") setOutputs(updater);
+    else setReferences(updater);
+    setEditingId(null);
   }
 
   async function deleteItem(id: string, type: "outputs" | "references") {
@@ -213,9 +237,29 @@ export default function ProfilePage() {
 
                       {/* Info */}
                       <div className="p-3">
-                        <p className="text-white font-body text-sm font-semibold truncate">
-                          {item.prompt_title || item.label || (activeTab === "outputs" ? "Output" : "Reference")}
-                        </p>
+                        {editingId === item.id ? (
+                          <form
+                            onSubmit={(e) => { e.preventDefault(); renameItem(item.id, activeTab); }}
+                            className="flex gap-1"
+                          >
+                            <input
+                              autoFocus
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onBlur={() => renameItem(item.id, activeTab)}
+                              onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+                              className="flex-1 min-w-0 bg-black/40 border border-gvc-gold/30 rounded-lg px-2 py-1 text-white font-body text-sm outline-none focus:border-gvc-gold/60"
+                            />
+                          </form>
+                        ) : (
+                          <p
+                            onClick={() => { setEditingId(item.id); setEditName(item.prompt_title || item.label || ""); }}
+                            className="text-white font-body text-sm font-semibold truncate cursor-pointer hover:text-gvc-gold transition-colors"
+                            title="Click to rename"
+                          >
+                            {item.prompt_title || item.label || (activeTab === "outputs" ? "Output" : "Reference")}
+                          </p>
+                        )}
                         {item.token_id && (
                           <p className="text-white/30 font-body text-xs">GVC #{item.token_id}</p>
                         )}

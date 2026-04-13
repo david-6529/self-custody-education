@@ -82,6 +82,26 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(rows[0], { status: 201 });
 }
 
+// PATCH /api/user — rename an output or reference
+export async function PATCH(req: NextRequest) {
+  await ensureTable();
+  const { id, wallet, type, name } = await req.json();
+  const w = wallet?.toLowerCase();
+
+  if (!id || !w || !name) {
+    return NextResponse.json({ error: "id, wallet, and name required" }, { status: 400 });
+  }
+
+  const table = type === "references" ? "user_references" : "user_outputs";
+  const col = type === "references" ? "label" : "prompt_title";
+  await pool.query(
+    `UPDATE ${table} SET ${col} = $1 WHERE id = $2 AND wallet_address = $3`,
+    [name, id, w]
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
 // DELETE /api/user?id=...&type=outputs|references
 export async function DELETE(req: NextRequest) {
   await ensureTable();
