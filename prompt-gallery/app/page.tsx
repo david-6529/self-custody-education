@@ -394,34 +394,6 @@ export default function Home() {
       ))}
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Wallet Connect */}
-        <div className="flex justify-end mb-4 gap-2">
-          {isConnected && address ? (
-            <>
-              <Link
-                href="/profile"
-                className="px-4 py-2 rounded-xl border border-white/[0.08] text-white/60 hover:text-gvc-gold hover:border-gvc-gold/30 font-body text-sm transition-all flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                My Profile
-              </Link>
-              <button
-                onClick={() => open()}
-                className="px-4 py-2 rounded-xl bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold font-body text-sm transition-all hover:bg-gvc-gold/20"
-              >
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => open()}
-              className="px-5 py-2 rounded-xl bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold font-display font-bold text-sm transition-all hover:bg-gvc-gold/25 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 110-6h5.25A2.25 2.25 0 0121 6v6zm0 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18V6a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 6" /></svg>
-              Connect Wallet
-            </button>
-          )}
-        </div>
 
         {/* Header */}
         <div className="text-center mb-10">

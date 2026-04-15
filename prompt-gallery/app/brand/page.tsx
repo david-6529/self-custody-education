@@ -242,40 +242,24 @@ export default function Library() {
                     <p className="text-white/20 font-body text-xs mt-0.5 capitalize">{asset.category}</p>
                   </div>
 
-                  {/* Hover actions */}
-                  <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all flex gap-1.5 justify-end">
+                  {/* Hover actions - top right */}
+                  <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
                     {/* Copy for Claude */}
                     <button
                       onClick={(e) => { e.stopPropagation(); copyForClaude(asset); }}
                       className={`px-2.5 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center gap-1.5 transition-all ${
                         copiedClaudeId === asset.id
                           ? "bg-gvc-green/20 border border-gvc-green/30 text-gvc-green"
-                          : "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold hover:bg-gvc-gold/25"
+                          : "bg-black/70 border border-gvc-gold/30 text-gvc-gold hover:bg-black/90"
                       }`}
                     >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                       {copiedClaudeId === asset.id ? "Copied!" : "Copy for Claude"}
-                    </button>
-                    {/* Copy URL */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); copyUrl(asset); }}
-                      className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all ${
-                        copiedId === asset.id
-                          ? "bg-gvc-green/20 border-gvc-green/30 text-gvc-green"
-                          : "bg-black/60 border-white/10 text-white/40 hover:text-white/70"
-                      }`}
-                      title="Copy URL"
-                    >
-                      {copiedId === asset.id ? (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.066a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.25 8.81" /></svg>
-                      )}
                     </button>
                     {/* Download */}
                     <button
                       onClick={(e) => { e.stopPropagation(); downloadAsset(asset); }}
-                      className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-white/70 flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-black/70 border border-white/10 text-white/50 hover:text-white flex items-center justify-center"
                       title="Download"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -318,7 +302,7 @@ export default function Library() {
                         : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_20px_rgba(255,224,72,0.3)]"
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     {copiedClaudeId === lightboxAsset.id ? "Copied!" : "Copy for Claude"}
                   </button>
                   <button
