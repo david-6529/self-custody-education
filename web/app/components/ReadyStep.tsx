@@ -95,7 +95,21 @@ Project: ${projectName}
 Template: ${TEMPLATE_LABELS[template] || template}
 Idea: ${description}${addons.length > 0 ? `\nExtras: ${addonLabels}` : ""}
 
-Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimmer effects) and real data from the GVC APIs. Make it look polished and production-ready.`;
+Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimmer effects) and real data from the GVC APIs. Make it look polished and production-ready.
+
+IMPORTANT: When you are done, give me a short, simple summary that a non-technical person can understand. Use this format:
+
+"Your project is ready! Here is what I built:
+- [2-3 bullet points describing what the app does, in plain English]
+
+To see it in action:
+1. Open your terminal
+2. Run: cd ${projectName} && npm run dev
+3. Open http://localhost:3000 in your browser
+
+That's it! If you want to change anything, just tell me in plain English."
+
+Do NOT include technical jargon, implementation details, file names, library names, or code references in your summary. Write it like you are talking to someone who has never coded before.`;
 
   async function copyToClipboard(text: string, setter: (v: boolean) => void) {
     try {
