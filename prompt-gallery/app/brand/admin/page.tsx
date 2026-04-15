@@ -34,6 +34,8 @@ export default function BrandAdmin() {
   const [newCatLabel, setNewCatLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editCatLabel, setEditCatLabel] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function fetchData() {
@@ -101,6 +103,17 @@ export default function BrandAdmin() {
       body: JSON.stringify({ id, category: newCat }),
     });
     setAssets((prev) => prev.map((a) => a.id === id ? { ...a, category: newCat } : a));
+  }
+
+  async function renameCategory(id: string) {
+    if (!editCatLabel.trim()) { setEditingCatId(null); return; }
+    await fetch("/api/brand/categories", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, label: editCatLabel.trim() }),
+    });
+    setCategories((prev) => prev.map((c) => c.id === id ? { ...c, label: editCatLabel.trim() } : c));
+    setEditingCatId(null);
   }
 
   async function addCategory() {
@@ -207,7 +220,26 @@ export default function BrandAdmin() {
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((cat) => (
               <div key={cat.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/15">
-                <span className="text-gvc-gold text-xs font-body">{cat.label}</span>
+                {editingCatId === cat.id ? (
+                  <form onSubmit={(e) => { e.preventDefault(); renameCategory(cat.id); }} className="flex items-center">
+                    <input
+                      autoFocus
+                      value={editCatLabel}
+                      onChange={(e) => setEditCatLabel(e.target.value)}
+                      onBlur={() => renameCategory(cat.id)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingCatId(null); }}
+                      className="bg-transparent text-gvc-gold text-xs font-body outline-none w-24 border-b border-gvc-gold/30"
+                    />
+                  </form>
+                ) : (
+                  <span
+                    onClick={() => { setEditingCatId(cat.id); setEditCatLabel(cat.label); }}
+                    className="text-gvc-gold text-xs font-body cursor-pointer hover:underline"
+                    title="Click to rename"
+                  >
+                    {cat.label}
+                  </span>
+                )}
                 <button
                   onClick={() => deleteCategory(cat.id)}
                   className="text-white/20 hover:text-red-400 transition-colors"
