@@ -72,11 +72,20 @@ export default function ReadyStep({
   const command = buildCommand();
 
   // Build the Claude Code prompt
-  const claudePrompt = `Run this command to scaffold my project, then build what's described in the generated CLAUDE.md file:
+  const addonLabels = addons.map((a) => ADDON_LABELS[a] || a).join(", ");
+  const claudePrompt = `Run this command to scaffold my project:
 
 ${command}
 
-After running the command, cd into the ${projectName} directory, read CLAUDE.md, and build the full working prototype in app/page.tsx. Use the GVC brand system and APIs described in CLAUDE.md.`;
+After running the command, cd into the ${projectName} directory and read CLAUDE.md for the full brand system, APIs, and code patterns.
+
+Then build me a working prototype in app/page.tsx based on this idea:
+
+Project: ${projectName}
+Template: ${TEMPLATE_LABELS[template] || template}
+Idea: ${description}${addons.length > 0 ? `\nExtras: ${addonLabels}` : ""}
+
+Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimmer effects) and real data from the GVC APIs. Make it look polished and production-ready.`;
 
   async function copyToClipboard(text: string, setter: (v: boolean) => void) {
     try {
