@@ -433,6 +433,17 @@ Do NOT include technical jargon, implementation details, file names, library nam
                         </div>
                       )}
 
+                      {/* "I did this" button inside Step 2 */}
+                      {i === 1 && isCurrent && (
+                        <button
+                          onClick={() => setActiveStep((s) => s + 1)}
+                          className="mt-4 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold font-display font-bold text-sm hover:bg-gvc-gold/25 transition-all"
+                        >
+                          I did this, next step
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        </button>
+                      )}
+
                       {/* Keyboard shortcut hint for step 3 */}
                       {i === 2 && isCurrent && (
                         <div className="mt-3 flex items-center gap-2">
@@ -457,23 +468,6 @@ Do NOT include technical jargon, implementation details, file names, library nam
                 </motion.div>
               );
             })}
-
-            {/* Step progression buttons */}
-            {activeStep > 0 && activeStep < claudeSteps.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-end"
-              >
-                <button
-                  onClick={() => setActiveStep((s) => s + 1)}
-                  className="px-5 py-2.5 rounded-xl bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold font-display font-bold text-sm hover:bg-gvc-gold/25 transition-all flex items-center gap-2"
-                >
-                  I did this, next step
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                </button>
-              </motion.div>
-            )}
 
             {/* Download link */}
             <p className="text-white/20 text-xs font-body text-center pt-2">
