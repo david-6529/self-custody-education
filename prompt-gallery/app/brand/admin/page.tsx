@@ -32,6 +32,8 @@ export default function BrandAdmin() {
   const [dragOver, setDragOver] = useState(false);
   const [newCatSlug, setNewCatSlug] = useState("");
   const [newCatLabel, setNewCatLabel] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function fetchData() {
@@ -73,6 +75,17 @@ export default function BrandAdmin() {
     e.preventDefault();
     setDragOver(false);
     uploadFiles(e.dataTransfer.files);
+  }
+
+  async function renameAsset(id: string) {
+    if (!editName.trim()) { setEditingId(null); return; }
+    await fetch("/api/brand/admin", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, filename: editName.trim() }),
+    });
+    setAssets((prev) => prev.map((a) => a.id === id ? { ...a, filename: editName.trim() } : a));
+    setEditingId(null);
   }
 
   async function deleteAsset(id: string) {
@@ -277,7 +290,26 @@ export default function BrandAdmin() {
                   <img src={asset.image_url} alt={asset.filename} className="w-full h-auto" />
 
                   <div className="p-3">
-                    <p className="text-white font-body text-xs font-semibold truncate">{asset.filename}</p>
+                    {editingId === asset.id ? (
+                      <form onSubmit={(e) => { e.preventDefault(); renameAsset(asset.id); }} className="mb-1">
+                        <input
+                          autoFocus
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onBlur={() => renameAsset(asset.id)}
+                          onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+                          className="w-full bg-black/40 border border-gvc-gold/30 rounded-lg px-2 py-1 text-white font-body text-xs outline-none focus:border-gvc-gold/60"
+                        />
+                      </form>
+                    ) : (
+                      <p
+                        onClick={() => { setEditingId(asset.id); setEditName(asset.filename); }}
+                        className="text-white font-body text-xs font-semibold truncate cursor-pointer hover:text-gvc-gold transition-colors mb-1"
+                        title="Click to rename"
+                      >
+                        {asset.filename}
+                      </p>
+                    )}
                     <select
                       value={asset.category}
                       onChange={(e) => changeCategory(asset.id, e.target.value)}

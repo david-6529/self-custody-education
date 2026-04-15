@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 // PATCH /api/brand/admin — update asset category or tags
 export async function PATCH(req: NextRequest) {
   await ensureTable();
-  const { id, category, tags } = await req.json();
+  const { id, category, tags, filename } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -78,6 +78,9 @@ export async function PATCH(req: NextRequest) {
   }
   if (tags !== undefined) {
     await pool.query("UPDATE brand_assets SET tags = $1 WHERE id = $2", [tags, id]);
+  }
+  if (filename) {
+    await pool.query("UPDATE brand_assets SET filename = $1 WHERE id = $2", [filename, id]);
   }
 
   return NextResponse.json({ ok: true });
