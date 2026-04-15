@@ -74,6 +74,43 @@ export async function ensureTable() {
     )
   `);
 
+  // Brand assets library
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS brand_assets (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      filename TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      category TEXT NOT NULL,
+      tags TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // Brand asset categories
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS brand_categories (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      slug TEXT UNIQUE NOT NULL,
+      label TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  // Seed brand categories if empty
+  const { rows: bcRows } = await pool.query("SELECT COUNT(*) as cnt FROM brand_categories");
+  if (parseInt(bcRows[0].cnt) === 0) {
+    await pool.query(`
+      INSERT INTO brand_categories (slug, label) VALUES
+        ('gifs', 'GIFs'),
+        ('backgrounds', 'Backgrounds'),
+        ('characters', 'Characters'),
+        ('scenes', 'Scenes'),
+        ('tposes', 'T-Poses'),
+        ('logos', 'Logos & Icons'),
+        ('textures', 'Textures & Patterns')
+      ON CONFLICT DO NOTHING
+    `);
+  }
+
   // Seed default categories if empty
   const { rows } = await pool.query("SELECT COUNT(*) as cnt FROM prompt_categories");
   if (parseInt(rows[0].cnt) === 0) {

@@ -505,6 +505,14 @@ function generateStarterPage(templateType, projectName, description, addons, pro
     `- \`/grid.svg\` -background grid texture`,
     `- \`/gvc-metadata.json\` -all 6,969 token traits and IPFS image URLs`,
     ``,
+    `### Brand Asset Library (hosted)`,
+    `Official GVC brand images (backgrounds, GIFs, characters, scenes, T-poses) are available via API:`,
+    `- Browse: https://prompt-gallery-theta.vercel.app/brand`,
+    `- API: \`GET https://prompt-gallery-theta.vercel.app/api/brand\` returns all assets grouped by category`,
+    `- Filter: \`GET https://prompt-gallery-theta.vercel.app/api/brand?category=backgrounds\``,
+    `- Response: \`{ assets: [{ id, filename, image_url, category }], categories: [...] }\``,
+    `- Use \`image_url\` values directly in \`<img>\` or \`next/image\` src`,
+    ``,
     `### Design patterns`,
     `- Dark backgrounds (#050505) with gold accents throughout`,
     `- Cards: \`bg-gvc-dark border border-white/[0.08] rounded-2xl\``,
@@ -972,6 +980,14 @@ Use cases: rarity checker, token lookup, trait filtering, collection search, tra
 - GVC logotype: /public/gvc-logotype.svg
 - Background grid: /public/grid.svg
 - Token metadata: /public/gvc-metadata.json (all 6,969 tokens with traits + images)
+
+## Brand Asset Library
+Official GVC brand images (backgrounds, GIFs, characters, scenes, T-poses) hosted and available via API.
+- Browse gallery: https://prompt-gallery-theta.vercel.app/brand
+- API: GET https://prompt-gallery-theta.vercel.app/api/brand (returns all assets)
+- Filter by category: GET https://prompt-gallery-theta.vercel.app/api/brand?category=backgrounds
+- Response shape: { assets: [{ id, filename, image_url, category }], categories: [...] }
+- Use image_url values directly as src in <img> or next/image components
 
 ## Tech Stack
 - Next.js (App Router), React, TypeScript, Tailwind CSS, Framer Motion
