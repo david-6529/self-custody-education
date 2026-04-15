@@ -8,16 +8,24 @@ import {
   Check,
   ExternalLink,
   Terminal,
+  Download,
+  FolderOpen,
+  ClipboardPaste,
 } from "lucide-react";
 import Image from "next/image";
 
 // Template label map
 const TEMPLATE_LABELS: Record<string, string> = {
   "project-site": "Website / Landing Page",
+  tracker: "Tracker / Dashboard",
   dashboard: "Dashboard / Tracker",
   "mini-game": "Game",
   gallery: "Gallery",
   "vote-and-rank": "Vote & Rank",
+  "badge-wallet-tool": "Badge / Wallet Lookup",
+  "rarity-checker": "Rarity / Price Checker",
+  leaderboard: "Community Leaderboard",
+  "sweep-tracker": "Sweep / Floor Tracker",
   "lookup-tool": "Lookup Tool",
   "card-maker": "Card / Image Maker",
   "profile-page": "Profile Page",
@@ -59,6 +67,7 @@ export default function ReadyStep({
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
   const [activeMethod, setActiveMethod] = useState<"claude" | "terminal">("claude");
+  const [activeStep, setActiveStep] = useState(0); // 0 = not started
 
   // Build the CLI command
   const buildCommand = useCallback(() => {
@@ -100,20 +109,47 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
       document.body.removeChild(ta);
     }
     setter(true);
-    setTimeout(() => setter(false), 2500);
+    setTimeout(() => setter(false), 3000);
   }
 
-  function openClaudeCode() {
+  function handleStep1() {
     copyToClipboard(claudePrompt, setCopiedPrompt);
+    setActiveStep(1);
     // Try to open the desktop app via URL scheme, fall back to download page
     setTimeout(() => {
       window.location.href = "claude://";
-      // If the app doesn't open after a short delay, redirect to download
       setTimeout(() => {
         window.open("https://claude.ai/download", "_blank");
       }, 1500);
     }, 300);
   }
+
+  const claudeSteps = [
+    {
+      icon: Download,
+      title: "Open Claude Code",
+      description: "We will copy your project setup to your clipboard and open the Claude Code desktop app.",
+      action: "Open Claude Code",
+      actionDone: "Copied! Opening...",
+      detail: null,
+    },
+    {
+      icon: FolderOpen,
+      title: "Choose a folder",
+      description: "Claude Code will ask you to select a folder. Choose where you want your project to live.",
+      action: null,
+      actionDone: null,
+      detail: "Pick any folder like Desktop, Documents, or a Projects folder. Claude will create a new folder inside it.",
+    },
+    {
+      icon: ClipboardPaste,
+      title: "Paste and hit Enter",
+      description: "Your project setup is already on your clipboard. Just paste it into Claude Code and press Enter.",
+      action: null,
+      actionDone: null,
+      detail: "Claude will install everything, set up the GVC brand system, and start building your project automatically.",
+    },
+  ];
 
   return (
     <motion.div
@@ -227,7 +263,7 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
       >
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => setActiveMethod("claude")}
+            onClick={() => { setActiveMethod("claude"); setActiveStep(0); }}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-display font-bold text-sm transition-all ${
               activeMethod === "claude"
                 ? "bg-gvc-gold/15 text-gvc-gold border border-gvc-gold/30"
@@ -235,7 +271,7 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
             }`}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            Open in Claude
+            Open in Claude Code
           </button>
           <button
             onClick={() => setActiveMethod("terminal")}
@@ -250,99 +286,158 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
           </button>
         </div>
 
-        {/* Open in Claude flow */}
+        {/* Open in Claude Code flow */}
         {activeMethod === "claude" && (
-          <div className="glass-card snake-border p-6">
-            <p className="text-white/40 font-body text-sm mb-5">
-              The easiest way to get started. No terminal needed. We will copy your project details to your clipboard and open the Claude Code app. Just paste and Claude handles everything.
-            </p>
+          <div className="space-y-4">
+            {claudeSteps.map((step, i) => {
+              const StepIcon = step.icon;
+              const isActive = activeStep === 0 ? i === 0 : i <= activeStep;
+              const isCurrent = activeStep === 0 ? i === 0 : i === activeStep;
+              const isDone = activeStep > 0 && i < activeStep;
 
-            <div className="space-y-4 mb-6">
-              {/* Step 1 */}
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-                  1
-                </span>
-                <div>
-                  <p className="text-white font-body font-semibold text-sm">
-                    Click the button below
-                  </p>
-                  <p className="text-white/40 text-sm font-body">
-                    It copies your project details and opens the Claude Code desktop app.
-                  </p>
-                </div>
-              </div>
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * i, duration: 0.4 }}
+                  className={`
+                    relative rounded-2xl border p-6 transition-all duration-300
+                    ${isCurrent
+                      ? "bg-gvc-dark border-gvc-gold/30 shadow-[0_0_30px_rgba(255,224,72,0.05)]"
+                      : isDone
+                        ? "bg-gvc-dark/50 border-gvc-green/20"
+                        : "bg-gvc-dark/30 border-white/[0.04] opacity-40"
+                    }
+                  `}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Step number */}
+                    <div className={`
+                      flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+                      ${isDone
+                        ? "bg-gvc-green/15 text-gvc-green"
+                        : isCurrent
+                          ? "bg-gvc-gold/15 text-gvc-gold"
+                          : "bg-white/5 text-white/20"
+                      }
+                    `}>
+                      {isDone ? (
+                        <Check className="w-6 h-6" />
+                      ) : (
+                        <StepIcon className="w-6 h-6" />
+                      )}
+                    </div>
 
-              {/* Step 2 */}
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-                  2
-                </span>
-                <div>
-                  <p className="text-white font-body font-semibold text-sm">
-                    Select a folder for your project
-                  </p>
-                  <p className="text-white/40 text-sm font-body">
-                    When Claude Code opens, it will ask you to choose a folder. Pick where you want your project to live (e.g. Desktop or Documents).
-                  </p>
-                </div>
-              </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-body uppercase tracking-wider ${
+                          isDone ? "text-gvc-green/60" : isCurrent ? "text-gvc-gold/60" : "text-white/20"
+                        }`}>
+                          Step {i + 1}
+                        </span>
+                        {isDone && (
+                          <span className="text-xs font-body text-gvc-green/60">Done</span>
+                        )}
+                      </div>
+                      <h3 className={`font-display font-bold text-lg mb-1.5 ${
+                        isDone ? "text-gvc-green" : isCurrent ? "text-white" : "text-white/40"
+                      }`}>
+                        {step.title}
+                      </h3>
+                      <p className={`font-body text-sm leading-relaxed ${
+                        isCurrent ? "text-white/50" : "text-white/25"
+                      }`}>
+                        {step.description}
+                      </p>
 
-              {/* Step 3 */}
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-                  3
-                </span>
-                <div>
-                  <p className="text-white font-body font-semibold text-sm">
-                    Paste and press Enter
-                  </p>
-                  <p className="text-white/40 text-sm font-body">
-                    Press{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Cmd</kbd>
-                    {" + "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
-                    {" "}on Mac or{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Ctrl</kbd>
-                    {" + "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
-                    {" "}on Windows. Claude will set up your project, install everything, and start building.
-                  </p>
-                </div>
-              </div>
-            </div>
+                      {/* Detail note */}
+                      {step.detail && isCurrent && (
+                        <div className="mt-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                          <p className="text-white/35 font-body text-xs leading-relaxed">
+                            {step.detail}
+                          </p>
+                        </div>
+                      )}
 
-            <button
-              onClick={openClaudeCode}
-              className={`
-                w-full inline-flex items-center justify-center gap-2 px-6 py-4
-                font-display font-bold text-base rounded-xl
-                transition-all duration-300
-                ${
-                  copiedPrompt
-                    ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
-                    : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
-                }
-              `}
-            >
-              {copiedPrompt ? (
-                <>
-                  <Check className="w-5 h-5" />
-                  Copied! Opening Claude Code...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="w-5 h-5" />
-                  Open in Claude Code
-                </>
-              )}
-            </button>
+                      {/* Action button for step 1 */}
+                      {i === 0 && isCurrent && !isDone && (
+                        <button
+                          onClick={handleStep1}
+                          className={`
+                            mt-4 inline-flex items-center justify-center gap-2.5 px-7 py-3.5
+                            font-display font-bold text-base rounded-xl
+                            transition-all duration-300
+                            ${copiedPrompt
+                              ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                              : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
+                            }
+                          `}
+                        >
+                          {copiedPrompt ? (
+                            <>
+                              <Check className="w-5 h-5" />
+                              {step.actionDone}
+                            </>
+                          ) : (
+                            <>
+                              <ExternalLink className="w-5 h-5" />
+                              {step.action}
+                            </>
+                          )}
+                        </button>
+                      )}
 
-            <p className="text-white/20 text-xs font-body mt-3 text-center">
+                      {/* Keyboard shortcut hint for step 3 */}
+                      {i === 2 && isCurrent && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <kbd className="px-2 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-mono border border-white/10">Cmd</kbd>
+                          <span className="text-white/20 text-xs">+</span>
+                          <kbd className="px-2 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-mono border border-white/10">V</kbd>
+                          <span className="text-white/30 text-xs font-body ml-1">to paste</span>
+                          <span className="text-white/10 text-xs font-body mx-1">|</span>
+                          <kbd className="px-2 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-mono border border-white/10">Enter</kbd>
+                          <span className="text-white/30 text-xs font-body ml-1">to go</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Progress connector */}
+                  {i < claudeSteps.length - 1 && (
+                    <div className={`absolute -bottom-4 left-9 w-0.5 h-4 transition-colors duration-300 ${
+                      isDone ? "bg-gvc-green/20" : "bg-white/[0.04]"
+                    }`} />
+                  )}
+                </motion.div>
+              );
+            })}
+
+            {/* Step progression buttons */}
+            {activeStep > 0 && activeStep < claudeSteps.length - 1 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-end"
+              >
+                <button
+                  onClick={() => setActiveStep((s) => s + 1)}
+                  className="px-5 py-2.5 rounded-xl bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold font-display font-bold text-sm hover:bg-gvc-gold/25 transition-all flex items-center gap-2"
+                >
+                  I did this, next step
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                </button>
+              </motion.div>
+            )}
+
+            {/* Download link */}
+            <p className="text-white/20 text-xs font-body text-center pt-2">
               Don&apos;t have Claude Code?{" "}
               <a href="https://claude.ai/download" target="_blank" rel="noopener noreferrer" className="text-gvc-gold/40 hover:text-gvc-gold/70 underline underline-offset-2 transition-colors">
-                Download it here
+                Download it free here
               </a>
+              {" "}(Mac, Windows, Linux)
             </p>
           </div>
         )}
