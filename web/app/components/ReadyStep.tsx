@@ -135,13 +135,20 @@ Do NOT include technical jargon, implementation details, file names, library nam
     }, 300);
   }
 
+  function handleCopyOnly() {
+    copyToClipboard(claudePrompt, setCopiedPrompt);
+    setActiveStep(1);
+  }
+
   const claudeSteps = [
     {
       icon: Download,
       title: "Open Claude Code",
-      description: "We will copy your project setup to your clipboard and open the Claude Code desktop app.",
+      description: "Copy your project setup to your clipboard and open the Claude Code desktop app. Double check that you are in the Claude Code section.",
       action: "Open Claude Code",
       actionDone: "Copied! Opening...",
+      secondaryAction: "Copy Setup Only",
+      secondaryActionDone: "Copied!",
       detail: null,
     },
     {
@@ -372,32 +379,58 @@ Do NOT include technical jargon, implementation details, file names, library nam
                         </div>
                       )}
 
-                      {/* Action button for step 1 */}
+                      {/* Action buttons for step 1 */}
                       {i === 0 && isCurrent && !isDone && (
-                        <button
-                          onClick={handleStep1}
-                          className={`
-                            mt-4 inline-flex items-center justify-center gap-2.5 px-7 py-3.5
-                            font-display font-bold text-base rounded-xl
-                            transition-all duration-300
-                            ${copiedPrompt
-                              ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
-                              : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
-                            }
-                          `}
-                        >
-                          {copiedPrompt ? (
-                            <>
-                              <Check className="w-5 h-5" />
-                              {step.actionDone}
-                            </>
-                          ) : (
-                            <>
-                              <ExternalLink className="w-5 h-5" />
-                              {step.action}
-                            </>
-                          )}
-                        </button>
+                        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                          <button
+                            onClick={handleStep1}
+                            className={`
+                              inline-flex items-center justify-center gap-2.5 px-7 py-3.5
+                              font-display font-bold text-base rounded-xl
+                              transition-all duration-300
+                              ${copiedPrompt
+                                ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                                : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
+                              }
+                            `}
+                          >
+                            {copiedPrompt ? (
+                              <>
+                                <Check className="w-5 h-5" />
+                                {step.actionDone}
+                              </>
+                            ) : (
+                              <>
+                                <ExternalLink className="w-5 h-5" />
+                                {step.action}
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={handleCopyOnly}
+                            className={`
+                              inline-flex items-center justify-center gap-2 px-6 py-3.5
+                              font-display font-bold text-sm rounded-xl
+                              transition-all duration-300
+                              ${copiedPrompt
+                                ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                                : "border border-white/15 text-white/50 hover:border-gvc-gold/30 hover:text-gvc-gold"
+                              }
+                            `}
+                          >
+                            {copiedPrompt ? (
+                              <>
+                                <Check className="w-4 h-4" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4" />
+                                Copy Setup Only
+                              </>
+                            )}
+                          </button>
+                        </div>
                       )}
 
                       {/* Keyboard shortcut hint for step 3 */}
