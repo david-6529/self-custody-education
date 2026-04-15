@@ -162,9 +162,8 @@ events.
 5. RESTRICTIONS AND PROHIBITED USES
 
 (a) Attribution Required. All Builds, whether Non-Commercial or subject to a
-Commercial License, must include a visible credit stating "Built with the
-GVC Builder Kit" or "Powered by Good Vibes Club" in a footer, about page, or
-equivalent location.
+Commercial License, must include a visible credit stating "Made using the
+GVC Builder Kit" in a footer, about page, or equivalent location.
 
 (b) No Implied Endorsement. You may not use the GVC IP, Builder Kit Assets,
 or the Good Vibes Club or Toast Studio names in any manner that implies

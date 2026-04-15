@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}}
 
-Built with the GVC Builder Kit.
+Made using the GVC Builder Kit.
 
 ## Get started
 

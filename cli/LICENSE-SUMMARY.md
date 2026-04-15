@@ -20,7 +20,7 @@ Build cool stuff for fun. Talk to us before you build something that makes money
 
 ## You MUST
 
-- **Credit**: Include "Built with the GVC Builder Kit" or "Powered by Good Vibes Club" in every Build (footer, about page, etc.)
+- **Credit**: Include "Made using the GVC Builder Kit" in every Build (footer, about page, etc.)
 - **Not imply endorsement**: Don't make it look like Toast Studio or Good Vibes Club officially backs your project unless we say so in writing
 - **Get written approval for physical merch**: Apparel, prints, stickers, etc. — ask first, even for non-commercial
 

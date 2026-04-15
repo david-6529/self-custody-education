@@ -24,7 +24,7 @@ const mundial = localFont({
 
 export const metadata: Metadata = {
   title: "{{PROJECT_NAME}}",
-  description: "Built with the GVC Builder Kit",
+  description: "Made using the GVC Builder Kit",
   icons: {
     icon: "/shaka.png",
     apple: "/shaka.png",

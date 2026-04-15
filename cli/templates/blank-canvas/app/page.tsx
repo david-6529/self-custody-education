@@ -90,7 +90,7 @@ export default function Home() {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="text-white/20 text-xs font-body"
         >
-          Built with the GVC Builder Kit
+          Made using the GVC Builder Kit
         </motion.p>
       </div>
     </main>
