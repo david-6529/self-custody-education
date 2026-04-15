@@ -104,8 +104,13 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
 
   function openClaudeCode() {
     copyToClipboard(claudePrompt, setCopiedPrompt);
+    // Try to open the desktop app via URL scheme, fall back to download page
     setTimeout(() => {
-      window.open("https://claude.ai/code", "_blank");
+      window.location.href = "claude://";
+      // If the app doesn't open after a short delay, redirect to download
+      setTimeout(() => {
+        window.open("https://claude.ai/download", "_blank");
+      }, 1500);
     }, 300);
   }
 
@@ -248,7 +253,7 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
         {activeMethod === "claude" && (
           <div className="glass-card snake-border p-6">
             <p className="text-white/40 font-body text-sm mb-5">
-              The easiest way to get started. We will copy your project details to your clipboard, then open Claude in a new tab. Just paste it in and Claude will help you build everything step by step.
+              The easiest way to get started. No terminal needed. We will copy your project details to your clipboard and open the Claude Code app. Just paste and Claude handles everything.
             </p>
 
             <div className="space-y-4 mb-6">
@@ -262,7 +267,7 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
                     Click the button below
                   </p>
                   <p className="text-white/40 text-sm font-body">
-                    It copies your project details and opens Claude in a new tab.
+                    It copies your project details and opens the Claude Code desktop app.
                   </p>
                 </div>
               </div>
@@ -274,18 +279,10 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
                 </span>
                 <div>
                   <p className="text-white font-body font-semibold text-sm">
-                    Paste into Claude
+                    Select a folder for your project
                   </p>
                   <p className="text-white/40 text-sm font-body">
-                    Press{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Cmd</kbd>
-                    {" + "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
-                    {" "}on Mac or{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Ctrl</kbd>
-                    {" + "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
-                    {" "}on Windows, then press Enter.
+                    When Claude Code opens, it will ask you to choose a folder. Pick where you want your project to live (e.g. Desktop or Documents).
                   </p>
                 </div>
               </div>
@@ -297,10 +294,18 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
                 </span>
                 <div>
                   <p className="text-white font-body font-semibold text-sm">
-                    Claude takes it from there
+                    Paste and press Enter
                   </p>
                   <p className="text-white/40 text-sm font-body">
-                    It already knows the GVC brand, your idea, and what features you want. Just tell it what to do in plain English.
+                    Press{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Cmd</kbd>
+                    {" + "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
+                    {" "}on Mac or{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Ctrl</kbd>
+                    {" + "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
+                    {" "}on Windows. Claude will set up your project, install everything, and start building.
                   </p>
                 </div>
               </div>
@@ -322,18 +327,21 @@ Use the GVC brand system (dark theme, gold accents, Brice + Mundial fonts, shimm
               {copiedPrompt ? (
                 <>
                   <Check className="w-5 h-5" />
-                  Copied! Opening Claude...
+                  Copied! Opening Claude Code...
                 </>
               ) : (
                 <>
                   <ExternalLink className="w-5 h-5" />
-                  Open in Claude
+                  Open in Claude Code
                 </>
               )}
             </button>
 
             <p className="text-white/20 text-xs font-body mt-3 text-center">
-              Opens claude.ai in a new tab with your project details on your clipboard
+              Don&apos;t have Claude Code?{" "}
+              <a href="https://claude.ai/download" target="_blank" rel="noopener noreferrer" className="text-gvc-gold/40 hover:text-gvc-gold/70 underline underline-offset-2 transition-colors">
+                Download it here
+              </a>
             </p>
           </div>
         )}
