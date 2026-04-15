@@ -1143,6 +1143,19 @@ async function main() {
     return;
   }
 
+  // ── Parse CLI flags for non-interactive mode ──
+  function parseFlag(flag) {
+    const idx = args.indexOf(flag);
+    if (idx === -1 || idx + 1 >= args.length) return null;
+    return args[idx + 1];
+  }
+
+  const flagName = parseFlag("--name");
+  const flagTemplate = parseFlag("--template");
+  const flagAddons = parseFlag("--addons");
+  const flagDescription = parseFlag("--description");
+  const nonInteractive = !!(flagName && flagTemplate);
+
   // "create" or no command runs the scaffold flow
   showHeader();
 
@@ -1151,104 +1164,129 @@ async function main() {
 
   const hasClaude = checkClaudeCLI();
 
-  p.intro(gold("Let's build something for Good Vibes Club"));
+  let projectName, templateType, description, selectedAddons;
 
-  // ── Project name ──
-  const projectName = await p.text({
-    message: "What's your project called?",
-    placeholder: "my-gvc-tracker",
-    validate(value) {
-      if (!value || value.trim().length === 0) {
-        return "Give your project a name!";
-      }
-      if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        return "Stick to letters, numbers, dashes, and underscores";
-      }
-      return undefined;
-    },
-  });
+  if (nonInteractive) {
+    // Non-interactive mode: use flags directly
+    projectName = flagName;
+    templateType = flagTemplate;
+    description = flagDescription || `A ${flagTemplate} project`;
+    selectedAddons = flagAddons ? flagAddons.split(",").map((a) => a.trim()) : [];
 
-  if (p.isCancel(projectName)) {
-    p.cancel("No worries, come back anytime!");
-    process.exit(0);
-  }
+    // Auto-suggest addons if none provided
+    if (selectedAddons.length === 0) {
+      const suggested = suggestAddons(description);
+      selectedAddons = [...suggested];
+    }
 
-  const projectDir = path.resolve(process.cwd(), projectName.trim());
+    console.log(gold(`\n  Creating "${projectName}" with template "${templateType}"...\n`));
+  } else {
+    // Interactive mode: prompt the user
+    p.intro(gold("Let's build something for Good Vibes Club"));
 
-  // Check if directory already exists
-  if (fs.existsSync(projectDir)) {
-    const overwrite = await p.confirm({
-      message: `A folder called "${projectName}" already exists. Overwrite it?`,
-      initialValue: false,
+    // ── Project name ──
+    projectName = await p.text({
+      message: "What's your project called?",
+      placeholder: "my-gvc-tracker",
+      validate(value) {
+        if (!value || value.trim().length === 0) {
+          return "Give your project a name!";
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+          return "Stick to letters, numbers, dashes, and underscores";
+        }
+        return undefined;
+      },
     });
 
-    if (p.isCancel(overwrite) || !overwrite) {
-      p.cancel("No worries, try a different name next time!");
+    if (p.isCancel(projectName)) {
+      p.cancel("No worries, come back anytime!");
       process.exit(0);
     }
   }
 
-  // ── Template selection ──
-  const templateType = await p.select({
-    message: "What do you want to build?",
-    options: TEMPLATE_CHOICES,
-  });
+  const projectDir = path.resolve(process.cwd(), typeof projectName === "string" ? projectName.trim() : projectName);
 
-  if (p.isCancel(templateType)) {
-    p.cancel("No worries, come back anytime!");
-    process.exit(0);
-  }
+  // Check if directory already exists
+  if (fs.existsSync(projectDir)) {
+    if (nonInteractive) {
+      // In non-interactive mode, just overwrite
+      await fs.remove(projectDir);
+    } else {
+      const overwrite = await p.confirm({
+        message: `A folder called "${projectName}" already exists. Overwrite it?`,
+        initialValue: false,
+      });
 
-  // ── Idea description ──
-  const description = await p.text({
-    message: "Describe your idea in a sentence or two:",
-    placeholder: "A dashboard that tracks GVC floor prices and shows my NFT collection",
-    validate(value) {
-      if (!value || value.trim().length === 0) {
-        return "Even a short description helps! Just a sentence is fine.";
+      if (p.isCancel(overwrite) || !overwrite) {
+        p.cancel("No worries, try a different name next time!");
+        process.exit(0);
       }
-      return undefined;
-    },
-  });
-
-  if (p.isCancel(description)) {
-    p.cancel("No worries, come back anytime!");
-    process.exit(0);
+    }
   }
 
-  // ── Add-on selection with smart suggestions ──
-  const suggested = suggestAddons(description);
+  if (!nonInteractive) {
+    // ── Template selection ──
+    templateType = await p.select({
+      message: "What do you want to build?",
+      options: TEMPLATE_CHOICES,
+    });
 
-  const addonOptions = ADDONS.map((addon) => ({
-    value: addon.value,
-    label: addon.label,
-    hint: addon.hint,
-  }));
+    if (p.isCancel(templateType)) {
+      p.cancel("No worries, come back anytime!");
+      process.exit(0);
+    }
 
-  // Show suggestions header if we have any
-  if (suggested.size > 0) {
-    const suggestedNames = [...suggested]
-      .map((s) => {
-        const found = ADDONS.find((a) => a.value === s);
-        return found ? found.label : s;
-      })
-      .join(", ");
-    p.note(
-      `Based on your description, we'd recommend:\n${gold(suggestedNames)}`,
-      "Smart suggestions"
-    );
-  }
+    // ── Idea description ──
+    description = await p.text({
+      message: "Describe your idea in a sentence or two:",
+      placeholder: "A dashboard that tracks GVC floor prices and shows my NFT collection",
+      validate(value) {
+        if (!value || value.trim().length === 0) {
+          return "Even a short description helps! Just a sentence is fine.";
+        }
+        return undefined;
+      },
+    });
 
-  const selectedAddons = await p.multiselect({
-    message: "Pick the add-ons you want (space to toggle, enter to confirm):",
-    options: addonOptions,
-    initialValues: [...suggested],
-    required: false,
-  });
+    if (p.isCancel(description)) {
+      p.cancel("No worries, come back anytime!");
+      process.exit(0);
+    }
 
-  if (p.isCancel(selectedAddons)) {
-    p.cancel("No worries, come back anytime!");
-    process.exit(0);
+    // ── Add-on selection with smart suggestions ──
+    const suggested = suggestAddons(description);
+
+    const addonOptions = ADDONS.map((addon) => ({
+      value: addon.value,
+      label: addon.label,
+      hint: addon.hint,
+    }));
+
+    if (suggested.size > 0) {
+      const suggestedNames = [...suggested]
+        .map((s) => {
+          const found = ADDONS.find((a) => a.value === s);
+          return found ? found.label : s;
+        })
+        .join(", ");
+      p.note(
+        `Based on your description, we'd recommend:\n${gold(suggestedNames)}`,
+        "Smart suggestions"
+      );
+    }
+
+    selectedAddons = await p.multiselect({
+      message: "Pick the add-ons you want (space to toggle, enter to confirm):",
+      options: addonOptions,
+      initialValues: [...suggested],
+      required: false,
+    });
+
+    if (p.isCancel(selectedAddons)) {
+      p.cancel("No worries, come back anytime!");
+      process.exit(0);
+    }
   }
 
   // ── Scaffolding ──

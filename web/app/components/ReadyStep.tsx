@@ -63,11 +63,12 @@ export default function ReadyStep({
   // Build the CLI command
   const buildCommand = useCallback(() => {
     let cmd = `npx create-gvc-app --name ${projectName} --template ${template}`;
+    cmd += ` --description "${description.replace(/"/g, '\\"')}"`;
     if (addons.length > 0) {
       cmd += ` --addons ${addons.join(",")}`;
     }
     return cmd;
-  }, [projectName, template, addons]);
+  }, [projectName, template, description, addons]);
 
   const command = buildCommand();
 
