@@ -7,6 +7,7 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Terminal,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -55,7 +56,9 @@ export default function ReadyStep({
   addons,
   onBack,
 }: ReadyStepProps) {
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
+  const [activeMethod, setActiveMethod] = useState<"claude" | "terminal">("claude");
 
   // Build the CLI command
   const buildCommand = useCallback(() => {
@@ -68,20 +71,33 @@ export default function ReadyStep({
 
   const command = buildCommand();
 
-  // Build the Claude prompt
-  async function copyCommand() {
+  // Build the Claude Code prompt
+  const claudePrompt = `Run this command to scaffold my project, then build what's described in the generated CLAUDE.md file:
+
+${command}
+
+After running the command, cd into the ${projectName} directory, read CLAUDE.md, and build the full working prototype in app/page.tsx. Use the GVC brand system and APIs described in CLAUDE.md.`;
+
+  async function copyToClipboard(text: string, setter: (v: boolean) => void) {
     try {
-      await navigator.clipboard.writeText(command);
+      await navigator.clipboard.writeText(text);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = command;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
-    setCopiedCommand(true);
-    setTimeout(() => setCopiedCommand(false), 2500);
+    setter(true);
+    setTimeout(() => setter(false), 2500);
+  }
+
+  function openClaudeCode() {
+    copyToClipboard(claudePrompt, setCopiedPrompt);
+    setTimeout(() => {
+      window.open("https://claude.ai/code", "_blank");
+    }, 300);
   }
 
   return (
@@ -114,7 +130,7 @@ export default function ReadyStep({
         transition={{ delay: 0.3, duration: 0.4 }}
         className="text-3xl sm:text-4xl font-display font-black text-shimmer mb-3 text-center"
       >
-        Your project is ready to build!
+        YOUR PROJECT IS READY
       </motion.h2>
 
       <motion.p
@@ -187,101 +203,222 @@ export default function ReadyStep({
         </div>
       </motion.div>
 
-      {/* How to get started */}
+      {/* Method tabs */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.4 }}
-        className="w-full glass-card snake-border p-6 mb-6"
+        className="w-full mb-6"
       >
-        <h3 className="text-lg font-display font-bold text-white mb-2">
-          How to get started
-        </h3>
-        <p className="text-white/40 font-body text-sm mb-5">
-          Open your terminal and paste these commands one at a time. Your project page will guide you through the rest.
-        </p>
-
-        <div className="space-y-4">
-          {/* Step 1 */}
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-              1
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-body font-semibold text-sm mb-2">
-                Create your project
-              </p>
-              <div className="bg-black/40 rounded-xl p-4 mb-1">
-                <code className="text-gvc-green/90 text-sm break-all whitespace-pre-wrap">
-                  {command}
-                </code>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-              2
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-body font-semibold text-sm mb-2">
-                Start it up
-              </p>
-              <div className="bg-black/40 rounded-xl p-4 space-y-1">
-                <code className="text-gvc-green/90 text-sm block">cd {projectName}</code>
-                <code className="text-gvc-green/90 text-sm block">npm run dev</code>
-              </div>
-              <p className="text-white/30 text-xs font-body mt-1.5">
-                Then open{" "}
-                <span className="text-white/50 font-mono">localhost:3000</span>{" "}
-                in your browser.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
-              3
-            </span>
-            <div>
-              <p className="text-white font-body font-semibold text-sm">
-                Follow the page
-              </p>
-              <p className="text-white/40 text-sm font-body">
-                Your project page walks you through downloading Claude Code, opening your project, and building it. Just follow the steps on screen.
-              </p>
-            </div>
-          </div>
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveMethod("claude")}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-display font-bold text-sm transition-all ${
+              activeMethod === "claude"
+                ? "bg-gvc-gold/15 text-gvc-gold border border-gvc-gold/30"
+                : "border border-white/[0.08] text-white/40 hover:text-white/60 hover:border-white/15"
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            Open in Claude
+          </button>
+          <button
+            onClick={() => setActiveMethod("terminal")}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-display font-bold text-sm transition-all ${
+              activeMethod === "terminal"
+                ? "bg-gvc-gold/15 text-gvc-gold border border-gvc-gold/30"
+                : "border border-white/[0.08] text-white/40 hover:text-white/60 hover:border-white/15"
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+            Use your terminal
+          </button>
         </div>
 
-        {/* Copy command button */}
-        <button
-          onClick={copyCommand}
-          className={`
-            mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4
-            font-display font-bold text-base rounded-xl
-            transition-all duration-300
-            ${
-              copiedCommand
-                ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
-                : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
-            }
-          `}
-        >
-          {copiedCommand ? (
-            <>
-              <Check className="w-5 h-5" />
-              Copied to clipboard!
-            </>
-          ) : (
-            <>
-              <Copy className="w-5 h-5" />
-              Copy setup command
-            </>
-          )}
-        </button>
+        {/* Open in Claude flow */}
+        {activeMethod === "claude" && (
+          <div className="glass-card snake-border p-6">
+            <p className="text-white/40 font-body text-sm mb-5">
+              The easiest way to get started. We will copy your project details to your clipboard, then open Claude in a new tab. Just paste it in and Claude will help you build everything step by step.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              {/* Step 1 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  1
+                </span>
+                <div>
+                  <p className="text-white font-body font-semibold text-sm">
+                    Click the button below
+                  </p>
+                  <p className="text-white/40 text-sm font-body">
+                    It copies your project details and opens Claude in a new tab.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  2
+                </span>
+                <div>
+                  <p className="text-white font-body font-semibold text-sm">
+                    Paste into Claude
+                  </p>
+                  <p className="text-white/40 text-sm font-body">
+                    Press{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Cmd</kbd>
+                    {" + "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
+                    {" "}on Mac or{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">Ctrl</kbd>
+                    {" + "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-xs font-mono">V</kbd>
+                    {" "}on Windows, then press Enter.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  3
+                </span>
+                <div>
+                  <p className="text-white font-body font-semibold text-sm">
+                    Claude takes it from there
+                  </p>
+                  <p className="text-white/40 text-sm font-body">
+                    It already knows the GVC brand, your idea, and what features you want. Just tell it what to do in plain English.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={openClaudeCode}
+              className={`
+                w-full inline-flex items-center justify-center gap-2 px-6 py-4
+                font-display font-bold text-base rounded-xl
+                transition-all duration-300
+                ${
+                  copiedPrompt
+                    ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                    : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
+                }
+              `}
+            >
+              {copiedPrompt ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  Copied! Opening Claude...
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="w-5 h-5" />
+                  Open in Claude
+                </>
+              )}
+            </button>
+
+            <p className="text-white/20 text-xs font-body mt-3 text-center">
+              Opens claude.ai in a new tab with your project details on your clipboard
+            </p>
+          </div>
+        )}
+
+        {/* Terminal flow */}
+        {activeMethod === "terminal" && (
+          <div className="glass-card snake-border p-6">
+            <p className="text-white/40 font-body text-sm mb-5">
+              Open your terminal and paste these commands one at a time. Your project page will guide you through the rest.
+            </p>
+
+            <div className="space-y-4">
+              {/* Step 1 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  1
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-body font-semibold text-sm mb-2">
+                    Create your project
+                  </p>
+                  <div className="bg-black/40 rounded-xl p-4 mb-1">
+                    <code className="text-gvc-green/90 text-sm break-all whitespace-pre-wrap">
+                      {command}
+                    </code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  2
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-body font-semibold text-sm mb-2">
+                    Start it up
+                  </p>
+                  <div className="bg-black/40 rounded-xl p-4 space-y-1">
+                    <code className="text-gvc-green/90 text-sm block">cd {projectName}</code>
+                    <code className="text-gvc-green/90 text-sm block">npm run dev</code>
+                  </div>
+                  <p className="text-white/30 text-xs font-body mt-1.5">
+                    Then open{" "}
+                    <span className="text-white/50 font-mono">localhost:3000</span>{" "}
+                    in your browser.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gvc-gold/15 text-gvc-gold text-sm font-bold flex items-center justify-center mt-0.5">
+                  3
+                </span>
+                <div>
+                  <p className="text-white font-body font-semibold text-sm">
+                    Follow the page
+                  </p>
+                  <p className="text-white/40 text-sm font-body">
+                    Your project page walks you through downloading Claude Code, opening your project, and building it. Just follow the steps on screen.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Copy command button */}
+            <button
+              onClick={() => copyToClipboard(command, setCopiedCommand)}
+              className={`
+                mt-6 w-full inline-flex items-center justify-center gap-2 px-6 py-4
+                font-display font-bold text-base rounded-xl
+                transition-all duration-300
+                ${
+                  copiedCommand
+                    ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                    : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_30px_rgba(255,224,72,0.3)]"
+                }
+              `}
+            >
+              {copiedCommand ? (
+                <>
+                  <Check className="w-5 h-5" />
+                  Copied to clipboard!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-5 h-5" />
+                  Copy setup command
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {/* What you need */}
