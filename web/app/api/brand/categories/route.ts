@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensureTable } from "@/lib/db";
+import pool, { ensureBrandTables } from "@/lib/db";
 
-// GET — list brand categories
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  await ensureTable();
+  await ensureBrandTables();
   const { rows } = await pool.query("SELECT * FROM brand_categories ORDER BY label");
   return NextResponse.json(rows);
 }
 
-// POST — create a new brand category
 export async function POST(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const { slug, label } = await req.json();
   if (!slug || !label) {
     return NextResponse.json({ error: "slug and label required" }, { status: 400 });
@@ -22,15 +22,13 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(rows[0] || { slug, label }, { status: 201 });
 }
 
-// PATCH — rename a brand category
 export async function PATCH(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const { id, slug, label } = await req.json();
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
   if (slug) {
-    // Update the category slug in brand_assets too
     const { rows } = await pool.query("SELECT slug FROM brand_categories WHERE id = $1", [id]);
     if (rows[0]) {
       await pool.query("UPDATE brand_assets SET category = $1 WHERE category = $2", [slug, rows[0].slug]);
@@ -43,9 +41,8 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-// DELETE — remove a brand category
 export async function DELETE(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });

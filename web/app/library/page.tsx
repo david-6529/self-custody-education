@@ -99,7 +99,7 @@ export default function Library() {
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="flex items-center gap-2 text-white/40 hover:text-white/70 font-body text-sm transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-            Back to Prompts
+            Back to Builder
           </Link>
         </div>
 

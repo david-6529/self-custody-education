@@ -507,9 +507,9 @@ function generateStarterPage(templateType, projectName, description, addons, pro
     ``,
     `### Brand Asset Library (hosted)`,
     `Official GVC brand images (backgrounds, GIFs, characters, scenes, T-poses) are available via API:`,
-    `- Browse: https://prompt-gallery-theta.vercel.app/brand`,
-    `- API: \`GET https://prompt-gallery-theta.vercel.app/api/brand\` returns all assets grouped by category`,
-    `- Filter: \`GET https://prompt-gallery-theta.vercel.app/api/brand?category=backgrounds\``,
+    `- Browse: https://web-seven-tan-85.vercel.app/library`,
+    `- API: \`GET https://web-seven-tan-85.vercel.app/api/brand\` returns all assets grouped by category`,
+    `- Filter: \`GET https://web-seven-tan-85.vercel.app/api/brand?category=backgrounds\``,
     `- Response: \`{ assets: [{ id, filename, image_url, category }], categories: [...] }\``,
     `- Use \`image_url\` values directly in \`<img>\` or \`next/image\` src`,
     ``,
@@ -983,9 +983,9 @@ Use cases: rarity checker, token lookup, trait filtering, collection search, tra
 
 ## Brand Asset Library
 Official GVC brand images (backgrounds, GIFs, characters, scenes, T-poses) hosted and available via API.
-- Browse gallery: https://prompt-gallery-theta.vercel.app/brand
-- API: GET https://prompt-gallery-theta.vercel.app/api/brand (returns all assets)
-- Filter by category: GET https://prompt-gallery-theta.vercel.app/api/brand?category=backgrounds
+- Browse gallery: https://web-seven-tan-85.vercel.app/library
+- API: GET https://web-seven-tan-85.vercel.app/api/brand (returns all assets)
+- Filter by category: GET https://web-seven-tan-85.vercel.app/api/brand?category=backgrounds
 - Response shape: { assets: [{ id, filename, image_url, category }], categories: [...] }
 - Use image_url values directly as src in <img> or next/image components
 

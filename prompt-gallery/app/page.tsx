@@ -4,9 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useAppKit } from "@reown/appkit/react";
-import { useAccount, useDisconnect } from "wagmi";
-import { optimizeImage } from "@/lib/optimize-image";
 import PROMPTS, { CATEGORIES, Prompt } from "./prompts";
 
 function PromptIcon({ type, className = "w-6 h-6" }: { type: string; className?: string }) {
@@ -99,10 +96,6 @@ function assemblePrompt(template: string, traits: Record<string, string>, skipPr
 }
 
 export default function Home() {
-  const { open } = useAppKit();
-  const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
-
   const [tokenId, setTokenId] = useState("");
   const [tokenMeta, setTokenMeta] = useState<TokenMeta | null>(null);
   const [metadata, setMetadata] = useState<Record<string, TokenMeta> | null>(null);
@@ -117,7 +110,6 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"popular" | "newest">("popular");
   const [promptGenerated, setPromptGenerated] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   async function downloadImage(url: string, filename: string) {
     try {
@@ -457,13 +449,6 @@ export default function Home() {
           >
             Submit a Prompt
           </button>
-          <Link
-            href="/brand"
-            className="px-6 py-2.5 rounded-xl font-display font-bold text-sm transition-all border border-white/[0.08] text-white/40 hover:text-white/60 hover:border-white/15 flex items-center gap-1.5"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" /></svg>
-            The Library
-          </Link>
         </motion.div>
 
         {activeTab === "browse" && (<>
@@ -771,50 +756,6 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Save Output */}
-        <AnimatePresence>
-          {promptGenerated && selectedPrompt && tokenMeta && isConnected && address && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-2xl bg-gvc-dark border border-white/[0.08] p-6 mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <svg className="w-5 h-5 text-gvc-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                <h3 className="text-base font-display font-bold text-white">Save Your Output</h3>
-              </div>
-              <p className="text-white/40 font-body text-sm mb-4 pl-8">Happy with the result? Upload it to your profile for easy reference.</p>
-              <div className="pl-8">
-                <label className="group flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-dashed border-white/15 text-white/50 font-body text-sm hover:border-gvc-gold/30 hover:text-gvc-gold cursor-pointer transition-all">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.338 3.75 3.75 0 013.467 5.338A3.75 3.75 0 0118 19.5H6.75z" /></svg>
-                  {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved to Profile!" : "Upload Output Image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !address) return;
-                      setSaveStatus("saving");
-                      try {
-                        const optimized = await optimizeImage(file);
-                        const fd = new FormData();
-                        fd.append("wallet", address);
-                        fd.append("type", "output");
-                        fd.append("file", optimized);
-                        fd.append("prompt_id", selectedPrompt.id);
-                        fd.append("prompt_title", selectedPrompt.title);
-                        fd.append("token_id", tokenId);
-                        const res = await fetch("/api/user", { method: "POST", body: fd });
-                        if (!res.ok) throw new Error();
-                        setSaveStatus("saved");
-                        setTimeout(() => setSaveStatus("idle"), 3000);
-                      } catch {
-                        setSaveStatus("idle");
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         </>)}
 

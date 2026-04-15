@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensureTable } from "@/lib/db";
+import pool, { ensureBrandTables } from "@/lib/db";
 import { put, del } from "@vercel/blob";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/brand/admin — get all assets + stats
 export async function GET() {
-  await ensureTable();
+  await ensureBrandTables();
 
   const { rows: assets } = await pool.query(
     "SELECT * FROM brand_assets ORDER BY category, created_at DESC"
@@ -13,12 +15,11 @@ export async function GET() {
     "SELECT * FROM brand_categories ORDER BY label"
   );
 
-  // Count per category
   const { rows: counts } = await pool.query(
     "SELECT category, COUNT(*) as count FROM brand_assets GROUP BY category"
   );
   const countMap: Record<string, number> = {};
-  counts.forEach((r: any) => { countMap[r.category] = parseInt(r.count); });
+  counts.forEach((r: { category: string; count: string }) => { countMap[r.category] = parseInt(r.count); });
 
   return NextResponse.json({
     assets,
@@ -30,7 +31,7 @@ export async function GET() {
 
 // POST /api/brand/admin — upload assets (supports multiple files)
 export async function POST(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
 
   const formData = await req.formData();
   const category = formData.get("category") as string;
@@ -39,9 +40,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "category required" }, { status: 400 });
   }
 
-  const uploaded: any[] = [];
+  const uploaded: Record<string, unknown>[] = [];
 
-  // Process all file entries
   const entries = Array.from(formData.entries());
   for (const [key, value] of entries) {
     if (key === "category") continue;
@@ -64,9 +64,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ uploaded, count: uploaded.length }, { status: 201 });
 }
 
-// PATCH /api/brand/admin — update asset category or tags
+// PATCH /api/brand/admin — update asset category, tags, or filename
 export async function PATCH(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const { id, category, tags, filename } = await req.json();
 
   if (!id) {
@@ -88,14 +88,13 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE /api/brand/admin?id=...
 export async function DELETE(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const id = req.nextUrl.searchParams.get("id");
 
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
 
-  // Get URL to delete from blob storage
   const { rows } = await pool.query("SELECT image_url FROM brand_assets WHERE id = $1", [id]);
   if (rows[0]?.image_url) {
     await del(rows[0].image_url).catch(() => {});

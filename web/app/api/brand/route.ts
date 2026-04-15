@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool, { ensureTable } from "@/lib/db";
+import pool, { ensureBrandTables } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 // GET /api/brand?category=gifs — public endpoint for builders
 export async function GET(req: NextRequest) {
-  await ensureTable();
+  await ensureBrandTables();
   const category = req.nextUrl.searchParams.get("category");
 
   let query = "SELECT * FROM brand_assets";
@@ -18,7 +20,6 @@ export async function GET(req: NextRequest) {
 
   const { rows } = await pool.query(query, params);
 
-  // Also return available categories
   const { rows: cats } = await pool.query(
     "SELECT * FROM brand_categories ORDER BY label"
   );

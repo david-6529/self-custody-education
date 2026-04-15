@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 
 interface BrandAsset {
@@ -144,9 +143,9 @@ export default function BrandAdmin() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Nav */}
         <div className="flex items-center justify-between mb-8">
-          <Link href="/brand" className="flex items-center gap-2 text-white/40 hover:text-white/70 font-body text-sm transition-colors">
+          <Link href="/library" className="flex items-center gap-2 text-white/40 hover:text-white/70 font-body text-sm transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-            Brand Gallery
+            The Library
           </Link>
         </div>
 
