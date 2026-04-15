@@ -20,13 +20,15 @@ interface BrandCategory {
   label: string;
 }
 
-export default function BrandGallery() {
+export default function Library() {
   const [assets, setAssets] = useState<BrandAsset[]>([]);
   const [categories, setCategories] = useState<BrandCategory[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [lightboxAsset, setLightboxAsset] = useState<BrandAsset | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedClaudeId, setCopiedClaudeId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("/api/brand")
@@ -39,23 +41,36 @@ export default function BrandGallery() {
       .catch(() => setLoading(false));
   }, []);
 
-  const filtered = activeCategory === "all"
-    ? assets
-    : assets.filter((a) => a.category === activeCategory);
+  const filtered = assets.filter((a) => {
+    const matchesCat = activeCategory === "all" || a.category === activeCategory;
+    const matchesSearch = !search || a.filename.toLowerCase().includes(search.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
 
   async function copyUrl(asset: BrandAsset) {
+    await copyText(asset.image_url);
+    setCopiedId(asset.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  async function copyForClaude(asset: BrandAsset) {
+    const text = `Use this image in my project:\nFilename: ${asset.filename}\nURL: ${asset.image_url}\nUsage: <img src="${asset.image_url}" alt="${asset.filename}" /> or with next/image: <Image src="${asset.image_url}" alt="${asset.filename}" width={400} height={300} />`;
+    await copyText(text);
+    setCopiedClaudeId(asset.id);
+    setTimeout(() => setCopiedClaudeId(null), 2000);
+  }
+
+  async function copyText(text: string) {
     try {
-      await navigator.clipboard.writeText(asset.image_url);
+      await navigator.clipboard.writeText(text);
     } catch {
       const ta = document.createElement("textarea");
-      ta.value = asset.image_url;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
     }
-    setCopiedId(asset.id);
-    setTimeout(() => setCopiedId(null), 2000);
   }
 
   function downloadAsset(asset: BrandAsset) {
@@ -104,7 +119,7 @@ export default function BrandGallery() {
             transition={{ delay: 0.1 }}
             className="text-3xl sm:text-4xl font-display font-black text-shimmer mb-3 uppercase"
           >
-            Brand Assets
+            The Library
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -112,15 +127,33 @@ export default function BrandGallery() {
             transition={{ delay: 0.2 }}
             className="text-white/40 font-body text-lg max-w-xl mx-auto"
           >
-            Official GVC visual assets for builders. Click any asset to copy its URL or download it.
+            Official GVC brand assets for your builds. Browse, copy, and paste into Claude to use them in your project.
           </motion.p>
         </div>
+
+        {/* Search */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="max-w-md mx-auto mb-6"
+        >
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search assets..."
+              className="w-full bg-gvc-dark border border-white/[0.08] rounded-xl pl-10 pr-4 py-3 text-white font-body text-sm outline-none focus:border-gvc-gold/30 placeholder:text-white/20 transition-colors"
+            />
+          </div>
+        </motion.div>
 
         {/* Category filter */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
           className="flex flex-wrap justify-center gap-2 mb-8"
         >
           <button
@@ -135,6 +168,7 @@ export default function BrandGallery() {
           </button>
           {categories.map((cat) => {
             const count = assets.filter((a) => a.category === cat.slug).length;
+            if (count === 0) return null;
             return (
               <button
                 key={cat.slug}
@@ -151,16 +185,19 @@ export default function BrandGallery() {
           })}
         </motion.div>
 
-        {/* API hint */}
+        {/* How to use hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mb-8 px-4 py-3 rounded-xl bg-gvc-dark border border-white/[0.06] text-center"
+          transition={{ delay: 0.35 }}
+          className="mb-8 px-4 py-3 rounded-xl bg-gvc-dark border border-white/[0.06] flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4"
         >
+          <div className="flex items-center gap-2 text-gvc-gold/60 font-body text-xs flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>
+            Tip
+          </div>
           <p className="text-white/30 font-body text-xs">
-            API endpoint:{" "}
-            <code className="text-gvc-gold/60 font-mono">GET /api/brand?category=backgrounds</code>
+            Click <span className="text-gvc-gold/50">Copy for Claude</span> on any asset and paste it directly into Claude Code. Claude will know how to use the image in your project.
           </p>
         </motion.div>
 
@@ -171,7 +208,9 @@ export default function BrandGallery() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-white/30 font-body text-sm">No assets in this category yet.</p>
+            <p className="text-white/30 font-body text-sm">
+              {search ? `No assets matching "${search}"` : "No assets in this category yet."}
+            </p>
           </div>
         ) : (
           <div className="columns-2 sm:columns-3 lg:columns-4 gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
@@ -185,6 +224,7 @@ export default function BrandGallery() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="group relative rounded-xl overflow-hidden bg-gvc-dark border border-white/[0.08] hover:border-gvc-gold/20 transition-all"
                 >
+                  {/* Image */}
                   <div
                     className="cursor-pointer"
                     onClick={() => setLightboxAsset(asset)}
@@ -196,31 +236,46 @@ export default function BrandGallery() {
                     />
                   </div>
 
+                  {/* Info */}
                   <div className="p-3">
                     <p className="text-white font-body text-xs font-semibold truncate">{asset.filename}</p>
                     <p className="text-white/20 font-body text-xs mt-0.5 capitalize">{asset.category}</p>
                   </div>
 
                   {/* Hover actions */}
-                  <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                  <div className="absolute inset-x-0 bottom-0 p-3 pt-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all flex gap-1.5 justify-end">
+                    {/* Copy for Claude */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); copyForClaude(asset); }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center gap-1.5 transition-all ${
+                        copiedClaudeId === asset.id
+                          ? "bg-gvc-green/20 border border-gvc-green/30 text-gvc-green"
+                          : "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold hover:bg-gvc-gold/25"
+                      }`}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                      {copiedClaudeId === asset.id ? "Copied!" : "Copy for Claude"}
+                    </button>
+                    {/* Copy URL */}
                     <button
                       onClick={(e) => { e.stopPropagation(); copyUrl(asset); }}
                       className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all ${
                         copiedId === asset.id
                           ? "bg-gvc-green/20 border-gvc-green/30 text-gvc-green"
-                          : "bg-black/60 border-white/10 text-white/40 hover:text-gvc-gold hover:border-gvc-gold/30"
+                          : "bg-black/60 border-white/10 text-white/40 hover:text-white/70"
                       }`}
                       title="Copy URL"
                     >
                       {copiedId === asset.id ? (
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.066a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.25 8.81" /></svg>
                       )}
                     </button>
+                    {/* Download */}
                     <button
                       onClick={(e) => { e.stopPropagation(); downloadAsset(asset); }}
-                      className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-gvc-gold hover:border-gvc-gold/30 flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 text-white/40 hover:text-white/70 flex items-center justify-center"
                       title="Download"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -252,27 +307,38 @@ export default function BrandGallery() {
                 <img
                   src={lightboxAsset.image_url}
                   alt={lightboxAsset.filename}
-                  className="max-w-full max-h-[80vh] rounded-xl shadow-2xl mx-auto"
+                  className="max-w-full max-h-[75vh] rounded-xl shadow-2xl mx-auto"
                 />
-                <div className="flex items-center justify-center gap-3 mt-4">
+                <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+                  <button
+                    onClick={() => copyForClaude(lightboxAsset)}
+                    className={`px-5 py-2.5 rounded-xl font-display font-bold text-sm flex items-center gap-2 transition-all ${
+                      copiedClaudeId === lightboxAsset.id
+                        ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
+                        : "bg-gvc-gold text-gvc-black hover:shadow-[0_0_20px_rgba(255,224,72,0.3)]"
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25" /></svg>
+                    {copiedClaudeId === lightboxAsset.id ? "Copied!" : "Copy for Claude"}
+                  </button>
                   <button
                     onClick={() => copyUrl(lightboxAsset)}
-                    className={`px-4 py-2 rounded-xl font-body text-sm flex items-center gap-2 transition-all ${
+                    className={`px-4 py-2.5 rounded-xl font-body text-sm flex items-center gap-2 transition-all ${
                       copiedId === lightboxAsset.id
                         ? "bg-gvc-green/20 text-gvc-green border border-gvc-green/30"
-                        : "bg-white/10 border border-white/10 text-white/60 hover:text-gvc-gold hover:border-gvc-gold/30"
+                        : "bg-white/10 border border-white/10 text-white/60 hover:text-white/80"
                     }`}
                   >
                     {copiedId === lightboxAsset.id ? "Copied!" : "Copy URL"}
                   </button>
                   <button
                     onClick={() => downloadAsset(lightboxAsset)}
-                    className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white/60 hover:text-gvc-gold hover:border-gvc-gold/30 font-body text-sm flex items-center gap-2 transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-white/10 border border-white/10 text-white/60 hover:text-white/80 font-body text-sm flex items-center gap-2 transition-all"
                   >
                     Download
                   </button>
-                  <p className="text-white/30 font-body text-xs">{lightboxAsset.filename}</p>
                 </div>
+                <p className="text-white/20 font-body text-xs text-center mt-3">{lightboxAsset.filename}</p>
               </motion.div>
               <button
                 onClick={() => setLightboxAsset(null)}

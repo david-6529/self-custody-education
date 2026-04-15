@@ -485,6 +485,13 @@ export default function Home() {
           >
             Submit a Prompt
           </button>
+          <Link
+            href="/brand"
+            className="px-6 py-2.5 rounded-xl font-display font-bold text-sm transition-all border border-white/[0.08] text-white/40 hover:text-white/60 hover:border-white/15 flex items-center gap-1.5"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" /></svg>
+            The Library
+          </Link>
         </motion.div>
 
         {activeTab === "browse" && (<>
