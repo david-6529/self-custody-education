@@ -157,7 +157,7 @@ Do NOT include technical jargon, implementation details, file names, library nam
       description: "Claude Code will ask you to select a folder. Choose where you want your project to live.",
       action: null,
       actionDone: null,
-      detail: "Pick any folder like Desktop, Documents, or a Projects folder. Claude will create a new folder inside it.",
+      detail: "PRO TIP: Pick any folder like Desktop, Documents, or a Projects folder. Claude will create a new folder inside it.",
     },
     {
       icon: ClipboardPaste,
@@ -372,8 +372,8 @@ Do NOT include technical jargon, implementation details, file names, library nam
 
                       {/* Detail note */}
                       {step.detail && isCurrent && (
-                        <div className="mt-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                          <p className="text-white/35 font-body text-xs leading-relaxed">
+                        <div className="mt-4 px-5 py-4 rounded-xl bg-gvc-gold/[0.04] border border-gvc-gold/10">
+                          <p className="text-white/50 font-body text-sm leading-relaxed">
                             {step.detail}
                           </p>
                         </div>
