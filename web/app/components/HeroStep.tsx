@@ -190,10 +190,21 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
           </motion.button>
 
+          {/* Terminal link */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="my-2 text-sm text-white/25 font-body inline-flex items-center gap-2 hover:text-white/40 transition-colors cursor-default"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            Or try it in your terminal with <code className="text-gvc-gold/50 font-mono text-xs ml-1">npx create-gvc-app</code>
+          </motion.p>
+
           <motion.a
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
             href="https://prompt-gallery-theta.vercel.app/"
@@ -210,17 +221,6 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
           </motion.a>
         </div>
-
-        {/* Terminal link */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-5 text-sm text-white/25 font-body inline-flex items-center gap-2 hover:text-white/40 transition-colors cursor-default"
-        >
-          <Terminal className="w-3.5 h-3.5" />
-          Or try it in your terminal with <code className="text-gvc-gold/50 font-mono text-xs ml-1">npx create-gvc-app</code>
-        </motion.p>
       </div>
 
       {/* Bottom: Badge Marquee */}
