@@ -171,23 +171,45 @@ export default function HeroStep({ onNext }: HeroStepProps) {
           Go from idea to live project in minutes. No coding experience needed.
         </motion.p>
 
-        {/* CTA Button */}
-        <motion.button
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          whileHover={{ scale: 1.04, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onNext}
-          className="
-            group relative inline-flex items-center gap-3 px-10 py-5
-            bg-gvc-gold text-gvc-black font-display font-bold text-xl
-            rounded-2xl transition-all duration-300 glow-pulse
-          "
-        >
-          Start Building
-          <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
-        </motion.button>
+        {/* CTA Buttons */}
+        <div className="flex flex-col items-center gap-3">
+          <motion.button
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onNext}
+            className="
+              group relative inline-flex items-center gap-3 px-10 py-5
+              bg-gvc-gold text-gvc-black font-display font-bold text-xl
+              rounded-2xl transition-all duration-300 glow-pulse
+            "
+          >
+            Start Building
+            <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
+          </motion.button>
+
+          <motion.a
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            whileHover={{ scale: 1.03, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            href="https://prompt-gallery-theta.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="
+              group relative inline-flex items-center gap-2 px-8 py-3.5
+              border border-gvc-gold/30 bg-gvc-gold/5 text-gvc-gold
+              font-display font-bold text-base rounded-2xl
+              hover:bg-gvc-gold/15 hover:border-gvc-gold/50 transition-all duration-300
+            "
+          >
+            Prompt Machine
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </motion.a>
+        </div>
 
         {/* Terminal link */}
         <motion.p
