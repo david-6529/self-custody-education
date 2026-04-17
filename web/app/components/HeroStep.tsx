@@ -142,14 +142,15 @@ export default function HeroStep({ onNext }: HeroStepProps) {
         </motion.h1>
 
         {/* Subtitle + Description */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-lg sm:text-xl text-white/60 font-body max-w-lg mx-auto mb-8"
+          className="text-lg sm:text-xl text-white/60 font-body max-w-lg mx-auto mb-8 space-y-2"
         >
-          A builder toolkit for the GVC community. Go from idea to live project in minutes. No coding experience needed.
-        </motion.p>
+          <p>A builder toolkit for the GVC community.</p>
+          <p>Go from idea to live project in minutes. No coding experience needed.</p>
+        </motion.div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col items-center gap-3">
