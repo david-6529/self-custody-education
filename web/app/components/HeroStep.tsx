@@ -55,7 +55,7 @@ type FeaturedBuild = {
 const FEATURED_BUILDS: FeaturedBuild[] = [
   {
     id: "prompt-machine",
-    name: "Prompt Machine",
+    name: "The Prompt Machine",
     status: "live",
     url: "https://prompt-gallery-theta.vercel.app/",
     icon: Sparkles,
