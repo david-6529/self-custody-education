@@ -59,7 +59,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     status: "live",
     url: "https://prompt-gallery-theta.vercel.app/",
     icon: Sparkles,
-    description: "Want to bring your GVC character to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
+    description: "Want to bring your GVC characters to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
   },
   {
     id: "vibematch",
