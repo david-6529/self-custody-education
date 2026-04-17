@@ -176,16 +176,34 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.5 }}
-            className="my-2 text-sm text-white/25 font-body inline-flex items-center gap-2 hover:text-white/40 transition-colors cursor-default"
+            className="mt-2 text-sm text-white/25 font-body inline-flex items-center gap-2 hover:text-white/40 transition-colors cursor-default"
           >
             <Terminal className="w-3.5 h-3.5" />
             Or try it in your terminal with <code className="text-gvc-gold/50 font-mono text-xs ml-1">npx create-gvc-app</code>
           </motion.p>
 
+          {/* Divider */}
+          <motion.div
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ delay: 0.75, duration: 0.6 }}
+            className="mt-10 mb-6 h-px w-64 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+          />
+
+          {/* Prompt Machine section */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="text-base sm:text-lg text-white/70 font-body mb-4 max-w-md text-center"
+          >
+            Want to bring your GVC character to life? Prompt it!
+          </motion.p>
+
           <motion.a
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
+            transition={{ delay: 0.85, duration: 0.5 }}
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
             href="https://prompt-gallery-theta.vercel.app/"
