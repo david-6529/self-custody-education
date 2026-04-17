@@ -151,16 +151,6 @@ export default function HeroStep({ onNext }: HeroStepProps) {
           A builder toolkit for the GVC community
         </motion.p>
 
-        {/* Italic tagline */}
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.5 }}
-          className="text-sm text-white/25 font-body italic mb-6"
-        >
-          Built by the community, for the community
-        </motion.p>
-
         {/* Description */}
         <motion.p
           initial={{ opacity: 0, y: 15 }}
