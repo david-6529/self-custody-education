@@ -59,7 +59,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     name: "The Prompt Machine",
     tabName: "Prompt Machine",
     status: "live",
-    url: "https://prompt-gallery-theta.vercel.app/",
+    url: "/prompt-machine",
     icon: Sparkles,
     description: "Want to bring your GVC characters to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
   },
