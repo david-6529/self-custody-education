@@ -134,7 +134,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-shimmer leading-[1.0] mb-4 tracking-wide"
+          className="text-5xl sm:text-7xl lg:text-8xl font-display font-black text-shimmer leading-[1.0] mb-4 tracking-wide uppercase"
         >
           The
           <br />
