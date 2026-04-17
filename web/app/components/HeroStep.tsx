@@ -335,7 +335,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gvc-gold text-gvc-black rounded-xl font-display font-bold text-sm hover:shadow-[0_0_30px_rgba(255,224,72,0.3)] transition-all"
                   >
-                    Launch {current.name}
+                    Launch It
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 ) : (
