@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ArrowRight, Terminal } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Terminal, Sparkles, Heart } from "lucide-react";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 // All 101 badge filenames
 const ALL_BADGES = [
@@ -43,8 +43,38 @@ interface HeroStepProps {
   onNext: () => void;
 }
 
+type FeaturedBuild = {
+  id: string;
+  name: string;
+  status: "live" | "soon";
+  url?: string;
+  icon: typeof Sparkles;
+  description: string;
+};
+
+const FEATURED_BUILDS: FeaturedBuild[] = [
+  {
+    id: "prompt-machine",
+    name: "Prompt Machine",
+    status: "live",
+    url: "https://prompt-gallery-theta.vercel.app/",
+    icon: Sparkles,
+    description: "Want to bring your GVC character to life? Use community-crafted prompts to generate AI images, avatars, and scenes.",
+  },
+  {
+    id: "vibematch",
+    name: "VibeMatch",
+    status: "soon",
+    icon: Heart,
+    description: "Find your perfect GVC pairing through vibes, traits, and community matchmaking.",
+  },
+];
+
 export default function HeroStep({ onNext }: HeroStepProps) {
   const badges = useMemo(() => shuffleArray([...ALL_BADGES]).slice(0, 25), []);
+  const [activeBuild, setActiveBuild] = useState<string>("prompt-machine");
+  const current = FEATURED_BUILDS.find((b) => b.id === activeBuild) || FEATURED_BUILDS[0];
+  const CurrentIcon = current.icon;
 
   return (
     <motion.div
@@ -187,38 +217,99 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ delay: 0.75, duration: 0.6 }}
-            className="mt-10 mb-6 h-px w-64 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+            className="mt-12 mb-8 h-px w-64 bg-gradient-to-r from-transparent via-white/15 to-transparent"
           />
 
-          {/* Prompt Machine section */}
-          <motion.p
+          {/* Featured Builds */}
+          <motion.h2
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="text-base sm:text-lg text-white/70 font-body mb-4 max-w-md text-center"
+            className="text-2xl sm:text-3xl font-display font-black text-white mb-6 uppercase tracking-wide"
           >
-            Want to bring your GVC character to life? Prompt it!
-          </motion.p>
+            Featured Builds
+          </motion.h2>
 
-          <motion.a
-            initial={{ opacity: 0, y: 15 }}
+          {/* Tabs */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.85, duration: 0.5 }}
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            href="https://prompt-gallery-theta.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="
-              group relative inline-flex items-center gap-3 px-10 py-5
-              border border-gvc-gold/30 bg-gvc-gold/5 text-gvc-gold
-              font-display font-bold text-xl rounded-2xl
-              hover:bg-gvc-gold/15 hover:border-gvc-gold/50 transition-all duration-300
-            "
+            className="flex flex-wrap justify-center gap-2 mb-6"
           >
-            Prompt Machine
-            <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
-          </motion.a>
+            {FEATURED_BUILDS.map((build) => {
+              const isActive = activeBuild === build.id;
+              const isSoon = build.status === "soon";
+              return (
+                <button
+                  key={build.id}
+                  onClick={() => setActiveBuild(build.id)}
+                  className={`px-5 py-2.5 rounded-xl font-display font-bold text-sm flex items-center gap-2 transition-all ${
+                    isActive
+                      ? "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold"
+                      : "border border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-gvc-gold" : isSoon ? "bg-white/30" : "bg-gvc-gold/40"}`}></span>
+                  {build.name}
+                  {isSoon && <span className="text-[9px] opacity-60 ml-0.5">SOON</span>}
+                </button>
+              );
+            })}
+            <button disabled className="px-5 py-2.5 rounded-xl border border-dashed border-white/10 text-white/20 font-display font-bold text-sm cursor-not-allowed">
+              + More Soon
+            </button>
+          </motion.div>
+
+          {/* Featured build detail card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
+            className="w-full max-w-xl"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-2xl bg-gvc-dark border border-white/10 p-8 text-center"
+              >
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 ${
+                  current.status === "live" ? "bg-gvc-gold/15" : "bg-white/5"
+                }`}>
+                  <CurrentIcon className={`w-7 h-7 ${
+                    current.status === "live" ? "text-gvc-gold" : "text-white/40"
+                  }`} />
+                </div>
+                <h3 className={`font-display font-black text-xl mb-3 ${
+                  current.status === "live" ? "text-gvc-gold" : "text-white/70"
+                }`}>
+                  {current.name}
+                </h3>
+                <p className="text-white/50 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+                  {current.description}
+                </p>
+                {current.status === "live" && current.url ? (
+                  <a
+                    href={current.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gvc-gold text-gvc-black rounded-xl font-display font-bold text-sm hover:shadow-[0_0_30px_rgba(255,224,72,0.3)] transition-all"
+                  >
+                    Launch {current.name}
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-6 py-3 border border-white/10 text-white/30 rounded-xl font-display font-bold text-sm">
+                    Coming Soon
+                  </span>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
