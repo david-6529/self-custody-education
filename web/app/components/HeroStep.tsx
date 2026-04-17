@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Terminal, Sparkles, Grid3x3 } from "lucide-react";
+import { ArrowRight, Terminal, Sparkles, Puzzle } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
@@ -66,8 +66,8 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     name: "VibeMatch",
     status: "soon",
     url: "https://vibematch.app",
-    icon: Grid3x3,
-    description: "A match-3 puzzle game starring your favorite GVC characters. Swap, match, and chain combos to rack up high scores.",
+    icon: Puzzle,
+    description: "A new puzzle game from Good Vibes Club. Players can match badges, win prizes, and climb to the top of the leaderboard!",
   },
 ];
 
@@ -251,15 +251,11 @@ export default function HeroStep({ onNext }: HeroStepProps) {
                       : "border border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-gvc-gold" : isSoon ? "bg-white/30" : "bg-gvc-gold/40"}`}></span>
                   {build.name}
                   {isSoon && <span className="text-[9px] opacity-60 ml-0.5">SOON</span>}
                 </button>
               );
             })}
-            <button disabled className="px-5 py-2.5 rounded-xl border border-dashed border-white/10 text-white/20 font-display font-bold text-sm cursor-not-allowed">
-              + More Soon
-            </button>
           </motion.div>
 
           {/* Featured build detail card */}
