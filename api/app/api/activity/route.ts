@@ -9,7 +9,8 @@ export async function GET() {
       "SELECT value FROM cache_entries WHERE key = 'community-activity' LIMIT 1"
     );
     if (!rows.length) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      // Cache not yet warm — return empty activity instead of 404 so clients can render gracefully
+      return NextResponse.json({ activity: [], cached: false });
     }
     return NextResponse.json(rows[0].value);
   } catch (e: any) {

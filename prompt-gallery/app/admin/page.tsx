@@ -4,6 +4,30 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
+const TOKEN_KEY = "gvc_admin_token";
+
+function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  let token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    token = window.prompt("Admin password required");
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+  }
+  return token;
+}
+
+async function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAdminToken();
+  const headers = new Headers(init.headers || {});
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    localStorage.removeItem(TOKEN_KEY);
+    alert("Wrong password. Refresh and try again.");
+  }
+  return res;
+}
+
 interface Submission {
   id: string;
   title: string;
@@ -45,7 +69,7 @@ export default function AdminPage() {
   async function fetchData() {
     try {
       const [adminRes, catRes] = await Promise.all([
-        fetch("/api/admin"),
+        adminFetch("/api/admin"),
         fetch("/api/categories"),
       ]);
       const data = await adminRes.json();
@@ -66,7 +90,7 @@ export default function AdminPage() {
 
   async function updateStatus(id: string, status: string) {
     try {
-      await fetch("/api/admin", {
+      await adminFetch("/api/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
@@ -92,7 +116,7 @@ export default function AdminPage() {
   async function createCategory() {
     if (!newCategoryName.trim()) return;
     try {
-      const res = await fetch("/api/categories", {
+      const res = await adminFetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: newCategoryName.trim() }),
@@ -109,7 +133,7 @@ export default function AdminPage() {
 
   async function deleteCategory(catId: string) {
     try {
-      await fetch("/api/categories", {
+      await adminFetch("/api/categories", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: catId }),
@@ -122,7 +146,7 @@ export default function AdminPage() {
 
   async function updateRefImages(id: string, urls: string[]) {
     try {
-      await fetch("/api/admin", {
+      await adminFetch("/api/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ref_images: JSON.stringify(urls) }),
@@ -137,7 +161,7 @@ export default function AdminPage() {
 
   async function toggleRefImages(id: string, current: boolean) {
     try {
-      await fetch("/api/admin", {
+      await adminFetch("/api/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, requires_ref_images: !current }),
@@ -152,7 +176,7 @@ export default function AdminPage() {
 
   async function updateCategory(id: string, category: string | null) {
     try {
-      await fetch("/api/admin", {
+      await adminFetch("/api/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, category }),
@@ -167,7 +191,7 @@ export default function AdminPage() {
 
   async function deleteSubmission(id: string) {
     try {
-      await fetch("/api/admin", {
+      await adminFetch("/api/admin", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),

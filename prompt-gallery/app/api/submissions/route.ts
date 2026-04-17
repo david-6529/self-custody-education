@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import pool, { ensureTable } from "@/lib/db";
 
+const ALLOWED_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+]);
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_TEXT_LEN = 4000;
+
+function validateImage(file: File): string | null {
+  if (!ALLOWED_MIME.has(file.type)) {
+    return `Unsupported file type: ${file.type || "unknown"}`;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return `File ${file.name} exceeds 10MB limit`;
+  }
+  if (file.size === 0) {
+    return "Empty file";
+  }
+  return null;
+}
+
+function sanitizeName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
+
 export async function POST(request: NextRequest) {
   try {
     await ensureTable();
@@ -21,19 +48,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload main image to Vercel Blob
-    const blob = await put(`prompt-submissions/${Date.now()}-${image.name}`, image, {
-      access: "public",
-    });
+    if (title.length > 200 || prompt.length > MAX_TEXT_LEN || (moreDetails && moreDetails.length > MAX_TEXT_LEN)) {
+      return NextResponse.json({ error: "Input exceeds max length" }, { status: 400 });
+    }
 
-    // Upload reference images if any
+    const imageErr = validateImage(image);
+    if (imageErr) {
+      return NextResponse.json({ error: imageErr }, { status: 400 });
+    }
+
+    // Upload main image to Vercel Blob
+    const blob = await put(
+      `prompt-submissions/${Date.now()}-${sanitizeName(image.name)}`,
+      image,
+      { access: "public", contentType: image.type }
+    );
+
+    // Upload reference images if any (validated)
     const refUrls: string[] = [];
     for (let i = 0; i < 10; i++) {
       const refFile = formData.get(`refImage${i}`) as File | null;
       if (!refFile) break;
-      const refBlob = await put(`prompt-submissions/ref-${Date.now()}-${refFile.name}`, refFile, {
-        access: "public",
-      });
+      const refErr = validateImage(refFile);
+      if (refErr) {
+        return NextResponse.json({ error: refErr }, { status: 400 });
+      }
+      const refBlob = await put(
+        `prompt-submissions/ref-${Date.now()}-${sanitizeName(refFile.name)}`,
+        refFile,
+        { access: "public", contentType: refFile.type }
+      );
       refUrls.push(refBlob.url);
     }
 

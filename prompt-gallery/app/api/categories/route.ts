@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { ensureTable } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 // GET all categories
 export async function GET() {
@@ -16,6 +17,8 @@ export async function GET() {
 
 // POST - create a new category
 export async function POST(request: NextRequest) {
+  const authFail = requireAdmin(request);
+  if (authFail) return authFail;
   try {
     await ensureTable();
     const { label } = await request.json();
@@ -38,6 +41,8 @@ export async function POST(request: NextRequest) {
 
 // DELETE - remove a category
 export async function DELETE(request: NextRequest) {
+  const authFail = requireAdmin(request);
+  if (authFail) return authFail;
   try {
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });

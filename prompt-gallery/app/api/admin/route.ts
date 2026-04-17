@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { ensureTable } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 // GET all submissions (pending first, then approved, then rejected)
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authFail = requireAdmin(request);
+  if (authFail) return authFail;
   try {
     await ensureTable();
 
@@ -29,6 +32,8 @@ export async function GET() {
 
 // PATCH - update submission status or fields
 export async function PATCH(request: NextRequest) {
+  const authFail = requireAdmin(request);
+  if (authFail) return authFail;
   try {
     await ensureTable();
 
@@ -80,6 +85,8 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - remove a submission
 export async function DELETE(request: NextRequest) {
+  const authFail = requireAdmin(request);
+  if (authFail) return authFail;
   try {
     const { id } = await request.json();
     if (!id) {

@@ -1139,7 +1139,7 @@ async function main() {
   if (command === "deploy") return runDeploy();
   if (command === "templates") return showTemplates();
   if (command === "--version" || command === "-v") {
-    console.log("create-gvc-app v0.5.0");
+    console.log("create-gvc-app v0.5.3");
     return;
   }
 
@@ -1154,7 +1154,19 @@ async function main() {
   const flagTemplate = parseFlag("--template");
   const flagAddons = parseFlag("--addons");
   const flagDescription = parseFlag("--description");
+  const flagForce = args.includes("--force");
   const nonInteractive = !!(flagName && flagTemplate);
+
+  // Validate --name in non-interactive mode to prevent path traversal / arbitrary deletes
+  if (nonInteractive) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(flagName)) {
+      console.error(
+        "\n  Error: --name must contain only letters, numbers, dashes, and underscores.\n" +
+        "  Received: " + JSON.stringify(flagName) + "\n"
+      );
+      process.exit(1);
+    }
+  }
 
   // "create" or no command runs the scaffold flow
   showHeader();
@@ -1207,10 +1219,27 @@ async function main() {
 
   const projectDir = path.resolve(process.cwd(), typeof projectName === "string" ? projectName.trim() : projectName);
 
+  // Safety: refuse to operate outside the current working directory
+  const cwdResolved = path.resolve(process.cwd());
+  if (!projectDir.startsWith(cwdResolved + path.sep) && projectDir !== cwdResolved) {
+    console.error("\n  Error: project directory must be inside the current working directory.\n");
+    process.exit(1);
+  }
+  if (projectDir === cwdResolved) {
+    console.error("\n  Error: project name cannot resolve to the current directory.\n");
+    process.exit(1);
+  }
+
   // Check if directory already exists
   if (fs.existsSync(projectDir)) {
     if (nonInteractive) {
-      // In non-interactive mode, just overwrite
+      if (!flagForce) {
+        console.error(
+          `\n  Error: folder "${projectName}" already exists.\n` +
+          `  Pass --force to overwrite it, or choose a different --name.\n`
+        );
+        process.exit(1);
+      }
       await fs.remove(projectDir);
     } else {
       const overwrite = await p.confirm({

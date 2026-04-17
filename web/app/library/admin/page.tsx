@@ -4,6 +4,30 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
+const TOKEN_KEY = "gvc_admin_token";
+
+function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  let token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    token = window.prompt("Admin password required");
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+  }
+  return token;
+}
+
+async function adminFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAdminToken();
+  const headers = new Headers(init.headers || {});
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    localStorage.removeItem(TOKEN_KEY);
+    alert("Wrong password. Refresh and try again.");
+  }
+  return res;
+}
+
 interface BrandAsset {
   id: string;
   filename: string;
@@ -66,7 +90,7 @@ export default function BrandAdmin() {
       const fd = new FormData();
       fd.append("category", uploadCategory);
       batch.forEach((f, idx) => fd.append(`file${idx}`, f));
-      await fetch("/api/brand/admin", { method: "POST", body: fd }).catch(() => {});
+      await adminFetch("/api/brand/admin", { method: "POST", body: fd }).catch(() => {});
     }
 
     await fetchData();
@@ -81,7 +105,7 @@ export default function BrandAdmin() {
 
   async function renameAsset(id: string) {
     if (!editName.trim()) { setEditingId(null); return; }
-    await fetch("/api/brand/admin", {
+    await adminFetch("/api/brand/admin", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, filename: editName.trim() }),
@@ -91,7 +115,7 @@ export default function BrandAdmin() {
   }
 
   async function deleteAsset(id: string) {
-    await fetch(`/api/brand/admin?id=${id}`, { method: "DELETE" });
+    await adminFetch(`/api/brand/admin?id=${id}`, { method: "DELETE" });
     setAssets((prev) => prev.filter((a) => a.id !== id));
     setTotal((prev) => prev - 1);
   }
@@ -105,7 +129,7 @@ export default function BrandAdmin() {
       : [...current, cat];
     // Require at least one category
     if (next.length === 0) return;
-    await fetch("/api/brand/admin", {
+    await adminFetch("/api/brand/admin", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, categories: next }),
@@ -117,7 +141,7 @@ export default function BrandAdmin() {
 
   async function renameCategory(id: string) {
     if (!editCatLabel.trim()) { setEditingCatId(null); return; }
-    await fetch("/api/brand/categories", {
+    await adminFetch("/api/brand/categories", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, label: editCatLabel.trim() }),
@@ -128,7 +152,7 @@ export default function BrandAdmin() {
 
   async function addCategory() {
     if (!newCatSlug.trim() || !newCatLabel.trim()) return;
-    await fetch("/api/brand/categories", {
+    await adminFetch("/api/brand/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slug: newCatSlug.trim().toLowerCase().replace(/\s+/g, "-"), label: newCatLabel.trim() }),
@@ -139,7 +163,7 @@ export default function BrandAdmin() {
   }
 
   async function deleteCategory(id: string) {
-    await fetch(`/api/brand/categories?id=${id}`, { method: "DELETE" });
+    await adminFetch(`/api/brand/categories?id=${id}`, { method: "DELETE" });
     await fetchData();
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { ensureBrandTables } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
   const { slug, label } = await req.json();
   if (!slug || !label) {
@@ -23,6 +27,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
   const { id, slug, label } = await req.json();
   if (!id) {
@@ -42,6 +49,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {

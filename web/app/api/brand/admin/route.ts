@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { ensureBrandTables } from "@/lib/db";
 import { put, del } from "@vercel/blob";
+import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const ALLOWED_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+]);
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 
 // GET /api/brand/admin — get all assets + stats
 export async function GET() {
@@ -40,6 +51,9 @@ export async function GET() {
 
 // POST /api/brand/admin — upload assets (supports multiple files and multiple categories)
 export async function POST(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
 
   const formData = await req.formData();
@@ -68,10 +82,24 @@ export async function POST(req: NextRequest) {
     if (key === "category" || key === "categories") continue;
     if (!(value instanceof File) || value.size === 0) continue;
 
+    if (!ALLOWED_MIME.has(value.type)) {
+      return NextResponse.json(
+        { error: `Unsupported file type: ${value.type || "unknown"}` },
+        { status: 400 }
+      );
+    }
+    if (value.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: `File ${value.name} exceeds 10MB limit` },
+        { status: 413 }
+      );
+    }
+
+    const safeName = value.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const blob = await put(
-      `brand-assets/${category}/${Date.now()}-${value.name}`,
+      `brand-assets/${category}/${Date.now()}-${safeName}`,
       value,
-      { access: "public" }
+      { access: "public", contentType: value.type }
     );
 
     const { rows } = await pool.query(
@@ -87,6 +115,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/brand/admin — update asset category, categories, tags, or filename
 export async function PATCH(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
   const { id, category, categories, tags, filename } = await req.json();
 
@@ -117,6 +148,9 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE /api/brand/admin?id=...
 export async function DELETE(req: NextRequest) {
+  const authFail = requireAdmin(req);
+  if (authFail) return authFail;
+
   await ensureBrandTables();
   const id = req.nextUrl.searchParams.get("id");
 
