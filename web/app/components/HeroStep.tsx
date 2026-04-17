@@ -59,7 +59,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     status: "live",
     url: "https://prompt-gallery-theta.vercel.app/",
     icon: Sparkles,
-    description: "Want to bring your GVC character to life? Use community-crafted prompts to generate AI images, avatars, and scenes.",
+    description: "Want to bring your GVC character to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
   },
   {
     id: "vibematch",
@@ -201,6 +201,24 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             Start Building
             <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
           </motion.button>
+
+          <motion.a
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65, duration: 0.5 }}
+            whileHover={{ scale: 1.03, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            href="/library"
+            className="
+              group relative inline-flex items-center gap-3 px-10 py-5
+              border border-gvc-gold/30 bg-gvc-gold/5 text-gvc-gold
+              font-display font-bold text-xl rounded-2xl
+              hover:bg-gvc-gold/15 hover:border-gvc-gold/50 transition-all duration-300
+            "
+          >
+            Asset Library
+            <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
+          </motion.a>
 
           {/* Terminal link */}
           <motion.p
