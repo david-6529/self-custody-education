@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Terminal, Sparkles, Heart } from "lucide-react";
+import { ArrowRight, Terminal, Sparkles, Grid3x3 } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
@@ -65,8 +65,9 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     id: "vibematch",
     name: "VibeMatch",
     status: "soon",
-    icon: Heart,
-    description: "Find your perfect GVC pairing through vibes, traits, and community matchmaking.",
+    url: "https://vibematch.app",
+    icon: Grid3x3,
+    description: "A match-3 puzzle game starring your favorite GVC characters. Swap, match, and chain combos to rack up high scores.",
   },
 ];
 
