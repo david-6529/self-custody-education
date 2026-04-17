@@ -19,6 +19,8 @@ export async function ensureBrandTables() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  // Multi-category support (JSON array of slugs)
+  await pool.query(`ALTER TABLE brand_assets ADD COLUMN IF NOT EXISTS categories TEXT`).catch(() => {});
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS brand_categories (

@@ -8,18 +8,27 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   await ensureBrandTables();
 
-  const { rows: assets } = await pool.query(
+  const { rows: rawAssets } = await pool.query(
     "SELECT * FROM brand_assets ORDER BY category, created_at DESC"
   );
   const { rows: categories } = await pool.query(
     "SELECT * FROM brand_categories ORDER BY label"
   );
 
-  const { rows: counts } = await pool.query(
-    "SELECT category, COUNT(*) as count FROM brand_assets GROUP BY category"
-  );
+  // Normalize: always expose `categories` as an array
+  const assets = rawAssets.map((r) => ({
+    ...r,
+    categories: r.categories ? JSON.parse(r.categories) : [r.category],
+  }));
+
+  // Count per category (using categories array if present, fallback to category)
   const countMap: Record<string, number> = {};
-  counts.forEach((r: { category: string; count: string }) => { countMap[r.category] = parseInt(r.count); });
+  assets.forEach((a) => {
+    const cats: string[] = a.categories || [a.category];
+    cats.forEach((cat: string) => {
+      countMap[cat] = (countMap[cat] || 0) + 1;
+    });
+  });
 
   return NextResponse.json({
     assets,
@@ -29,22 +38,34 @@ export async function GET() {
   });
 }
 
-// POST /api/brand/admin — upload assets (supports multiple files)
+// POST /api/brand/admin — upload assets (supports multiple files and multiple categories)
 export async function POST(req: NextRequest) {
   await ensureBrandTables();
 
   const formData = await req.formData();
   const category = formData.get("category") as string;
+  const categoriesRaw = formData.get("categories") as string | null;
 
   if (!category) {
     return NextResponse.json({ error: "category required" }, { status: 400 });
+  }
+
+  // Parse categories (comma-separated or JSON array), default to [category]
+  let categories: string[] = [category];
+  if (categoriesRaw) {
+    try {
+      const parsed = JSON.parse(categoriesRaw);
+      if (Array.isArray(parsed)) categories = parsed;
+    } catch {
+      categories = categoriesRaw.split(",").map((c) => c.trim()).filter(Boolean);
+    }
   }
 
   const uploaded: Record<string, unknown>[] = [];
 
   const entries = Array.from(formData.entries());
   for (const [key, value] of entries) {
-    if (key === "category") continue;
+    if (key === "category" || key === "categories") continue;
     if (!(value instanceof File) || value.size === 0) continue;
 
     const blob = await put(
@@ -54,9 +75,9 @@ export async function POST(req: NextRequest) {
     );
 
     const { rows } = await pool.query(
-      `INSERT INTO brand_assets (filename, image_url, category)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [value.name, blob.url, category]
+      `INSERT INTO brand_assets (filename, image_url, category, categories)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [value.name, blob.url, category, JSON.stringify(categories)]
     );
     uploaded.push(rows[0]);
   }
@@ -64,10 +85,10 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ uploaded, count: uploaded.length }, { status: 201 });
 }
 
-// PATCH /api/brand/admin — update asset category, tags, or filename
+// PATCH /api/brand/admin — update asset category, categories, tags, or filename
 export async function PATCH(req: NextRequest) {
   await ensureBrandTables();
-  const { id, category, tags, filename } = await req.json();
+  const { id, category, categories, tags, filename } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -75,6 +96,14 @@ export async function PATCH(req: NextRequest) {
 
   if (category) {
     await pool.query("UPDATE brand_assets SET category = $1 WHERE id = $2", [category, id]);
+  }
+  if (Array.isArray(categories)) {
+    // Also update the primary category to the first one for backward compat
+    const primary = categories[0] || null;
+    await pool.query(
+      "UPDATE brand_assets SET categories = $1, category = COALESCE($2, category) WHERE id = $3",
+      [JSON.stringify(categories), primary, id]
+    );
   }
   if (tags !== undefined) {
     await pool.query("UPDATE brand_assets SET tags = $1 WHERE id = $2", [tags, id]);

@@ -9,6 +9,7 @@ interface BrandAsset {
   filename: string;
   image_url: string;
   category: string;
+  categories: string[];
   tags: string | null;
   created_at: string;
 }
@@ -95,13 +96,23 @@ export default function BrandAdmin() {
     setTotal((prev) => prev - 1);
   }
 
-  async function changeCategory(id: string, newCat: string) {
+  async function toggleCategory(id: string, cat: string) {
+    const asset = assets.find((a) => a.id === id);
+    if (!asset) return;
+    const current = asset.categories || [asset.category];
+    const next = current.includes(cat)
+      ? current.filter((c) => c !== cat)
+      : [...current, cat];
+    // Require at least one category
+    if (next.length === 0) return;
     await fetch("/api/brand/admin", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, category: newCat }),
+      body: JSON.stringify({ id, categories: next }),
     });
-    setAssets((prev) => prev.map((a) => a.id === id ? { ...a, category: newCat } : a));
+    setAssets((prev) => prev.map((a) => a.id === id ? { ...a, categories: next, category: next[0] } : a));
+    // Refresh counts
+    await fetchData();
   }
 
   async function renameCategory(id: string) {
@@ -134,7 +145,7 @@ export default function BrandAdmin() {
 
   const filtered = activeCategory === "all"
     ? assets
-    : assets.filter((a) => a.category === activeCategory);
+    : assets.filter((a) => (a.categories || [a.category]).includes(activeCategory));
 
   return (
     <main className="min-h-screen bg-gvc-black relative overflow-hidden">
@@ -341,15 +352,24 @@ export default function BrandAdmin() {
                         {asset.filename}
                       </p>
                     )}
-                    <select
-                      value={asset.category}
-                      onChange={(e) => changeCategory(asset.id, e.target.value)}
-                      className="mt-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-white/50 font-body text-xs outline-none w-full"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat.slug} value={cat.slug}>{cat.label}</option>
-                      ))}
-                    </select>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {categories.map((cat) => {
+                        const selected = (asset.categories || [asset.category]).includes(cat.slug);
+                        return (
+                          <button
+                            key={cat.slug}
+                            onClick={() => toggleCategory(asset.id, cat.slug)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-body transition-all ${
+                              selected
+                                ? "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold"
+                                : "bg-black/40 border border-white/10 text-white/30 hover:text-white/60 hover:border-white/20"
+                            }`}
+                          >
+                            {cat.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Delete */}

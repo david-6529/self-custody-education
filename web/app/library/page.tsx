@@ -10,6 +10,7 @@ interface BrandAsset {
   filename: string;
   image_url: string;
   category: string;
+  categories: string[];
   tags: string | null;
   created_at: string;
 }
@@ -42,7 +43,8 @@ export default function Library() {
   }, []);
 
   const filtered = assets.filter((a) => {
-    const matchesCat = activeCategory === "all" || a.category === activeCategory;
+    const assetCats = a.categories || [a.category];
+    const matchesCat = activeCategory === "all" || assetCats.includes(activeCategory);
     const matchesSearch = !search || a.filename.toLowerCase().includes(search.toLowerCase());
     return matchesCat && matchesSearch;
   });
@@ -167,7 +169,7 @@ export default function Library() {
             All ({assets.length})
           </button>
           {categories.map((cat) => {
-            const count = assets.filter((a) => a.category === cat.slug).length;
+            const count = assets.filter((a) => (a.categories || [a.category]).includes(cat.slug)).length;
             if (count === 0) return null;
             return (
               <button
@@ -239,7 +241,13 @@ export default function Library() {
                   {/* Info */}
                   <div className="p-3">
                     <p className="text-white font-body text-xs font-semibold truncate">{asset.filename}</p>
-                    <p className="text-white/20 font-body text-xs mt-0.5 capitalize">{asset.category}</p>
+                    <p className="text-white/20 font-body text-xs mt-0.5 capitalize truncate">
+                      {(() => {
+                        const slugs = asset.categories || [asset.category];
+                        const labels = slugs.map((s) => categories.find((c) => c.slug === s)?.label || s);
+                        return labels.join(", ");
+                      })()}
+                    </p>
                   </div>
 
                   {/* Hover actions - top right */}
