@@ -30,7 +30,7 @@
 
 ---
 
-The GVC Builder Kit gets you from idea to live project in minutes. No coding experience needed. The GVC brand is baked in, Claude knows the design rules, and deploying is one command.
+The GVC Builder Kit gets you from idea to live project in minutes. No coding experience needed. The GVC brand and assets are baked in, Claude knows all of the design rules by heart, and setup is as simple as sending one command. From there, you can customize your project endlessly.
 
 ---
 
