@@ -46,6 +46,7 @@ interface HeroStepProps {
 type FeaturedBuild = {
   id: string;
   name: string;
+  tabName?: string;
   status: "live" | "soon";
   url?: string;
   icon: typeof Sparkles;
@@ -56,6 +57,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
   {
     id: "prompt-machine",
     name: "The Prompt Machine",
+    tabName: "Prompt Machine",
     status: "live",
     url: "https://prompt-gallery-theta.vercel.app/",
     icon: Sparkles,
@@ -290,7 +292,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
                       : "border border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
                   }`}
                 >
-                  {build.name}
+                  {build.tabName || build.name}
                   {isSoon && <span className="text-[9px] opacity-60 ml-0.5">SOON</span>}
                 </button>
               );
