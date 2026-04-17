@@ -8,21 +8,12 @@
     "start": "next start"
   },
   "dependencies": {
-    "@coinbase/wallet-sdk": "^4.3.7",
-    "@metamask/connect-evm": "^0.9.1",
-    "@reown/appkit": "^1.8.19",
-    "@reown/appkit-adapter-wagmi": "^1.8.19",
-    "@tanstack/react-query": "^5.99.0",
     "@vercel/blob": "^2.3.3",
-    "@walletconnect/ethereum-provider": "^2.23.9",
     "framer-motion": "^11.0.0",
     "next": "^14.2.0",
     "pg": "^8.20.0",
-    "porto": "^0.2.37",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "viem": "^2.47.16",
-    "wagmi": "^3.6.1"
+    "react-dom": "^18.3.0"
   },
   "devDependencies": {
     "@types/node": "^20",
