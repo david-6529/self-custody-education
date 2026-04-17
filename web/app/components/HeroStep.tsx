@@ -200,14 +200,14 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="
-              group relative inline-flex items-center gap-2 px-8 py-3.5
+              group relative inline-flex items-center gap-3 px-10 py-5
               border border-gvc-gold/30 bg-gvc-gold/5 text-gvc-gold
-              font-display font-bold text-base rounded-2xl
+              font-display font-bold text-xl rounded-2xl
               hover:bg-gvc-gold/15 hover:border-gvc-gold/50 transition-all duration-300
             "
           >
             Prompt Machine
-            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowRight className="w-6 h-6 transition-transform duration-300 group-hover:translate-x-1" />
           </motion.a>
         </div>
 
