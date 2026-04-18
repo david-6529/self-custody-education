@@ -11,6 +11,8 @@ const ALLOWED_MIME = new Set([
 ]);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_LEN = 4000;
+const RATE_LIMIT_WINDOW_MIN = 60;
+const RATE_LIMIT_MAX = 5;
 
 function validateImage(file: File): string | null {
   if (!ALLOWED_MIME.has(file.type)) {
@@ -29,6 +31,33 @@ function sanitizeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 }
 
+function getClientIp(request: NextRequest): string {
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return request.headers.get("x-real-ip") || "unknown";
+}
+
+async function checkRateLimit(ip: string): Promise<boolean> {
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS cnt FROM submission_rate_log
+     WHERE ip = $1 AND created_at > NOW() - INTERVAL '${RATE_LIMIT_WINDOW_MIN} minutes'`,
+    [ip]
+  );
+  return rows[0].cnt < RATE_LIMIT_MAX;
+}
+
+async function recordRateLimitHit(ip: string): Promise<void> {
+  await pool.query("INSERT INTO submission_rate_log (ip) VALUES ($1)", [ip]);
+  // Opportunistic cleanup — drop rows older than 24h on a fraction of requests
+  if (Math.random() < 0.05) {
+    await pool
+      .query(
+        "DELETE FROM submission_rate_log WHERE created_at < NOW() - INTERVAL '24 hours'"
+      )
+      .catch(() => {});
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     await ensureTable();
@@ -40,6 +69,13 @@ export async function POST(request: NextRequest) {
     const xHandle = formData.get("xHandle") as string;
     const image = formData.get("image") as File;
     const moreDetails = formData.get("moreDetails") as string;
+    const honeypot = formData.get("website") as string | null;
+
+    // Honeypot — real users leave this empty; bots fill all fields
+    if (honeypot && honeypot.trim().length > 0) {
+      // Respond as if success to avoid tipping off the bot
+      return NextResponse.json({ id: "ok", status: "pending" }, { status: 201 });
+    }
 
     if (!title || !prompt || !tokenId || !image) {
       return NextResponse.json(
@@ -55,6 +91,17 @@ export async function POST(request: NextRequest) {
     const imageErr = validateImage(image);
     if (imageErr) {
       return NextResponse.json({ error: imageErr }, { status: 400 });
+    }
+
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many submissions. Please try again in ${RATE_LIMIT_WINDOW_MIN} minutes.`,
+        },
+        { status: 429 }
+      );
     }
 
     // Upload main image to Vercel Blob
@@ -88,6 +135,8 @@ export async function POST(request: NextRequest) {
        RETURNING id, title, status, created_at`,
       [title, prompt, tokenId, blob.url, xHandle || null, moreDetails || null, refUrls.length > 0 ? JSON.stringify(refUrls) : null]
     );
+
+    await recordRateLimitHit(ip);
 
     return NextResponse.json(rows[0], { status: 201 });
   } catch (e: any) {

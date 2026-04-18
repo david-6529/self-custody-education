@@ -2,7 +2,7 @@ import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: true },
   max: 5,
 });
 
@@ -59,6 +59,19 @@ export async function ensureTable() {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+
+  // Rate-limit log for public submission POSTs
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS submission_rate_log (
+      id BIGSERIAL PRIMARY KEY,
+      ip TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS idx_submission_rate_log_ip_created
+     ON submission_rate_log (ip, created_at DESC)`
+  );
 
   // Brand asset categories
   await pool.query(`

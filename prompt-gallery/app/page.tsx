@@ -233,6 +233,9 @@ export default function Home() {
       formData.append("image", submitFile);
       if (submitMoreDetails) formData.append("moreDetails", submitMoreDetails);
       submitRefFiles.forEach((f, i) => formData.append(`refImage${i}`, f));
+      // Honeypot — real users never fill this, bots usually do
+      const hp = (document.getElementById("submit-hp-website") as HTMLInputElement | null)?.value || "";
+      formData.append("website", hp);
 
       const res = await fetch("/api/submissions", {
         method: "POST",
@@ -922,6 +925,18 @@ export default function Home() {
                 className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/[0.08] text-white font-body text-sm placeholder:text-white/30 focus:outline-none focus:border-gvc-gold/30 transition-colors resize-none"
               />
             </div>
+
+            {/* Honeypot — hidden from users, bots fill it */}
+            <input
+              id="submit-hp-website"
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", opacity: 0 }}
+              defaultValue=""
+            />
 
             {/* Submit button */}
             <button
