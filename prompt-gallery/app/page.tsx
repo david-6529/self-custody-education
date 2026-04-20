@@ -743,12 +743,17 @@ export default function Home() {
                       {/* Always: GVC character */}
                       <div className="rounded-xl bg-black/30 border border-white/[0.08] p-4">
                         <p className="text-white font-body text-sm font-semibold mb-2">Your GVC character</p>
-                        <p className="text-white/40 font-body text-xs mb-3">Your original GVC PFP image.</p>
+                        <p className="text-white/40 font-body text-xs mb-3">Your GVC character&apos;s PFP image.</p>
                         {imageUrl && (
-                          <button onClick={() => downloadImage(imageUrl, `GVC-${tokenId}.png`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
-                            Download GVC-{tokenId}.png
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          </button>
+                          <>
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
+                              <img src={imageUrl} alt={`GVC #${tokenId}`} className="w-full h-full object-cover" />
+                            </div>
+                            <button onClick={() => downloadImage(imageUrl, `GVC-${tokenId}.png`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                              Download GVC-{tokenId}.png
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            </button>
+                          </>
                         )}
                       </div>
 
