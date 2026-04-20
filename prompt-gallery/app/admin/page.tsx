@@ -11,26 +11,43 @@ function sanitizeRefName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 }
 
+interface PromptOverride {
+  builtin_id: string;
+  title: string | null;
+  description: string | null;
+  prompt: string | null;
+  category: string | null;
+  token_id: string | null;
+  x_handle: string | null;
+}
+
 // Pre-loaded prompts defined in code (app/prompts.ts). Surfaced in the admin
-// list as read-only "approved" entries so moderators can see the full set of
-// prompts that render on the public page, not just community submissions.
-const BUILT_IN_SUBMISSIONS: (Submission & { builtIn: true })[] = BUILT_IN_PROMPTS.map((p) => ({
-  id: `builtin-${p.id}`,
-  title: p.title,
-  prompt: p.template,
-  token_id: p.exampleTokenId || "",
-  image_url: p.exampleImage || "",
-  x_handle: p.author?.replace(/^@/, "") || null,
-  status: "approved" as const,
-  category: p.category || null,
-  generations: 0,
-  description: p.description || null,
-  more_details: null,
-  ref_images: null,
-  requires_ref_images: Boolean(p.hasReferenceImage || p.requiresTpose),
-  created_at: "2025-01-01T00:00:00.000Z",
-  builtIn: true,
-}));
+// list as "approved" entries. Admin edits land in the prompt_overrides table
+// and are merged back on top of the defaults when rendering.
+function buildBuiltInSubmissions(
+  overrides: Record<string, PromptOverride>
+): (Submission & { builtIn: true })[] {
+  return BUILT_IN_PROMPTS.map((p) => {
+    const ov = overrides[p.id];
+    return {
+      id: `builtin-${p.id}`,
+      title: ov?.title || p.title,
+      prompt: ov?.prompt || p.template,
+      token_id: ov?.token_id || p.exampleTokenId || "",
+      image_url: p.exampleImage || "",
+      x_handle: ov?.x_handle ?? (p.author?.replace(/^@/, "") || null),
+      status: "approved" as const,
+      category: ov?.category || p.category || null,
+      generations: 0,
+      description: ov?.description || p.description || null,
+      more_details: null,
+      ref_images: null,
+      requires_ref_images: Boolean(p.hasReferenceImage || p.requiresTpose),
+      created_at: "2025-01-01T00:00:00.000Z",
+      builtIn: true,
+    };
+  });
+}
 
 const TOKEN_KEY = "gvc_admin_token";
 
@@ -108,18 +125,26 @@ export default function AdminPage() {
   const [uploadingRefsId, setUploadingRefsId] = useState<string | null>(null);
   const refFileInputRef = useRef<HTMLInputElement>(null);
   const [refUploadTarget, setRefUploadTarget] = useState<string | null>(null);
+  const [overrides, setOverrides] = useState<Record<string, PromptOverride>>({});
 
   async function fetchData() {
     try {
-      const [adminRes, catRes] = await Promise.all([
+      const [adminRes, catRes, ovRes] = await Promise.all([
         adminFetch("/api/admin"),
         fetch("/api/categories"),
+        fetch("/api/overrides"),
       ]);
       const data = await adminRes.json();
       const cats = await catRes.json();
+      const ovs = await ovRes.json();
       setSubmissions(data.submissions || []);
       setStats(data.stats || { total: 0, pending: 0, approved: 0, rejected: 0 });
       setCategories(Array.isArray(cats) ? cats : []);
+      setOverrides(
+        Array.isArray(ovs)
+          ? Object.fromEntries((ovs as PromptOverride[]).map((o) => [o.builtin_id, o]))
+          : {}
+      );
     } catch (e) {
       console.error("Failed to fetch:", e);
     } finally {
@@ -251,6 +276,36 @@ export default function AdminPage() {
   }
 
   async function updateCategory(id: string, category: string | null) {
+    // Built-in prompts flow through prompt_overrides
+    if (id.startsWith("builtin-")) {
+      const builtinId = id.replace(/^builtin-/, "");
+      try {
+        await adminFetch("/api/admin/override", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ builtin_id: builtinId, category }),
+        });
+        setOverrides((prev) => ({
+          ...prev,
+          [builtinId]: {
+            ...(prev[builtinId] || {
+              builtin_id: builtinId,
+              title: null,
+              description: null,
+              prompt: null,
+              token_id: null,
+              x_handle: null,
+              category: null,
+            }),
+            category,
+          },
+        }));
+      } catch (e) {
+        console.error("Override category failed:", e);
+      }
+      return;
+    }
+
     try {
       await adminFetch("/api/admin", {
         method: "PATCH",
@@ -290,38 +345,61 @@ export default function AdminPage() {
     }
     setEditSaving(true);
     try {
-      const res = await adminFetch("/api/admin", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          title: editForm.title,
-          token_id: editForm.token_id,
-          x_handle: editForm.x_handle,
-          prompt: editForm.prompt,
-          description: editForm.description,
-          more_details: editForm.more_details,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${res.status}`);
+      if (id.startsWith("builtin-")) {
+        // Built-in prompt — route through the overrides table
+        const builtinId = id.replace(/^builtin-/, "");
+        const res = await adminFetch("/api/admin/override", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            builtin_id: builtinId,
+            title: editForm.title,
+            token_id: editForm.token_id,
+            x_handle: editForm.x_handle,
+            prompt: editForm.prompt,
+            description: editForm.description,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        const saved = await res.json();
+        setOverrides((prev) => ({ ...prev, [builtinId]: saved }));
+      } else {
+        const res = await adminFetch("/api/admin", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            title: editForm.title,
+            token_id: editForm.token_id,
+            x_handle: editForm.x_handle,
+            prompt: editForm.prompt,
+            description: editForm.description,
+            more_details: editForm.more_details,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        setSubmissions((prev) =>
+          prev.map((s) =>
+            s.id === id
+              ? {
+                  ...s,
+                  title: editForm.title,
+                  token_id: editForm.token_id,
+                  x_handle: editForm.x_handle || null,
+                  prompt: editForm.prompt,
+                  description: editForm.description || null,
+                  more_details: editForm.more_details || null,
+                }
+              : s
+          )
+        );
       }
-      setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                title: editForm.title,
-                token_id: editForm.token_id,
-                x_handle: editForm.x_handle || null,
-                prompt: editForm.prompt,
-                description: editForm.description || null,
-                more_details: editForm.more_details || null,
-              }
-            : s
-        )
-      );
       setEditingId(null);
     } catch (e) {
       console.error("Edit save failed:", e);
@@ -352,13 +430,14 @@ export default function AdminPage() {
 
   // Pre-loaded prompts (built-ins) are always "approved" — surface them in the
   // list so the admin can see every prompt that renders publicly, not just
-  // the community-submitted ones.
-  const combined: Submission[] = [...BUILT_IN_SUBMISSIONS, ...submissions];
+  // the community-submitted ones. Admin edits flow through prompt_overrides.
+  const builtInSubmissions = buildBuiltInSubmissions(overrides);
+  const combined: Submission[] = [...builtInSubmissions, ...submissions];
   const filtered = filter === "all" ? combined : combined.filter((s) => s.status === filter);
   const statsWithBuiltIns: Stats = {
-    total: stats.total + BUILT_IN_SUBMISSIONS.length,
+    total: stats.total + builtInSubmissions.length,
     pending: stats.pending,
-    approved: stats.approved + BUILT_IN_SUBMISSIONS.length,
+    approved: stats.approved + builtInSubmissions.length,
     rejected: stats.rejected,
   };
 
@@ -747,30 +826,20 @@ export default function AdminPage() {
                   <div className="px-4 pb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-white/30 font-body text-xs">Category:</span>
-                      {sub.builtIn ? (
-                        <span className="px-2 py-1 rounded-lg bg-black/20 border border-white/[0.04] text-white/40 font-body text-xs">
-                          {sub.category || "Unassigned"}
-                        </span>
-                      ) : (
-                        <select
-                          value={sub.category || ""}
-                          onChange={(e) => updateCategory(sub.id, e.target.value || null)}
-                          className="px-2 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-white/60 font-body text-xs focus:outline-none focus:border-gvc-gold/30 appearance-none cursor-pointer"
-                        >
-                          <option value="" className="bg-[#121212]">Unassigned</option>
-                          {categories.map((cat) => (
-                            <option key={cat.slug} value={cat.slug} className="bg-[#121212]">{cat.label}</option>
-                          ))}
-                        </select>
-                      )}
+                      <select
+                        value={sub.category || ""}
+                        onChange={(e) => updateCategory(sub.id, e.target.value || null)}
+                        className="px-2 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-white/60 font-body text-xs focus:outline-none focus:border-gvc-gold/30 appearance-none cursor-pointer"
+                      >
+                        <option value="" className="bg-[#121212]">Unassigned</option>
+                        {categories.map((cat) => (
+                          <option key={cat.slug} value={cat.slug} className="bg-[#121212]">{cat.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="flex gap-2 px-4 pb-4">
-                    {sub.builtIn ? (
-                      <span className="text-white/30 font-body text-xs italic px-1 py-2">
-                        Pre-loaded prompts are defined in code; edit app/prompts.ts to change them.
-                      </span>
-                    ) : editingId === sub.id ? (
+                    {editingId === sub.id ? (
                       <>
                         <button
                           onClick={() => saveEdit(sub.id)}
@@ -786,6 +855,34 @@ export default function AdminPage() {
                         >
                           Cancel
                         </button>
+                      </>
+                    ) : sub.builtIn ? (
+                      <>
+                        <button
+                          onClick={() => startEdit(sub)}
+                          className="px-4 py-2 rounded-lg text-white/50 font-display font-bold text-xs hover:text-white hover:bg-white/[0.04] transition-colors"
+                        >
+                          Edit
+                        </button>
+                        {overrides[sub.id.replace(/^builtin-/, "")] && (
+                          <button
+                            onClick={async () => {
+                              const builtinId = sub.id.replace(/^builtin-/, "");
+                              if (!confirm("Reset this pre-loaded prompt to its default values?")) return;
+                              await adminFetch(`/api/admin/override?builtin_id=${encodeURIComponent(builtinId)}`, {
+                                method: "DELETE",
+                              });
+                              setOverrides((prev) => {
+                                const next = { ...prev };
+                                delete next[builtinId];
+                                return next;
+                              });
+                            }}
+                            className="px-4 py-2 rounded-lg text-white/30 font-display font-bold text-xs hover:text-white/60 hover:bg-white/[0.04] transition-colors ml-auto"
+                          >
+                            Reset to default
+                          </button>
+                        )}
                       </>
                     ) : (
                       <>

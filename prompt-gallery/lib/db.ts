@@ -44,6 +44,22 @@ export async function ensureTable() {
     )
   `);
 
+  // Admin-editable overrides for pre-loaded prompts defined in app/prompts.ts.
+  // Keeps icons / pinned / ref images / requiresTpose behavior in code while
+  // letting moderators tweak the text fields from the admin panel.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS prompt_overrides (
+      builtin_id TEXT PRIMARY KEY,
+      title TEXT,
+      description TEXT,
+      prompt TEXT,
+      category TEXT,
+      token_id TEXT,
+      x_handle TEXT,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
 
   // Categories table for custom categories
   await pool.query(`

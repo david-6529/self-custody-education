@@ -112,6 +112,7 @@ export default function Home() {
   const [category, setCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "submit">("browse");
   const [communityPrompts, setCommunityPrompts] = useState<any[]>([]);
+  const [promptOverrides, setPromptOverrides] = useState<Record<string, { title?: string | null; description?: string | null; prompt?: string | null; category?: string | null; token_id?: string | null; x_handle?: string | null }>>({});
   const [builtInGenerations, setBuiltInGenerations] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<"popular" | "newest">("popular");
   const [promptGenerated, setPromptGenerated] = useState(false);
@@ -320,6 +321,13 @@ export default function Home() {
       .then((r) => r.json())
       .then((data) => setCommunityPrompts(Array.isArray(data) ? data : []))
       .catch(() => {});
+    fetch("/api/overrides")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setPromptOverrides(Object.fromEntries(data.map((o: any) => [o.builtin_id, o])));
+      })
+      .catch(() => {});
     fetch("/api/generate")
       .then((r) => r.json())
       .then((data) => setBuiltInGenerations(data || {}))
@@ -366,7 +374,23 @@ export default function Home() {
         refImages: normalizeRefImages(cp.ref_images),
       } as any));
 
-      const all = [...PROMPTS, ...communityAsPrompts];
+      // Apply admin-set overrides on top of the code defaults so text edits
+      // from the admin panel flow through without a redeploy.
+      const builtInsWithOverrides = PROMPTS.map((p) => {
+        const ov = promptOverrides[p.id];
+        if (!ov) return p;
+        return {
+          ...p,
+          title: ov.title || p.title,
+          description: ov.description || p.description,
+          template: ov.prompt || p.template,
+          category: (ov.category as Prompt["category"]) || p.category,
+          exampleTokenId: ov.token_id || p.exampleTokenId,
+          author: ov.x_handle ? `@${ov.x_handle}` : p.author,
+        };
+      });
+
+      const all = [...builtInsWithOverrides, ...communityAsPrompts];
       const list = category === "all"
         ? all
         : all.filter((p) => p.category === category || p.pinned);
@@ -378,7 +402,7 @@ export default function Home() {
         return 0; // newest = default order (built-in first, then DB order which is newest first)
       });
     },
-    [category, communityPrompts, sortBy]
+    [category, communityPrompts, sortBy, promptOverrides]
   );
 
   const assembledPrompt = useMemo(() => {
