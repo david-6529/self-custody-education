@@ -38,7 +38,19 @@ export async function PATCH(request: NextRequest) {
     await ensureTable();
 
     const body = await request.json();
-    const { id, status, category, requires_ref_images, ref_images, description, more_details } = body;
+    const {
+      id,
+      status,
+      category,
+      requires_ref_images,
+      ref_images,
+      description,
+      more_details,
+      title,
+      prompt,
+      token_id,
+      x_handle,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -71,6 +83,22 @@ export async function PATCH(request: NextRequest) {
     if (more_details !== undefined) {
       updates.push(`more_details = $${idx++}`);
       values.push(more_details);
+    }
+    if (typeof title === "string" && title.trim()) {
+      updates.push(`title = $${idx++}`);
+      values.push(title.trim());
+    }
+    if (typeof prompt === "string" && prompt.trim()) {
+      updates.push(`prompt = $${idx++}`);
+      values.push(prompt.trim());
+    }
+    if (typeof token_id === "string" && token_id.trim()) {
+      updates.push(`token_id = $${idx++}`);
+      values.push(token_id.trim());
+    }
+    if (x_handle !== undefined) {
+      updates.push(`x_handle = $${idx++}`);
+      values.push(typeof x_handle === "string" ? x_handle.trim().replace(/^@/, "") || null : null);
     }
 
     updates.push(`updated_at = NOW()`);

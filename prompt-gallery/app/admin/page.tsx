@@ -66,6 +66,16 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    token_id: string;
+    x_handle: string;
+    prompt: string;
+    description: string;
+    more_details: string;
+  }>({ title: "", token_id: "", x_handle: "", prompt: "", description: "", more_details: "" });
+  const [editSaving, setEditSaving] = useState(false);
 
   async function fetchData() {
     try {
@@ -187,6 +197,72 @@ export default function AdminPage() {
       );
     } catch (e) {
       console.error("Category update failed:", e);
+    }
+  }
+
+  function startEdit(sub: Submission) {
+    setEditingId(sub.id);
+    setExpandedId(sub.id);
+    setEditForm({
+      title: sub.title || "",
+      token_id: sub.token_id || "",
+      x_handle: sub.x_handle || "",
+      prompt: sub.prompt || "",
+      description: sub.description || "",
+      more_details: sub.more_details || "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm({ title: "", token_id: "", x_handle: "", prompt: "", description: "", more_details: "" });
+  }
+
+  async function saveEdit(id: string) {
+    if (!editForm.title.trim() || !editForm.prompt.trim() || !editForm.token_id.trim()) {
+      alert("Title, prompt, and token ID are required.");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await adminFetch("/api/admin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          title: editForm.title,
+          token_id: editForm.token_id,
+          x_handle: editForm.x_handle,
+          prompt: editForm.prompt,
+          description: editForm.description,
+          more_details: editForm.more_details,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                title: editForm.title,
+                token_id: editForm.token_id,
+                x_handle: editForm.x_handle || null,
+                prompt: editForm.prompt,
+                description: editForm.description || null,
+                more_details: editForm.more_details || null,
+              }
+            : s
+        )
+      );
+      setEditingId(null);
+    } catch (e) {
+      console.error("Edit save failed:", e);
+      alert(`Save failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -330,15 +406,45 @@ export default function AdminPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-display font-bold text-white text-sm">{sub.title}</h3>
-                          <p className="text-white/30 font-body text-xs">
-                            Token #{sub.token_id}
-                            {sub.x_handle && ` - @${sub.x_handle}`}
-                            {" - "}
-                            {new Date(sub.created_at).toLocaleDateString()}
-                            {(sub as any).generations > 0 && ` - ${(sub as any).generations} generations`}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          {editingId === sub.id ? (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                value={editForm.title}
+                                onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                                placeholder="Title"
+                                className="w-full px-2 py-1 rounded bg-black/40 border border-white/[0.08] text-white font-display font-bold text-sm focus:outline-none focus:border-gvc-gold/30"
+                              />
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={editForm.token_id}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, token_id: e.target.value }))}
+                                  placeholder="Token ID"
+                                  className="w-28 px-2 py-1 rounded bg-black/40 border border-white/[0.08] text-white/70 font-body text-xs focus:outline-none focus:border-gvc-gold/30"
+                                />
+                                <input
+                                  type="text"
+                                  value={editForm.x_handle}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, x_handle: e.target.value.replace(/^@/, "") }))}
+                                  placeholder="X handle (optional)"
+                                  className="flex-1 px-2 py-1 rounded bg-black/40 border border-white/[0.08] text-white/70 font-body text-xs focus:outline-none focus:border-gvc-gold/30"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <h3 className="font-display font-bold text-white text-sm">{sub.title}</h3>
+                              <p className="text-white/30 font-body text-xs">
+                                Token #{sub.token_id}
+                                {sub.x_handle && ` - @${sub.x_handle}`}
+                                {" - "}
+                                {new Date(sub.created_at).toLocaleDateString()}
+                                {(sub as any).generations > 0 && ` - ${(sub as any).generations} generations`}
+                              </p>
+                            </>
+                          )}
                         </div>
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs font-body font-semibold flex-shrink-0 ${
@@ -354,12 +460,14 @@ export default function AdminPage() {
                       </div>
 
                       {/* Expand/collapse prompt */}
-                      <button
-                        onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
-                        className="text-white/20 font-body text-xs mt-1 hover:text-white/40 transition-colors"
-                      >
-                        {expandedId === sub.id ? "Hide prompt" : "View prompt"}
-                      </button>
+                      {editingId !== sub.id && (
+                        <button
+                          onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
+                          className="text-white/20 font-body text-xs mt-1 hover:text-white/40 transition-colors"
+                        >
+                          {expandedId === sub.id ? "Hide prompt" : "View prompt"}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -373,29 +481,66 @@ export default function AdminPage() {
                         className="overflow-hidden"
                       >
                         <div className="px-4 pb-4 space-y-3">
-                          {/* Prompt text */}
-                          <div className="bg-black/40 rounded-lg p-3 border border-white/[0.06]">
-                            <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.prompt}</p>
-                          </div>
-
-                          {/* Description (public) */}
-                          {sub.description && (
-                            <div>
-                              <p className="text-gvc-gold/70 font-body text-xs mb-1">Description (shown publicly):</p>
-                              <div className="bg-black/40 rounded-lg p-3 border border-gvc-gold/20">
-                                <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.description}</p>
+                          {editingId === sub.id ? (
+                            <>
+                              {/* Prompt text (editable) */}
+                              <div>
+                                <p className="text-white/30 font-body text-xs mb-1">Prompt:</p>
+                                <textarea
+                                  value={editForm.prompt}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, prompt: e.target.value }))}
+                                  rows={6}
+                                  className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/[0.08] text-white/80 font-body text-xs leading-relaxed focus:outline-none focus:border-gvc-gold/30 resize-y"
+                                />
                               </div>
-                            </div>
-                          )}
-
-                          {/* More details (team-only) */}
-                          {sub.more_details && (
-                            <div>
-                              <p className="text-white/30 font-body text-xs mb-1">More details (team-only):</p>
+                              {/* Description (editable) */}
+                              <div>
+                                <p className="text-gvc-gold/70 font-body text-xs mb-1">Description (shown publicly):</p>
+                                <textarea
+                                  value={editForm.description}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                                  rows={3}
+                                  className="w-full px-3 py-2 rounded-lg bg-black/40 border border-gvc-gold/20 text-white/80 font-body text-xs leading-relaxed focus:outline-none focus:border-gvc-gold/40 resize-y"
+                                />
+                              </div>
+                              {/* More details (editable) */}
+                              <div>
+                                <p className="text-white/30 font-body text-xs mb-1">More details (team-only):</p>
+                                <textarea
+                                  value={editForm.more_details}
+                                  onChange={(e) => setEditForm((f) => ({ ...f, more_details: e.target.value }))}
+                                  rows={3}
+                                  className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/[0.08] text-white/70 font-body text-xs leading-relaxed focus:outline-none focus:border-gvc-gold/30 resize-y"
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* Prompt text */}
                               <div className="bg-black/40 rounded-lg p-3 border border-white/[0.06]">
-                                <p className="text-white/50 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.more_details}</p>
+                                <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.prompt}</p>
                               </div>
-                            </div>
+
+                              {/* Description (public) */}
+                              {sub.description && (
+                                <div>
+                                  <p className="text-gvc-gold/70 font-body text-xs mb-1">Description (shown publicly):</p>
+                                  <div className="bg-black/40 rounded-lg p-3 border border-gvc-gold/20">
+                                    <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.description}</p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* More details (team-only) */}
+                              {sub.more_details && (
+                                <div>
+                                  <p className="text-white/30 font-body text-xs mb-1">More details (team-only):</p>
+                                  <div className="bg-black/40 rounded-lg p-3 border border-white/[0.06]">
+                                    <p className="text-white/50 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.more_details}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
 
                           {/* Reference images - selectable */}
@@ -460,46 +605,73 @@ export default function AdminPage() {
                     </div>
                   </div>
                   <div className="flex gap-2 px-4 pb-4">
-                    {sub.status === "pending" && (
+                    {editingId === sub.id ? (
                       <>
                         <button
-                          onClick={() => updateStatus(sub.id, "approved")}
-                          className="px-4 py-2 rounded-lg bg-gvc-green/15 text-gvc-green font-display font-bold text-xs hover:bg-gvc-green/25 transition-colors"
+                          onClick={() => saveEdit(sub.id)}
+                          disabled={editSaving}
+                          className="px-4 py-2 rounded-lg bg-gvc-gold/15 text-gvc-gold font-display font-bold text-xs hover:bg-gvc-gold/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Approve
+                          {editSaving ? "Saving..." : "Save"}
                         </button>
                         <button
-                          onClick={() => updateStatus(sub.id, "rejected")}
-                          className="px-4 py-2 rounded-lg text-red-400/60 font-display font-bold text-xs hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          onClick={cancelEdit}
+                          disabled={editSaving}
+                          className="px-4 py-2 rounded-lg text-white/40 font-display font-bold text-xs hover:text-white/70 hover:bg-white/[0.04] transition-colors"
                         >
-                          Reject
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {sub.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => updateStatus(sub.id, "approved")}
+                              className="px-4 py-2 rounded-lg bg-gvc-green/15 text-gvc-green font-display font-bold text-xs hover:bg-gvc-green/25 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => updateStatus(sub.id, "rejected")}
+                              className="px-4 py-2 rounded-lg text-red-400/60 font-display font-bold text-xs hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {sub.status === "approved" && (
+                          <button
+                            onClick={() => updateStatus(sub.id, "pending")}
+                            className="px-4 py-2 rounded-lg text-white/30 font-display font-bold text-xs hover:text-white/50 hover:bg-white/[0.04] transition-colors"
+                          >
+                            Move to pending
+                          </button>
+                        )}
+                        {sub.status === "rejected" && (
+                          <button
+                            onClick={() => updateStatus(sub.id, "pending")}
+                            className="px-4 py-2 rounded-lg text-white/30 font-display font-bold text-xs hover:text-white/50 hover:bg-white/[0.04] transition-colors"
+                          >
+                            Reconsider
+                          </button>
+                        )}
+                        <button
+                          onClick={() => startEdit(sub)}
+                          className="px-4 py-2 rounded-lg text-white/50 font-display font-bold text-xs hover:text-white hover:bg-white/[0.04] transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Delete this submission?")) deleteSubmission(sub.id);
+                          }}
+                          className="px-4 py-2 rounded-lg text-red-400/30 font-display font-bold text-xs hover:text-red-400/60 hover:bg-red-400/5 transition-colors ml-auto"
+                        >
+                          Delete
                         </button>
                       </>
                     )}
-                    {sub.status === "approved" && (
-                      <button
-                        onClick={() => updateStatus(sub.id, "pending")}
-                        className="px-4 py-2 rounded-lg text-white/30 font-display font-bold text-xs hover:text-white/50 hover:bg-white/[0.04] transition-colors"
-                      >
-                        Move to pending
-                      </button>
-                    )}
-                    {sub.status === "rejected" && (
-                      <button
-                        onClick={() => updateStatus(sub.id, "pending")}
-                        className="px-4 py-2 rounded-lg text-white/30 font-display font-bold text-xs hover:text-white/50 hover:bg-white/[0.04] transition-colors"
-                      >
-                        Reconsider
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        if (confirm("Delete this submission?")) deleteSubmission(sub.id);
-                      }}
-                      className="px-4 py-2 rounded-lg text-red-400/30 font-display font-bold text-xs hover:text-red-400/60 hover:bg-red-400/5 transition-colors ml-auto"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </motion.div>
               ))}
