@@ -5,10 +5,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import { normalizeRefImages, serializeRefImages, type RefImage } from "@/lib/ref-images";
+import BUILT_IN_PROMPTS from "../prompts";
 
 function sanitizeRefName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 }
+
+// Pre-loaded prompts defined in code (app/prompts.ts). Surfaced in the admin
+// list as read-only "approved" entries so moderators can see the full set of
+// prompts that render on the public page, not just community submissions.
+const BUILT_IN_SUBMISSIONS: (Submission & { builtIn: true })[] = BUILT_IN_PROMPTS.map((p) => ({
+  id: `builtin-${p.id}`,
+  title: p.title,
+  prompt: p.template,
+  token_id: p.exampleTokenId || "",
+  image_url: p.exampleImage || "",
+  x_handle: p.author?.replace(/^@/, "") || null,
+  status: "approved" as const,
+  category: p.category || null,
+  generations: 0,
+  description: p.description || null,
+  more_details: null,
+  ref_images: null,
+  requires_ref_images: Boolean(p.hasReferenceImage || p.requiresTpose),
+  created_at: "2025-01-01T00:00:00.000Z",
+  builtIn: true,
+}));
 
 const TOKEN_KEY = "gvc_admin_token";
 
@@ -49,6 +71,7 @@ interface Submission {
   ref_images: string | null;
   requires_ref_images: boolean;
   created_at: string;
+  builtIn?: boolean;
 }
 
 interface Stats {
@@ -327,7 +350,17 @@ export default function AdminPage() {
     }
   }
 
-  const filtered = filter === "all" ? submissions : submissions.filter((s) => s.status === filter);
+  // Pre-loaded prompts (built-ins) are always "approved" — surface them in the
+  // list so the admin can see every prompt that renders publicly, not just
+  // the community-submitted ones.
+  const combined: Submission[] = [...BUILT_IN_SUBMISSIONS, ...submissions];
+  const filtered = filter === "all" ? combined : combined.filter((s) => s.status === filter);
+  const statsWithBuiltIns: Stats = {
+    total: stats.total + BUILT_IN_SUBMISSIONS.length,
+    pending: stats.pending,
+    approved: stats.approved + BUILT_IN_SUBMISSIONS.length,
+    rejected: stats.rejected,
+  };
 
   return (
     <main className="min-h-screen bg-[#050505] text-white px-4 sm:px-6 py-8">
@@ -368,10 +401,10 @@ export default function AdminPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Total", value: stats.total, color: "text-white" },
-            { label: "Pending", value: stats.pending, color: stats.pending > 0 ? "text-gvc-gold" : "text-white/50" },
-            { label: "Approved", value: stats.approved, color: "text-gvc-green" },
-            { label: "Rejected", value: stats.rejected, color: "text-white/30" },
+            { label: "Total", value: statsWithBuiltIns.total, color: "text-white" },
+            { label: "Pending", value: statsWithBuiltIns.pending, color: statsWithBuiltIns.pending > 0 ? "text-gvc-gold" : "text-white/50" },
+            { label: "Approved", value: statsWithBuiltIns.approved, color: "text-gvc-green" },
+            { label: "Rejected", value: statsWithBuiltIns.rejected, color: "text-white/30" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl bg-[#121212] border border-white/[0.08] p-4 text-center">
               <p className={`text-2xl font-display font-black ${s.color}`}>{s.value}</p>
@@ -422,7 +455,7 @@ export default function AdminPage() {
                   : "border border-white/[0.08] text-white/40 hover:text-white/60"
               }`}
             >
-              {f} {f !== "all" && `(${f === "pending" ? stats.pending : f === "approved" ? stats.approved : stats.rejected})`}
+              {f} {f !== "all" && `(${f === "pending" ? statsWithBuiltIns.pending : f === "approved" ? statsWithBuiltIns.approved : statsWithBuiltIns.rejected})`}
             </button>
           ))}
         </div>
@@ -510,17 +543,24 @@ export default function AdminPage() {
                             </>
                           )}
                         </div>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-body font-semibold flex-shrink-0 ${
-                            sub.status === "pending"
-                              ? "bg-gvc-gold/15 text-gvc-gold"
-                              : sub.status === "approved"
-                              ? "bg-gvc-green/15 text-gvc-green"
-                              : "bg-white/[0.04] text-white/30"
-                          }`}
-                        >
-                          {sub.status}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {sub.builtIn && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-body font-semibold bg-gvc-gold/15 text-gvc-gold">
+                              Pre-loaded
+                            </span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-body font-semibold ${
+                              sub.status === "pending"
+                                ? "bg-gvc-gold/15 text-gvc-gold"
+                                : sub.status === "approved"
+                                ? "bg-gvc-green/15 text-gvc-green"
+                                : "bg-white/[0.04] text-white/30"
+                            }`}
+                          >
+                            {sub.status}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Expand/collapse prompt */}
@@ -661,39 +701,43 @@ export default function AdminPage() {
                                       </div>
                                     </div>
                                   ))}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setRefUploadTarget(sub.id);
-                                      refFileInputRef.current?.click();
-                                    }}
-                                    disabled={isUploading}
-                                    className="w-full h-16 rounded-lg border-2 border-dashed border-white/10 hover:border-gvc-gold/40 text-white/30 hover:text-gvc-gold/70 font-body text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
-                                    {isUploading ? (
-                                      <div className="w-4 h-4 border-2 border-gvc-gold/30 border-t-gvc-gold rounded-full animate-spin" />
-                                    ) : (
-                                      <>
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
-                                        <span>Add reference image</span>
-                                      </>
-                                    )}
-                                  </button>
+                                  {!sub.builtIn && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setRefUploadTarget(sub.id);
+                                        refFileInputRef.current?.click();
+                                      }}
+                                      disabled={isUploading}
+                                      className="w-full h-16 rounded-lg border-2 border-dashed border-white/10 hover:border-gvc-gold/40 text-white/30 hover:text-gvc-gold/70 font-body text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {isUploading ? (
+                                        <div className="w-4 h-4 border-2 border-gvc-gold/30 border-t-gvc-gold rounded-full animate-spin" />
+                                      ) : (
+                                        <>
+                                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                                          <span>Add reference image</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             );
                           })()}
 
-                          {/* Requires reference images toggle */}
-                          <div className="flex items-center gap-3 pt-2 border-t border-white/[0.04]">
-                            <button
-                              onClick={() => toggleRefImages(sub.id, sub.requires_ref_images)}
-                              className={`relative w-10 h-5 rounded-full transition-colors ${sub.requires_ref_images ? "bg-gvc-gold/30" : "bg-white/10"}`}
-                            >
-                              <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${sub.requires_ref_images ? "left-5.5 bg-gvc-gold" : "left-0.5 bg-white/40"}`} style={{ left: sub.requires_ref_images ? "22px" : "2px" }} />
-                            </button>
-                            <span className="text-white/40 font-body text-xs">Requires reference images for users</span>
-                          </div>
+                          {/* Requires reference images toggle — community submissions only */}
+                          {!sub.builtIn && (
+                            <div className="flex items-center gap-3 pt-2 border-t border-white/[0.04]">
+                              <button
+                                onClick={() => toggleRefImages(sub.id, sub.requires_ref_images)}
+                                className={`relative w-10 h-5 rounded-full transition-colors ${sub.requires_ref_images ? "bg-gvc-gold/30" : "bg-white/10"}`}
+                              >
+                                <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${sub.requires_ref_images ? "left-5.5 bg-gvc-gold" : "left-0.5 bg-white/40"}`} style={{ left: sub.requires_ref_images ? "22px" : "2px" }} />
+                              </button>
+                              <span className="text-white/40 font-body text-xs">Requires reference images for users</span>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     )}
@@ -703,20 +747,30 @@ export default function AdminPage() {
                   <div className="px-4 pb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-white/30 font-body text-xs">Category:</span>
-                      <select
-                        value={sub.category || ""}
-                        onChange={(e) => updateCategory(sub.id, e.target.value || null)}
-                        className="px-2 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-white/60 font-body text-xs focus:outline-none focus:border-gvc-gold/30 appearance-none cursor-pointer"
-                      >
-                        <option value="" className="bg-[#121212]">Unassigned</option>
-                        {categories.map((cat) => (
-                          <option key={cat.slug} value={cat.slug} className="bg-[#121212]">{cat.label}</option>
-                        ))}
-                      </select>
+                      {sub.builtIn ? (
+                        <span className="px-2 py-1 rounded-lg bg-black/20 border border-white/[0.04] text-white/40 font-body text-xs">
+                          {sub.category || "Unassigned"}
+                        </span>
+                      ) : (
+                        <select
+                          value={sub.category || ""}
+                          onChange={(e) => updateCategory(sub.id, e.target.value || null)}
+                          className="px-2 py-1 rounded-lg bg-black/40 border border-white/[0.08] text-white/60 font-body text-xs focus:outline-none focus:border-gvc-gold/30 appearance-none cursor-pointer"
+                        >
+                          <option value="" className="bg-[#121212]">Unassigned</option>
+                          {categories.map((cat) => (
+                            <option key={cat.slug} value={cat.slug} className="bg-[#121212]">{cat.label}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 px-4 pb-4">
-                    {editingId === sub.id ? (
+                    {sub.builtIn ? (
+                      <span className="text-white/30 font-body text-xs italic px-1 py-2">
+                        Pre-loaded prompts are defined in code; edit app/prompts.ts to change them.
+                      </span>
+                    ) : editingId === sub.id ? (
                       <>
                         <button
                           onClick={() => saveEdit(sub.id)}
