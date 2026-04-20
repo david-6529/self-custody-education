@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ id: "ok", status: "pending" }, { status: 201 });
     }
 
-    if (!title || !prompt || !tokenId || !image) {
+    if (!title || !prompt || !tokenId || !description || !image) {
       return NextResponse.json(
-        { error: "Missing required fields: title, prompt, tokenId, image" },
+        { error: "Missing required fields: title, prompt, tokenId, description, image" },
         { status: 400 }
       );
     }

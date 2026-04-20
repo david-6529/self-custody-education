@@ -222,7 +222,7 @@ export default function Home() {
   }
 
   async function handleSubmit() {
-    if (!submitTitle || !submitPromptText || !submitTokenId || !submitFile) return;
+    if (!submitTitle || !submitPromptText || !submitTokenId || !submitDescription.trim() || !submitFile) return;
     setSubmitStatus("sending");
 
     try {
@@ -815,6 +815,20 @@ export default function Home() {
               />
             </div>
 
+            {/* Description (public, required) */}
+            <div>
+              <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">
+                Description <span className="text-white/20">(shown publicly)</span>
+              </label>
+              <textarea
+                placeholder="A short, friendly description of what this prompt does. This will be shown on your prompt's card so other Good Vibes Club members understand what to expect."
+                value={submitDescription}
+                onChange={(e) => setSubmitDescription(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/[0.08] text-white font-body text-sm placeholder:text-white/30 focus:outline-none focus:border-gvc-gold/30 transition-colors resize-none"
+              />
+            </div>
+
             {/* Image Upload */}
             <div>
               <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">Example Output</label>
@@ -909,20 +923,6 @@ export default function Home() {
               <p className="text-white/20 font-body text-xs">Add any reference images that should be included with your prompt (style references, scene references, etc).</p>
             </div>
 
-            {/* Description (public, optional) */}
-            <div>
-              <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">
-                Description <span className="text-white/20">(optional, shown publicly)</span>
-              </label>
-              <textarea
-                placeholder="A short, friendly description of what this prompt does. This will be shown on your prompt's card so other Good Vibes Club members understand what to expect."
-                value={submitDescription}
-                onChange={(e) => setSubmitDescription(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/[0.08] text-white font-body text-sm placeholder:text-white/30 focus:outline-none focus:border-gvc-gold/30 transition-colors resize-none"
-              />
-            </div>
-
             {/* More Details (team-only, optional) */}
             <div>
               <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">
@@ -952,7 +952,7 @@ export default function Home() {
             {/* Submit button */}
             <button
               onClick={handleSubmit}
-              disabled={submitStatus === "sending" || !submitTitle || !submitPromptText || !submitTokenId || !submitFile}
+              disabled={submitStatus === "sending" || !submitTitle || !submitPromptText || !submitTokenId || !submitDescription.trim() || !submitFile}
               className="w-full inline-flex items-center justify-center gap-2 px-5 py-4 font-display font-bold text-base rounded-xl transition-all duration-300 bg-gvc-gold text-gvc-black hover:shadow-[0_0_20px_rgba(255,224,72,0.3)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
             >
               {submitStatus === "error" ? "Something went wrong. Try again." : submitStatus === "sending" ? (
