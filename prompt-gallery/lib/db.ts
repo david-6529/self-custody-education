@@ -27,6 +27,12 @@ export async function ensureTable() {
   // Add columns if table already exists without them
   await pool.query(`ALTER TABLE prompt_submissions ADD COLUMN IF NOT EXISTS generations INTEGER NOT NULL DEFAULT 0`).catch(() => {});
   await pool.query(`ALTER TABLE prompt_submissions ADD COLUMN IF NOT EXISTS more_details TEXT`).catch(() => {});
+  await pool.query(`ALTER TABLE prompt_submissions ADD COLUMN IF NOT EXISTS description TEXT`).catch(() => {});
+  // Backfill description from more_details for legacy rows so existing public
+  // prompts keep displaying something. Safe to run repeatedly.
+  await pool.query(
+    `UPDATE prompt_submissions SET description = more_details WHERE description IS NULL AND more_details IS NOT NULL`
+  ).catch(() => {});
   await pool.query(`ALTER TABLE prompt_submissions ADD COLUMN IF NOT EXISTS ref_images TEXT`).catch(() => {});
   await pool.query(`ALTER TABLE prompt_submissions ADD COLUMN IF NOT EXISTS requires_ref_images BOOLEAN DEFAULT false`).catch(() => {});
 

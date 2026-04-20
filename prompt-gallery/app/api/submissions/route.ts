@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     const tokenId = formData.get("tokenId") as string;
     const xHandle = formData.get("xHandle") as string;
     const image = formData.get("image") as File;
+    const description = formData.get("description") as string;
     const moreDetails = formData.get("moreDetails") as string;
     const honeypot = formData.get("website") as string | null;
 
@@ -84,7 +85,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (title.length > 200 || prompt.length > MAX_TEXT_LEN || (moreDetails && moreDetails.length > MAX_TEXT_LEN)) {
+    if (
+      title.length > 200 ||
+      prompt.length > MAX_TEXT_LEN ||
+      (description && description.length > MAX_TEXT_LEN) ||
+      (moreDetails && moreDetails.length > MAX_TEXT_LEN)
+    ) {
       return NextResponse.json({ error: "Input exceeds max length" }, { status: 400 });
     }
 
@@ -130,10 +136,10 @@ export async function POST(request: NextRequest) {
 
     // Insert into database
     const { rows } = await pool.query(
-      `INSERT INTO prompt_submissions (title, prompt, token_id, image_url, x_handle, more_details, ref_images, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+      `INSERT INTO prompt_submissions (title, prompt, token_id, image_url, x_handle, description, more_details, ref_images, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
        RETURNING id, title, status, created_at`,
-      [title, prompt, tokenId, blob.url, xHandle || null, moreDetails || null, refUrls.length > 0 ? JSON.stringify(refUrls) : null]
+      [title, prompt, tokenId, blob.url, xHandle || null, description || null, moreDetails || null, refUrls.length > 0 ? JSON.stringify(refUrls) : null]
     );
 
     await recordRateLimitHit(ip);
@@ -149,7 +155,7 @@ export async function GET() {
   try {
     await ensureTable();
     const { rows } = await pool.query(
-      `SELECT id, title, prompt, token_id, image_url, x_handle, status, category, generations, more_details, ref_images, requires_ref_images, created_at
+      `SELECT id, title, prompt, token_id, image_url, x_handle, status, category, generations, description, ref_images, requires_ref_images, created_at
        FROM prompt_submissions
        WHERE status = 'approved'
        ORDER BY created_at DESC`

@@ -159,6 +159,7 @@ export default function Home() {
   const [submitDragOver, setSubmitDragOver] = useState(false);
   const [submitRefFiles, setSubmitRefFiles] = useState<File[]>([]);
   const [submitRefPreviews, setSubmitRefPreviews] = useState<string[]>([]);
+  const [submitDescription, setSubmitDescription] = useState("");
   const [submitMoreDetails, setSubmitMoreDetails] = useState("");
   const [submitFileError, setSubmitFileError] = useState("");
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -231,6 +232,7 @@ export default function Home() {
       formData.append("tokenId", submitTokenId);
       formData.append("xHandle", submitHandle);
       formData.append("image", submitFile);
+      if (submitDescription) formData.append("description", submitDescription);
       if (submitMoreDetails) formData.append("moreDetails", submitMoreDetails);
       submitRefFiles.forEach((f, i) => formData.append(`refImage${i}`, f));
       // Honeypot — real users never fill this, bots usually do
@@ -263,6 +265,7 @@ export default function Home() {
     setSubmitPromptText("");
     setSubmitTokenId("");
     setSubmitHandle("");
+    setSubmitDescription("");
     setSubmitMoreDetails("");
     setSubmitRefFiles([]);
     setSubmitRefPreviews([]);
@@ -318,7 +321,7 @@ export default function Home() {
       const communityAsPrompts = communityPrompts.map((cp: any) => ({
         id: cp.id,
         title: cp.title,
-        description: cp.more_details || "",
+        description: cp.description || cp.more_details || "",
         category: cp.category || "scene",
         template: cp.prompt || "",
         icon: "sparkle" as const,
@@ -328,7 +331,6 @@ export default function Home() {
         generations: cp.generations || 0,
         hasReferenceImage: cp.requires_ref_images && cp.ref_images,
         refImageUrls: cp.ref_images ? JSON.parse(cp.ref_images) : [],
-        moreDetails: cp.more_details || "",
       } as any));
 
       const all = [...PROMPTS, ...communityAsPrompts];
@@ -738,13 +740,6 @@ export default function Home() {
                       ))}
                     </div>
 
-                    {/* More details from submitter */}
-                    {(selectedPrompt as any).moreDetails && (
-                      <div className="bg-black/20 rounded-xl p-3 mb-4 border border-white/[0.06]">
-                        <p className="text-white/30 font-body text-xs mb-1">Notes from the prompt creator:</p>
-                        <p className="text-white/50 font-body text-xs leading-relaxed">{(selectedPrompt as any).moreDetails}</p>
-                      </div>
-                    )}
                   </>
                 );
               })()}
@@ -914,11 +909,27 @@ export default function Home() {
               <p className="text-white/20 font-body text-xs">Add any reference images that should be included with your prompt (style references, scene references, etc).</p>
             </div>
 
-            {/* More Details (optional) */}
+            {/* Description (public, optional) */}
             <div>
-              <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">More Details <span className="text-white/20">(optional)</span></label>
+              <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">
+                Description <span className="text-white/20">(optional, shown publicly)</span>
+              </label>
               <textarea
-                placeholder="Describe any additional context about the reference images above, or any other details that would help someone use your prompt effectively."
+                placeholder="A short, friendly description of what this prompt does. This will be shown on your prompt's card so other Good Vibes Club members understand what to expect."
+                value={submitDescription}
+                onChange={(e) => setSubmitDescription(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/[0.08] text-white font-body text-sm placeholder:text-white/30 focus:outline-none focus:border-gvc-gold/30 transition-colors resize-none"
+              />
+            </div>
+
+            {/* More Details (team-only, optional) */}
+            <div>
+              <label className="text-white/50 font-body text-xs uppercase tracking-wider mb-1.5 block">
+                More Details <span className="text-white/20">(optional, for the GVC team only)</span>
+              </label>
+              <textarea
+                placeholder="Any context for the review team: reasoning behind reference images, limitations, attribution, or anything else we should know. Not shown publicly."
                 value={submitMoreDetails}
                 onChange={(e) => setSubmitMoreDetails(e.target.value)}
                 rows={3}

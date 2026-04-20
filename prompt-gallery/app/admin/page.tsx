@@ -38,6 +38,7 @@ interface Submission {
   status: "pending" | "approved" | "rejected";
   category: string | null;
   generations: number;
+  description: string | null;
   more_details: string | null;
   ref_images: string | null;
   requires_ref_images: boolean;
@@ -377,10 +378,20 @@ export default function AdminPage() {
                             <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.prompt}</p>
                           </div>
 
-                          {/* More details */}
+                          {/* Description (public) */}
+                          {sub.description && (
+                            <div>
+                              <p className="text-gvc-gold/70 font-body text-xs mb-1">Description (shown publicly):</p>
+                              <div className="bg-black/40 rounded-lg p-3 border border-gvc-gold/20">
+                                <p className="text-white/60 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.description}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* More details (team-only) */}
                           {sub.more_details && (
                             <div>
-                              <p className="text-white/30 font-body text-xs mb-1">Additional details:</p>
+                              <p className="text-white/30 font-body text-xs mb-1">More details (team-only):</p>
                               <div className="bg-black/40 rounded-lg p-3 border border-white/[0.06]">
                                 <p className="text-white/50 font-body text-xs leading-relaxed whitespace-pre-wrap">{sub.more_details}</p>
                               </div>
