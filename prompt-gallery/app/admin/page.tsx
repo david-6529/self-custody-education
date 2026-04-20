@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
+
+function sanitizeRefName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
 
 const TOKEN_KEY = "gvc_admin_token";
 
@@ -76,6 +81,9 @@ export default function AdminPage() {
     more_details: string;
   }>({ title: "", token_id: "", x_handle: "", prompt: "", description: "", more_details: "" });
   const [editSaving, setEditSaving] = useState(false);
+  const [uploadingRefsId, setUploadingRefsId] = useState<string | null>(null);
+  const refFileInputRef = useRef<HTMLInputElement>(null);
+  const [refUploadTarget, setRefUploadTarget] = useState<string | null>(null);
 
   async function fetchData() {
     try {
@@ -152,6 +160,34 @@ export default function AdminPage() {
       setCategories((prev) => prev.filter((c) => c.id !== catId));
     } catch (e) {
       console.error("Delete category failed:", e);
+    }
+  }
+
+  async function addRefImages(id: string, files: FileList | File[]) {
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/") && f.type !== "image/gif");
+    if (!images.length) return;
+
+    setUploadingRefsId(id);
+    try {
+      const uploaded = await Promise.all(
+        images.map((f) =>
+          upload(
+            `prompt-submissions/ref-admin-${Date.now()}-${sanitizeRefName(f.name)}`,
+            f,
+            { access: "public", handleUploadUrl: "/api/submissions/upload", contentType: f.type }
+          )
+        )
+      );
+      const newUrls = uploaded.map((b) => b.url);
+      const sub = submissions.find((s) => s.id === id);
+      const existing: string[] = sub?.ref_images ? JSON.parse(sub.ref_images) : [];
+      const combined = [...existing, ...newUrls];
+      await updateRefImages(id, combined);
+    } catch (e) {
+      console.error("Ref image upload failed:", e);
+      alert(`Upload failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setUploadingRefsId(null);
     }
   }
 
@@ -289,6 +325,24 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen bg-[#050505] text-white px-4 sm:px-6 py-8">
+      {/* Shared hidden file input for adding reference images to any submission */}
+      <input
+        ref={refFileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const targetId = refUploadTarget;
+          const files = e.target.files;
+          // Reset the value so selecting the same file twice still fires onChange
+          e.target.value = "";
+          if (targetId && files && files.length > 0) {
+            addRefImages(targetId, files);
+          }
+          setRefUploadTarget(null);
+        }}
+      />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -543,16 +597,28 @@ export default function AdminPage() {
                             </>
                           )}
 
-                          {/* Reference images - selectable */}
-                          {sub.ref_images && (() => {
-                            const refs: string[] = JSON.parse(sub.ref_images);
-                            if (!Array.isArray(refs) || refs.length === 0) return null;
+                          {/* Reference images - editable */}
+                          {(() => {
+                            const refs: string[] = sub.ref_images
+                              ? (() => {
+                                  try {
+                                    const parsed = JSON.parse(sub.ref_images);
+                                    return Array.isArray(parsed) ? parsed : [];
+                                  } catch {
+                                    return [];
+                                  }
+                                })()
+                              : [];
+                            const isUploading = uploadingRefsId === sub.id;
                             return (
                               <div>
-                                <p className="text-white/30 font-body text-xs mb-2">Reference images ({refs.length}) - click X to remove from prompt:</p>
+                                <p className="text-white/30 font-body text-xs mb-2">
+                                  Reference images ({refs.length})
+                                  {refs.length > 0 && " - hover and click X to remove"}
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                   {refs.map((url: string, i: number) => (
-                                    <div key={i} className="relative group">
+                                    <div key={url + i} className="relative group">
                                       <a href={url} target="_blank" rel="noopener noreferrer" className="w-24 h-24 rounded-lg overflow-hidden bg-black/40 border border-white/[0.08] hover:border-gvc-gold/30 transition-colors block">
                                         <img src={url} alt={`Reference ${i + 1}`} className="w-full h-full object-cover" />
                                       </a>
@@ -568,6 +634,24 @@ export default function AdminPage() {
                                       </button>
                                     </div>
                                   ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setRefUploadTarget(sub.id);
+                                      refFileInputRef.current?.click();
+                                    }}
+                                    disabled={isUploading}
+                                    className="w-24 h-24 rounded-lg border-2 border-dashed border-white/10 hover:border-gvc-gold/40 text-white/30 hover:text-gvc-gold/70 font-body text-xs flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {isUploading ? (
+                                      <div className="w-4 h-4 border-2 border-gvc-gold/30 border-t-gvc-gold rounded-full animate-spin" />
+                                    ) : (
+                                      <>
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                                        <span>Add</span>
+                                      </>
+                                    )}
+                                  </button>
                                 </div>
                               </div>
                             );
