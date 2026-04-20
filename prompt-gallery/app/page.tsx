@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
+import { normalizeRefImages } from "@/lib/ref-images";
 import PROMPTS, { CATEGORIES, Prompt } from "./prompts";
 
 function sanitizeName(name: string): string {
@@ -361,7 +362,8 @@ export default function Home() {
         exampleTokenId: cp.token_id,
         generations: cp.generations || 0,
         hasReferenceImage: cp.requires_ref_images && cp.ref_images,
-        refImageUrls: cp.ref_images ? JSON.parse(cp.ref_images) : [],
+        refImageUrls: normalizeRefImages(cp.ref_images).map((r) => r.url),
+        refImages: normalizeRefImages(cp.ref_images),
       } as any));
 
       const all = [...PROMPTS, ...communityAsPrompts];
@@ -757,18 +759,23 @@ export default function Home() {
                       )}
 
                       {/* Community: reference images from submission */}
-                      {isCommunityRef && refUrls.map((url: string, i: number) => (
-                        <div key={i} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4">
-                          <p className="text-white font-body text-sm font-semibold mb-2">Reference image {i + 1}</p>
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
-                            <img src={url} alt={`Reference ${i + 1}`} className="w-full h-full object-cover" />
+                      {isCommunityRef && ((selectedPrompt as any).refImages || refUrls.map((u: string) => ({ url: u, title: null, description: null }))).map((ref: { url: string; title: string | null; description: string | null }, i: number) => {
+                        const label = ref.title || `Reference image ${i + 1}`;
+                        const desc = ref.description;
+                        return (
+                          <div key={ref.url + i} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4">
+                            <p className="text-white font-body text-sm font-semibold mb-2">{label}</p>
+                            {desc && <p className="text-white/40 font-body text-xs mb-3">{desc}</p>}
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
+                              <img src={ref.url} alt={label} className="w-full h-full object-cover" />
+                            </div>
+                            <a href={ref.url} download={`reference-${i + 1}.png`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                              Download
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            </a>
                           </div>
-                          <a href={url} download={`reference-${i + 1}.png`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
-                            Download
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          </a>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                   </>

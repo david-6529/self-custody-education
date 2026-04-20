@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
+import { normalizeRefImages, serializeRefImages, type RefImage } from "@/lib/ref-images";
 
 function sanitizeRefName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
@@ -165,7 +166,11 @@ export default function AdminPage() {
 
   async function addRefImages(id: string, files: FileList | File[]) {
     const images = Array.from(files).filter((f) => f.type.startsWith("image/") && f.type !== "image/gif");
-    if (!images.length) return;
+    console.log("[ref-upload] starting", { id, incomingCount: Array.from(files).length, acceptedCount: images.length });
+    if (!images.length) {
+      alert("No acceptable images to upload (PNG, JPEG, or WebP only; GIFs are not supported).");
+      return;
+    }
 
     setUploadingRefsId(id);
     try {
@@ -178,29 +183,30 @@ export default function AdminPage() {
           )
         )
       );
-      const newUrls = uploaded.map((b) => b.url);
+      const newRefs: RefImage[] = uploaded.map((b) => ({ url: b.url, title: null, description: null }));
+      console.log("[ref-upload] uploaded urls", newRefs.map((r) => r.url));
       const sub = submissions.find((s) => s.id === id);
-      const existing: string[] = sub?.ref_images ? JSON.parse(sub.ref_images) : [];
-      const combined = [...existing, ...newUrls];
-      await updateRefImages(id, combined);
+      const existing: RefImage[] = normalizeRefImages(sub?.ref_images);
+      const combined: RefImage[] = [...existing, ...newRefs];
+      await saveRefImages(id, combined);
+      console.log("[ref-upload] DB updated with", combined.length, "total refs");
     } catch (e) {
-      console.error("Ref image upload failed:", e);
-      alert(`Upload failed: ${e instanceof Error ? e.message : String(e)}`);
+      console.error("[ref-upload] failed:", e);
+      alert(`Ref image upload failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setUploadingRefsId(null);
     }
   }
 
-  async function updateRefImages(id: string, urls: string[]) {
+  async function saveRefImages(id: string, refs: RefImage[]) {
+    const serialized = serializeRefImages(refs);
     try {
       await adminFetch("/api/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, ref_images: JSON.stringify(urls) }),
+        body: JSON.stringify({ id, ref_images: serialized }),
       });
-      setSubmissions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, ref_images: JSON.stringify(urls) } : s))
-      );
+      setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ref_images: serialized } : s)));
     } catch (e) {
       console.error("Update ref images failed:", e);
     }
@@ -335,12 +341,16 @@ export default function AdminPage() {
         onChange={(e) => {
           const targetId = refUploadTarget;
           const files = e.target.files;
-          // Reset the value so selecting the same file twice still fires onChange
+          // Snapshot files into a plain array before resetting the input value,
+          // since some browsers invalidate the FileList reference on reset.
+          const fileArr = files ? Array.from(files) : [];
           e.target.value = "";
-          if (targetId && files && files.length > 0) {
-            addRefImages(targetId, files);
-          }
           setRefUploadTarget(null);
+          if (targetId && fileArr.length > 0) {
+            addRefImages(targetId, fileArr);
+          } else {
+            console.warn("[ref-upload] onChange fired but nothing to upload", { targetId, count: fileArr.length });
+          }
         }}
       />
       <div className="max-w-6xl mx-auto">
@@ -599,39 +609,56 @@ export default function AdminPage() {
 
                           {/* Reference images - editable */}
                           {(() => {
-                            const refs: string[] = sub.ref_images
-                              ? (() => {
-                                  try {
-                                    const parsed = JSON.parse(sub.ref_images);
-                                    return Array.isArray(parsed) ? parsed : [];
-                                  } catch {
-                                    return [];
-                                  }
-                                })()
-                              : [];
+                            const refs: RefImage[] = normalizeRefImages(sub.ref_images);
                             const isUploading = uploadingRefsId === sub.id;
                             return (
                               <div>
                                 <p className="text-white/30 font-body text-xs mb-2">
                                   Reference images ({refs.length})
-                                  {refs.length > 0 && " - hover and click X to remove"}
+                                  {refs.length > 0 && " - title/description shows on the public prompt"}
                                 </p>
-                                <div className="flex flex-wrap gap-2">
-                                  {refs.map((url: string, i: number) => (
-                                    <div key={url + i} className="relative group">
-                                      <a href={url} target="_blank" rel="noopener noreferrer" className="w-24 h-24 rounded-lg overflow-hidden bg-black/40 border border-white/[0.08] hover:border-gvc-gold/30 transition-colors block">
-                                        <img src={url} alt={`Reference ${i + 1}`} className="w-full h-full object-cover" />
-                                      </a>
-                                      <button
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          const updated = refs.filter((_: string, idx: number) => idx !== i);
-                                          updateRefImages(sub.id, updated);
-                                        }}
-                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                      >
-                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                      </button>
+                                <div className="space-y-3">
+                                  {refs.map((ref, i) => (
+                                    <div key={ref.url + i} className="flex gap-3 rounded-lg bg-black/30 border border-white/[0.06] p-3">
+                                      <div className="relative group flex-shrink-0">
+                                        <a href={ref.url} target="_blank" rel="noopener noreferrer" className="w-24 h-24 rounded-lg overflow-hidden bg-black/40 border border-white/[0.08] hover:border-gvc-gold/30 transition-colors block">
+                                          <img src={ref.url} alt={ref.title || `Reference ${i + 1}`} className="w-full h-full object-cover" />
+                                        </a>
+                                        <button
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            const updated = refs.filter((_, idx) => idx !== i);
+                                            saveRefImages(sub.id, updated);
+                                          }}
+                                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                      </div>
+                                      <div className="flex-1 min-w-0 space-y-2">
+                                        <input
+                                          type="text"
+                                          value={ref.title || ""}
+                                          placeholder={`Title (e.g. "Your T-Pose"). Falls back to "Reference image ${i + 1}"`}
+                                          onChange={(e) => {
+                                            const updated = refs.map((r, idx) => (idx === i ? { ...r, title: e.target.value } : r));
+                                            setSubmissions((prev) => prev.map((s) => (s.id === sub.id ? { ...s, ref_images: serializeRefImages(updated) } : s)));
+                                          }}
+                                          onBlur={() => saveRefImages(sub.id, normalizeRefImages((submissions.find((s) => s.id === sub.id) || sub).ref_images))}
+                                          className="w-full px-2 py-1 rounded bg-black/40 border border-white/[0.08] text-white font-body text-xs focus:outline-none focus:border-gvc-gold/30"
+                                        />
+                                        <textarea
+                                          value={ref.description || ""}
+                                          placeholder="Description (optional). Shown under the title on the prompt."
+                                          rows={2}
+                                          onChange={(e) => {
+                                            const updated = refs.map((r, idx) => (idx === i ? { ...r, description: e.target.value } : r));
+                                            setSubmissions((prev) => prev.map((s) => (s.id === sub.id ? { ...s, ref_images: serializeRefImages(updated) } : s)));
+                                          }}
+                                          onBlur={() => saveRefImages(sub.id, normalizeRefImages((submissions.find((s) => s.id === sub.id) || sub).ref_images))}
+                                          className="w-full px-2 py-1 rounded bg-black/40 border border-white/[0.08] text-white/70 font-body text-xs leading-relaxed focus:outline-none focus:border-gvc-gold/30 resize-y"
+                                        />
+                                      </div>
                                     </div>
                                   ))}
                                   <button
@@ -641,14 +668,14 @@ export default function AdminPage() {
                                       refFileInputRef.current?.click();
                                     }}
                                     disabled={isUploading}
-                                    className="w-24 h-24 rounded-lg border-2 border-dashed border-white/10 hover:border-gvc-gold/40 text-white/30 hover:text-gvc-gold/70 font-body text-xs flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full h-16 rounded-lg border-2 border-dashed border-white/10 hover:border-gvc-gold/40 text-white/30 hover:text-gvc-gold/70 font-body text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     {isUploading ? (
                                       <div className="w-4 h-4 border-2 border-gvc-gold/30 border-t-gvc-gold rounded-full animate-spin" />
                                     ) : (
                                       <>
-                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
-                                        <span>Add</span>
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                                        <span>Add reference image</span>
                                       </>
                                     )}
                                   </button>
