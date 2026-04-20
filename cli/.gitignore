@@ -1,0 +1,10 @@
+# License files are canonical at the repo root; copied into this package
+# only at publish time by prepack.
+/LICENSE
+/LICENSE-SUMMARY.md
+/TERMS.md
+
+# npm / node
+node_modules/
+*.tgz
+.DS_Store

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="web/public/shaka.png" alt="GVC Shaka" width="80" />
+  <img src="web-builder/public/shaka.png" alt="GVC Shaka" width="80" />
 </p>
 
 <p align="center">

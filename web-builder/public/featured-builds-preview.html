@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Featured Builds — Layout Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #050505; font-family: system-ui, sans-serif; color: white; }
+    .font-display { font-family: Georgia, serif; font-weight: 900; letter-spacing: 0.02em; }
+    .gold { color: #FFE048; }
+    .bg-gold { background: #FFE048; }
+    .border-gold { border-color: rgba(255, 224, 72, 0.3); }
+    .divider { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); height: 1px; }
+    .shimmer {
+      background: linear-gradient(90deg, #FFE048, #fff, #FFE048);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% auto;
+      animation: shimmer 3s infinite linear;
+    }
+    @keyframes shimmer { 0% { background-position: 0% } 100% { background-position: 200% } }
+    .card-glow:hover { box-shadow: 0 0 30px rgba(255,224,72,0.15); }
+  </style>
+</head>
+<body class="p-8">
+  <div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-display shimmer mb-2 uppercase">Featured Builds — Layout Options</h1>
+    <p class="text-white/40 mb-12">Click through to see each approach. Scroll to compare.</p>
+
+    <!-- ========================= OPTION A: 3-UP CARD GRID ========================= -->
+    <section class="mb-16 pb-16 border-b border-white/10">
+      <div class="text-xs text-gold mb-2 uppercase tracking-wider">Option A — Card Grid (3 across, equal weight)</div>
+      <div class="my-12 h-px w-64 mx-auto divider"></div>
+      <h2 class="text-2xl font-display text-center mb-2 uppercase">Featured Builds</h2>
+      <p class="text-white/50 text-center mb-8">Tools and experiences built with The Playground</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Prompt Machine -->
+        <a href="#" class="group relative rounded-2xl bg-gvc-dark border border-gold bg-[rgba(255,224,72,0.05)] p-6 card-glow transition-all hover:border-opacity-50">
+          <div class="w-10 h-10 rounded-xl bg-[rgba(255,224,72,0.15)] flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-[#FFE048]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25"/></svg>
+          </div>
+          <h3 class="font-display gold text-lg mb-1">Prompt Machine</h3>
+          <p class="text-white/50 text-sm mb-3">AI prompts to bring your GVC to life</p>
+          <span class="text-gold text-xs inline-flex items-center gap-1">Launch →</span>
+        </a>
+
+        <!-- VibeMatch -->
+        <div class="relative rounded-2xl bg-white/[0.02] border border-white/10 p-6 opacity-70">
+          <div class="absolute top-3 right-3 text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded-full uppercase tracking-wider">Soon</div>
+          <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <h3 class="font-display text-white/70 text-lg mb-1">VibeMatch</h3>
+          <p class="text-white/30 text-sm mb-3">Find your perfect GVC pairing</p>
+          <span class="text-white/30 text-xs">Coming soon</span>
+        </div>
+
+        <!-- Slot 3 (empty or placeholder) -->
+        <div class="relative rounded-2xl bg-white/[0.01] border border-dashed border-white/10 p-6 flex items-center justify-center">
+          <p class="text-white/20 text-xs text-center">More builds<br/>coming soon</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= OPTION B: HERO TILES WITH ARTWORK ========================= -->
+    <section class="mb-16 pb-16 border-b border-white/10">
+      <div class="text-xs text-gold mb-2 uppercase tracking-wider">Option B — Hero tiles with background art (more visual)</div>
+      <div class="my-12 h-px w-64 mx-auto divider"></div>
+      <h2 class="text-2xl font-display text-center mb-2 uppercase">Featured Builds</h2>
+      <p class="text-white/50 text-center mb-8">Tools and experiences built with The Playground</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Prompt Machine -->
+        <a href="#" class="group relative rounded-2xl overflow-hidden aspect-[4/5] border border-gold bg-gradient-to-br from-[rgba(255,224,72,0.12)] via-[rgba(255,224,72,0.04)] to-transparent p-6 flex flex-col justify-end card-glow transition-all">
+          <div class="absolute top-4 right-4 text-[9px] text-gold bg-[rgba(255,224,72,0.15)] px-2 py-0.5 rounded-full uppercase tracking-wider">Live</div>
+          <h3 class="font-display gold text-2xl mb-2">Prompt Machine</h3>
+          <p class="text-white/60 text-sm mb-4">AI prompts to bring your GVC character to life</p>
+          <span class="text-gold text-sm inline-flex items-center gap-1">Launch →</span>
+        </a>
+
+        <!-- VibeMatch -->
+        <div class="group relative rounded-2xl overflow-hidden aspect-[4/5] border border-white/10 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-transparent p-6 flex flex-col justify-end opacity-75">
+          <div class="absolute top-4 right-4 text-[9px] text-white/50 bg-white/10 px-2 py-0.5 rounded-full uppercase tracking-wider">Coming Soon</div>
+          <h3 class="font-display text-white/80 text-2xl mb-2">VibeMatch</h3>
+          <p class="text-white/40 text-sm mb-4">Find your perfect GVC pairing</p>
+          <span class="text-white/40 text-sm">In development</span>
+        </div>
+
+        <!-- Empty -->
+        <div class="relative rounded-2xl aspect-[4/5] border border-dashed border-white/10 flex items-center justify-center">
+          <p class="text-white/20 text-xs text-center">More builds<br/>coming soon</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= OPTION C: HORIZONTAL STRIP ========================= -->
+    <section class="mb-16 pb-16 border-b border-white/10">
+      <div class="text-xs text-gold mb-2 uppercase tracking-wider">Option C — Compact horizontal strip (less visual weight)</div>
+      <div class="my-12 h-px w-64 mx-auto divider"></div>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-display uppercase">Featured Builds</h2>
+          <p class="text-white/40 text-sm">Tools built with The Playground</p>
+        </div>
+        <a class="text-gold text-xs uppercase tracking-wider">View all →</a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <a href="#" class="group flex items-center gap-4 p-4 rounded-xl bg-gvc-dark border border-gold bg-[rgba(255,224,72,0.04)] card-glow transition-all">
+          <div class="w-11 h-11 rounded-lg bg-[rgba(255,224,72,0.15)] flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-[#FFE048]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-display gold text-sm">Prompt Machine</p>
+            <p class="text-white/40 text-xs truncate">AI prompts for your GVC</p>
+          </div>
+          <span class="text-gold text-lg">→</span>
+        </a>
+
+        <div class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/10 opacity-70">
+          <div class="w-11 h-11 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-display text-white/70 text-sm">VibeMatch</p>
+            <p class="text-white/30 text-xs truncate">Find your perfect pairing</p>
+          </div>
+          <span class="text-[9px] text-white/30 uppercase tracking-wider">Soon</span>
+        </div>
+
+        <div class="flex items-center justify-center p-4 rounded-xl border border-dashed border-white/10">
+          <p class="text-white/20 text-xs">More coming soon</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================= OPTION D: TABBED LIST ========================= -->
+    <section class="mb-16 pb-16 border-b border-white/10">
+      <div class="text-xs text-gold mb-2 uppercase tracking-wider">Option D — Pill tabs (newest style, browser-chrome feel)</div>
+      <div class="my-12 h-px w-64 mx-auto divider"></div>
+      <h2 class="text-2xl font-display text-center mb-6 uppercase">Featured Builds</h2>
+
+      <div class="flex justify-center gap-2 mb-6">
+        <a href="#" class="px-5 py-2.5 rounded-xl bg-[rgba(255,224,72,0.15)] border border-gold gold font-display font-bold text-sm flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FFE048]"></span> Prompt Machine
+        </a>
+        <button class="px-5 py-2.5 rounded-xl border border-white/10 text-white/40 font-display font-bold text-sm flex items-center gap-2 cursor-not-allowed" disabled>
+          <span class="w-1.5 h-1.5 rounded-full bg-white/30"></span> VibeMatch <span class="text-[9px] opacity-60">SOON</span>
+        </button>
+        <button class="px-5 py-2.5 rounded-xl border border-dashed border-white/10 text-white/20 font-display font-bold text-sm">
+          + Slot 3
+        </button>
+      </div>
+
+      <div class="rounded-2xl bg-gvc-dark border border-white/10 p-8 text-center max-w-xl mx-auto">
+        <div class="w-14 h-14 rounded-xl bg-[rgba(255,224,72,0.15)] flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-[#FFE048]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25"/></svg>
+        </div>
+        <h3 class="font-display gold text-xl mb-2">Prompt Machine</h3>
+        <p class="text-white/50 text-sm mb-5 max-w-sm mx-auto">Want to bring your GVC character to life? Use community-crafted prompts to generate AI images, avatars, and scenes.</p>
+        <a href="#" class="inline-flex items-center gap-2 px-6 py-3 bg-gold text-black rounded-xl font-display font-bold text-sm">Launch Prompt Machine →</a>
+      </div>
+    </section>
+
+    <!-- ========================= OPTION E: SIMPLE STACKED WITH BIG CURRENT ONE ========================= -->
+    <section class="mb-16">
+      <div class="text-xs text-gold mb-2 uppercase tracking-wider">Option E — Featured primary + smaller secondary tiles</div>
+      <div class="my-12 h-px w-64 mx-auto divider"></div>
+      <h2 class="text-2xl font-display text-center mb-2 uppercase">Featured Builds</h2>
+      <p class="text-white/50 text-center mb-8">Tools and experiences built with The Playground</p>
+
+      <a href="#" class="group relative block rounded-2xl overflow-hidden border border-gold bg-gradient-to-br from-[rgba(255,224,72,0.1)] via-[rgba(255,224,72,0.03)] to-transparent p-8 mb-4 card-glow transition-all">
+        <div class="flex items-start gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-[rgba(255,224,72,0.15)] flex items-center justify-center flex-shrink-0">
+            <svg class="w-8 h-8 text-[#FFE048]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-display gold text-2xl">Prompt Machine</h3>
+              <span class="text-[9px] text-gold bg-[rgba(255,224,72,0.15)] px-2 py-0.5 rounded-full uppercase tracking-wider">Live</span>
+            </div>
+            <p class="text-white/60 mb-4">Want to bring your GVC character to life? Use community-crafted AI prompts for avatars, scenes, memes, and more.</p>
+            <span class="text-gold text-sm inline-flex items-center gap-1">Launch Prompt Machine →</span>
+          </div>
+        </div>
+      </a>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="relative rounded-2xl bg-white/[0.02] border border-white/10 p-5 opacity-75">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="font-display text-white/70 text-base">VibeMatch</p>
+                <span class="text-[9px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded-full uppercase tracking-wider">Soon</span>
+              </div>
+              <p class="text-white/30 text-xs">Find your perfect GVC pairing</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-dashed border-white/10 p-5 flex items-center justify-center">
+          <p class="text-white/20 text-xs">More builds coming</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

@@ -5,20 +5,20 @@ const nextConfig = {
       bodySizeLimit: "10mb",
     },
   },
-  // Redirect to goodvibesclub.ai/prompt-machine is temporarily disabled while
-  // the DNS for goodvibesclub.ai is being hooked up. Re-enable once the domain
-  // resolves so direct visits to prompt-gallery-theta.vercel.app land on the
-  // canonical URL.
-  // async redirects() {
-  //   return [
-  //     {
-  //       source: "/",
-  //       missing: [{ type: "query", key: "_via" }],
-  //       has: [{ type: "host", value: "prompt-gallery-theta.vercel.app" }],
-  //       destination: "https://goodvibesclub.ai/prompt-machine",
-  //       permanent: false,
-  //     },
-  //   ];
-  // },
+  async redirects() {
+    // Direct visits to prompt-gallery-theta.vercel.app bounce to the canonical
+    // goodvibesclub.ai/prompt-machine URL. The `_via=gvc` marker (set by the
+    // web project when it forwards here) short-circuits this redirect so the
+    // two projects don't ping-pong.
+    return [
+      {
+        source: "/",
+        missing: [{ type: "query", key: "_via" }],
+        has: [{ type: "host", value: "prompt-gallery-theta.vercel.app" }],
+        destination: "https://goodvibesclub.ai/prompt-machine",
+        permanent: false,
+      },
+    ];
+  },
 };
 module.exports = nextConfig;
