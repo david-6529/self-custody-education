@@ -141,7 +141,7 @@ export default function Home() {
     // Track generation
     if (selectedPrompt) {
       const isBuiltIn = !!PROMPTS.find((p) => p.id === selectedPrompt.id);
-      fetch("/api/generate", {
+      fetch("/api/prompt-machine/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ promptId: selectedPrompt.id, isBuiltIn }),
@@ -238,7 +238,7 @@ export default function Home() {
       const mainPath = `prompt-submissions/${Date.now()}-${sanitizeName(submitFile.name)}`;
       const mainBlob = await upload(mainPath, submitFile, {
         access: "public",
-        handleUploadUrl: "/api/submissions/upload",
+        handleUploadUrl: "/api/prompt-machine/submissions/upload",
         contentType: submitFile.type,
       });
 
@@ -250,7 +250,7 @@ export default function Home() {
             upload(
               `prompt-submissions/ref-${Date.now()}-${sanitizeName(f.name)}`,
               f,
-              { access: "public", handleUploadUrl: "/api/submissions/upload", contentType: f.type }
+              { access: "public", handleUploadUrl: "/api/prompt-machine/submissions/upload", contentType: f.type }
             )
           )
         );
@@ -259,7 +259,7 @@ export default function Home() {
 
       // 3. POST metadata + blob URLs
       const hp = (document.getElementById("submit-hp-website") as HTMLInputElement | null)?.value || "";
-      const res = await fetch("/api/submissions", {
+      const res = await fetch("/api/prompt-machine/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -317,18 +317,18 @@ export default function Home() {
       .then((r) => r.json())
       .then(setMetadata)
       .catch(() => setError("Could not load token metadata."));
-    fetch("/api/submissions")
+    fetch("/api/prompt-machine/submissions")
       .then((r) => r.json())
       .then((data) => setCommunityPrompts(Array.isArray(data) ? data : []))
       .catch(() => {});
-    fetch("/api/overrides")
+    fetch("/api/prompt-machine/overrides")
       .then((r) => r.json())
       .then((data) => {
         if (!Array.isArray(data)) return;
         setPromptOverrides(Object.fromEntries(data.map((o: any) => [o.builtin_id, o])));
       })
       .catch(() => {});
-    fetch("/api/generate")
+    fetch("/api/prompt-machine/generate")
       .then((r) => r.json())
       .then((data) => setBuiltInGenerations(data || {}))
       .catch(() => {});
@@ -741,7 +741,7 @@ export default function Home() {
 
                     <div className={`grid grid-cols-1 gap-4 mb-6 ${totalImages <= 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                       {/* Always: GVC character */}
-                      <div className="rounded-xl bg-black/30 border border-white/[0.08] p-4">
+                      <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                         <p className="text-white font-body text-sm font-semibold mb-2">Your GVC character</p>
                         <p className="text-white/40 font-body text-xs mb-3">Your GVC character&apos;s PFP image.</p>
                         {imageUrl && (
@@ -749,8 +749,8 @@ export default function Home() {
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
                               <img src={imageUrl} alt={`GVC #${tokenId}`} className="w-full h-full object-cover" />
                             </div>
-                            <button onClick={() => downloadImage(imageUrl, `GVC-${tokenId}.png`)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
-                              Download GVC-{tokenId}.png
+                            <button onClick={() => downloadImage(imageUrl, `GVC-${tokenId}.png`)} className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                              Download
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             </button>
                           </>
@@ -759,11 +759,14 @@ export default function Home() {
 
                       {/* Built-in: proportion reference */}
                       {isBuiltInRef && (
-                        <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4">
+                        <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                           <p className="text-white font-body text-sm font-semibold mb-2">Proportion reference</p>
                           <p className="text-white/40 font-body text-xs mb-3">Download and upload this alongside your character.</p>
-                          <a href="/ref/ReferenceImage.png" download="Image-2-GVC-Proportion-Reference.png" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
-                            Download reference
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
+                            <img src="/ref/ReferenceImage.png" alt="Proportion reference" className="w-full h-full object-cover" />
+                          </div>
+                          <a href="/ref/ReferenceImage.png" download="Image-2-GVC-Proportion-Reference.png" className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                            Download
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                           </a>
                         </div>
@@ -772,15 +775,18 @@ export default function Home() {
                       {/* T-Pose: T-Pose + scene */}
                       {isTpose && (
                         <>
-                          <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4">
+                          <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                             <p className="text-white font-body text-sm font-semibold mb-2">Your T-Pose</p>
                             <p className="text-white/40 font-body text-xs mb-3">Use the T-Pose you generated from the pinned prompt. Save it as <span className="text-white/60 font-mono">TPoseReference-{tokenId}.png</span></p>
                           </div>
-                          <div className="rounded-xl bg-black/30 border border-white/[0.08] p-4">
+                          <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                             <p className="text-white font-body text-sm font-semibold mb-2">Scene image</p>
                             <p className="text-white/40 font-body text-xs mb-3">The base scene your character will be placed into.</p>
-                            <a href="/examples/welcome-to-vibetown.png" download="welcome-to-vibetown.png" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
-                              Download scene
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
+                              <img src="/examples/welcome-to-vibetown.png" alt="Scene" className="w-full h-full object-cover" />
+                            </div>
+                            <a href="/examples/welcome-to-vibetown.png" download="welcome-to-vibetown.png" className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                              Download
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             </a>
                           </div>
@@ -792,13 +798,13 @@ export default function Home() {
                         const label = ref.title || `Reference image ${i + 1}`;
                         const desc = ref.description;
                         return (
-                          <div key={ref.url + i} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4">
+                          <div key={ref.url + i} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                             <p className="text-white font-body text-sm font-semibold mb-2">{label}</p>
                             {desc && <p className="text-white/40 font-body text-xs mb-3">{desc}</p>}
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
                               <img src={ref.url} alt={label} className="w-full h-full object-cover" />
                             </div>
-                            <a href={ref.url} download={`reference-${i + 1}.png`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                            <a href={ref.url} download={`reference-${i + 1}.png`} className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
                               Download
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             </a>

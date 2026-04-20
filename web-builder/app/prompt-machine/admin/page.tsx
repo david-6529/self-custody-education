@@ -130,9 +130,9 @@ export default function AdminPage() {
   async function fetchData() {
     try {
       const [adminRes, catRes, ovRes] = await Promise.all([
-        adminFetch("/api/admin"),
-        fetch("/api/categories"),
-        fetch("/api/overrides"),
+        adminFetch("/api/prompt-machine/admin"),
+        fetch("/api/prompt-machine/categories"),
+        fetch("/api/prompt-machine/overrides"),
       ]);
       const data = await adminRes.json();
       const cats = await catRes.json();
@@ -158,7 +158,7 @@ export default function AdminPage() {
 
   async function updateStatus(id: string, status: string) {
     try {
-      await adminFetch("/api/admin", {
+      await adminFetch("/api/prompt-machine/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
@@ -184,7 +184,7 @@ export default function AdminPage() {
   async function createCategory() {
     if (!newCategoryName.trim()) return;
     try {
-      const res = await adminFetch("/api/categories", {
+      const res = await adminFetch("/api/prompt-machine/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: newCategoryName.trim() }),
@@ -201,7 +201,7 @@ export default function AdminPage() {
 
   async function deleteCategory(catId: string) {
     try {
-      await adminFetch("/api/categories", {
+      await adminFetch("/api/prompt-machine/categories", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: catId }),
@@ -227,7 +227,7 @@ export default function AdminPage() {
           upload(
             `prompt-submissions/ref-admin-${Date.now()}-${sanitizeRefName(f.name)}`,
             f,
-            { access: "public", handleUploadUrl: "/api/submissions/upload", contentType: f.type }
+            { access: "public", handleUploadUrl: "/api/prompt-machine/submissions/upload", contentType: f.type }
           )
         )
       );
@@ -249,7 +249,7 @@ export default function AdminPage() {
   async function saveRefImages(id: string, refs: RefImage[]) {
     const serialized = serializeRefImages(refs);
     try {
-      await adminFetch("/api/admin", {
+      await adminFetch("/api/prompt-machine/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ref_images: serialized }),
@@ -262,7 +262,7 @@ export default function AdminPage() {
 
   async function toggleRefImages(id: string, current: boolean) {
     try {
-      await adminFetch("/api/admin", {
+      await adminFetch("/api/prompt-machine/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, requires_ref_images: !current }),
@@ -280,7 +280,7 @@ export default function AdminPage() {
     if (id.startsWith("builtin-")) {
       const builtinId = id.replace(/^builtin-/, "");
       try {
-        await adminFetch("/api/admin/override", {
+        await adminFetch("/api/prompt-machine/admin/override", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ builtin_id: builtinId, category }),
@@ -307,7 +307,7 @@ export default function AdminPage() {
     }
 
     try {
-      await adminFetch("/api/admin", {
+      await adminFetch("/api/prompt-machine/admin", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, category }),
@@ -348,7 +348,7 @@ export default function AdminPage() {
       if (id.startsWith("builtin-")) {
         // Built-in prompt — route through the overrides table
         const builtinId = id.replace(/^builtin-/, "");
-        const res = await adminFetch("/api/admin/override", {
+        const res = await adminFetch("/api/prompt-machine/admin/override", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -367,7 +367,7 @@ export default function AdminPage() {
         const saved = await res.json();
         setOverrides((prev) => ({ ...prev, [builtinId]: saved }));
       } else {
-        const res = await adminFetch("/api/admin", {
+        const res = await adminFetch("/api/prompt-machine/admin", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -411,7 +411,7 @@ export default function AdminPage() {
 
   async function deleteSubmission(id: string) {
     try {
-      await adminFetch("/api/admin", {
+      await adminFetch("/api/prompt-machine/admin", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
