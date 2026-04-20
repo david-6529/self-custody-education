@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { upload } from "@vercel/blob/client";
+import { compressImage, formatBytes } from "@/lib/image-compress";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -61,6 +62,9 @@ export default function BrandAdmin() {
   const [uploading, setUploading] = useState(false);
   const [uploadCategory, setUploadCategory] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [preserveOriginal, setPreserveOriginal] = useState(false);
+  const [optimizeRunning, setOptimizeRunning] = useState(false);
+  const [optimizeProgress, setOptimizeProgress] = useState({ done: 0, total: 0, savedBytes: 0, label: "" });
   const [newCatSlug, setNewCatSlug] = useState("");
   const [newCatLabel, setNewCatLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -86,31 +90,68 @@ export default function BrandAdmin() {
   useEffect(() => { fetchData(); }, []);
 
   async function uploadFiles(files: FileList | File[]) {
-    const fileArr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    // Drop GIFs — we no longer accept them in the asset library
+    const rejectedGifs: string[] = [];
+    const fileArr = Array.from(files).filter((f) => {
+      if (f.type === "image/gif") {
+        rejectedGifs.push(f.name);
+        return false;
+      }
+      return f.type.startsWith("image/");
+    });
+    if (rejectedGifs.length > 0) {
+      alert(`GIFs are no longer supported. Skipped:\n${rejectedGifs.join("\n")}`);
+    }
     if (!fileArr.length || !uploadCategory) return;
 
     const adminToken = getAdminToken();
     if (!adminToken) return;
 
-    const oversize = fileArr.filter((f) => f.size > MAX_UPLOAD_BYTES);
-    if (oversize.length > 0) {
-      alert(`Skipping files over 10MB:\n${oversize.map((f) => f.name).join("\n")}`);
-    }
-    const toUpload = fileArr.filter((f) => f.size <= MAX_UPLOAD_BYTES);
-    if (!toUpload.length) return;
-
     setUploading(true);
 
-    // Direct-to-Blob client uploads — bypasses the 4.5MB serverless body limit
+    // Compress (unless user opted to preserve originals). Oversize check runs
+    // AFTER compression since a 12MB PNG might become a 1MB WebP.
+    const prepared: { file: File; originalName: string; savedBytes: number }[] = [];
+    const compressFailures: { name: string; reason: string }[] = [];
+    for (const original of fileArr) {
+      if (preserveOriginal) {
+        prepared.push({ file: original, originalName: original.name, savedBytes: 0 });
+        continue;
+      }
+      try {
+        const result = await compressImage(original);
+        prepared.push({
+          file: result.file,
+          originalName: original.name,
+          savedBytes: result.originalSize - result.compressedSize,
+        });
+      } catch (e) {
+        compressFailures.push({ name: original.name, reason: e instanceof Error ? e.message : String(e) });
+      }
+    }
+
+    const oversize = prepared.filter((p) => p.file.size > MAX_UPLOAD_BYTES);
+    if (oversize.length > 0) {
+      alert(
+        `Skipping files over 10MB even after compression:\n` +
+          oversize.map((p) => `${p.originalName} → ${formatBytes(p.file.size)}`).join("\n")
+      );
+    }
+    const toUpload = prepared.filter((p) => p.file.size <= MAX_UPLOAD_BYTES);
+    if (!toUpload.length) {
+      setUploading(false);
+      return;
+    }
+
     const clientPayload = JSON.stringify({
       adminToken,
       category: uploadCategory,
       categories: [uploadCategory],
     });
 
-    const failures: { name: string; reason: string }[] = [];
+    const failures: { name: string; reason: string }[] = [...compressFailures];
     await Promise.all(
-      toUpload.map(async (file) => {
+      toUpload.map(async ({ file, originalName }) => {
         const path = `brand-assets/${uploadCategory}/${Date.now()}-${sanitizeName(file.name)}`;
         try {
           const result = await upload(path, file, {
@@ -120,8 +161,8 @@ export default function BrandAdmin() {
             contentType: file.type,
           });
 
-          // Finalize: the webhook-based onUploadCompleted is unreliable here, so
-          // we explicitly POST the blob URL back to our server for DB insert.
+          // Explicit finalize — the onUploadCompleted webhook is unreliable in
+          // this setup, so we POST the URL back ourselves for the DB insert.
           const finalizeRes = await fetch("/api/brand/admin/upload", {
             method: "PUT",
             headers: {
@@ -133,7 +174,7 @@ export default function BrandAdmin() {
               pathname: result.pathname,
               category: uploadCategory,
               categories: [uploadCategory],
-              filename: file.name,
+              filename: originalName,
             }),
           });
           if (!finalizeRes.ok) {
@@ -142,14 +183,19 @@ export default function BrandAdmin() {
           }
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          console.error(`Upload failed for ${file.name}:`, e);
+          console.error(`Upload failed for ${originalName}:`, e);
           if (/client token/i.test(msg)) {
             localStorage.removeItem(TOKEN_KEY);
           }
-          failures.push({ name: file.name, reason: msg });
+          failures.push({ name: originalName, reason: msg });
         }
       })
     );
+
+    const totalSaved = toUpload.reduce((sum, p) => sum + p.savedBytes, 0);
+    if (totalSaved > 0) {
+      console.log(`Compression saved ${formatBytes(totalSaved)} across ${toUpload.length} files`);
+    }
 
     await fetchData();
     setUploading(false);
@@ -166,6 +212,98 @@ export default function BrandAdmin() {
     e.preventDefault();
     setDragOver(false);
     uploadFiles(e.dataTransfer.files);
+  }
+
+  async function optimizeExisting() {
+    const adminToken = getAdminToken();
+    if (!adminToken) return;
+
+    // Candidates: everything except SVGs, which don't benefit from raster compression
+    const candidates = assets.filter((a) => {
+      const url = a.image_url.toLowerCase();
+      return !url.endsWith(".svg") && !url.includes(".svg?");
+    });
+
+    if (!candidates.length) {
+      alert("No optimizable assets found.");
+      return;
+    }
+
+    const confirmMsg =
+      `This will re-download, compress, and re-upload ${candidates.length} asset(s) one at a time.\n\n` +
+      `Each optimized version replaces the original; the old blob is deleted.\n\n` +
+      `You can leave the page — it runs in the tab and will stop if you close it.\n\n` +
+      `Continue?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setOptimizeRunning(true);
+    setOptimizeProgress({ done: 0, total: candidates.length, savedBytes: 0, label: "" });
+
+    let done = 0;
+    let savedBytes = 0;
+    const failures: { name: string; reason: string }[] = [];
+
+    for (const asset of candidates) {
+      setOptimizeProgress({ done, total: candidates.length, savedBytes, label: asset.filename });
+      try {
+        const res = await fetch(asset.image_url);
+        if (!res.ok) throw new Error(`Fetch ${res.status}`);
+        const blob = await res.blob();
+        const originalSize = blob.size;
+        const guessedType = blob.type || "image/png";
+        const tempFile = new File([blob], asset.filename, { type: guessedType });
+
+        const compressed = await compressImage(tempFile);
+        if (!compressed.changed) {
+          done++;
+          continue;
+        }
+
+        const primary = (asset.categories && asset.categories[0]) || asset.category;
+        const path = `brand-assets/${primary}/${Date.now()}-${sanitizeName(compressed.file.name)}`;
+        const clientPayload = JSON.stringify({
+          adminToken,
+          category: primary,
+          categories: asset.categories && asset.categories.length > 0 ? asset.categories : [primary],
+        });
+        const uploadResult = await upload(path, compressed.file, {
+          access: "public",
+          handleUploadUrl: "/api/brand/admin/upload",
+          clientPayload,
+          contentType: compressed.file.type,
+        });
+
+        // Swap image_url in DB; PATCH handles old-blob cleanup
+        const patchRes = await adminFetch("/api/brand/admin", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: asset.id, image_url: uploadResult.url }),
+        });
+        if (!patchRes.ok) {
+          const errBody = await patchRes.json().catch(() => ({}));
+          throw new Error(errBody.error || `PATCH HTTP ${patchRes.status}`);
+        }
+
+        savedBytes += originalSize - compressed.file.size;
+      } catch (e) {
+        failures.push({ name: asset.filename, reason: e instanceof Error ? e.message : String(e) });
+      }
+      done++;
+      setOptimizeProgress({ done, total: candidates.length, savedBytes, label: asset.filename });
+    }
+
+    setOptimizeRunning(false);
+    setOptimizeProgress({ done: 0, total: 0, savedBytes: 0, label: "" });
+    await fetchData();
+
+    const summary =
+      `Optimize complete.\n\n` +
+      `Processed ${candidates.length} asset(s)\n` +
+      `Saved ${formatBytes(savedBytes)} total\n` +
+      (failures.length > 0
+        ? `\nFailed ${failures.length}:\n${failures.map((f) => `• ${f.name}: ${f.reason}`).join("\n")}`
+        : "");
+    alert(summary);
   }
 
   async function renameAsset(id: string) {
@@ -293,7 +431,7 @@ export default function BrandAdmin() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/*,.gif"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
               multiple
               className="hidden"
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}
@@ -307,10 +445,50 @@ export default function BrandAdmin() {
               <>
                 <svg className="w-8 h-8 text-white/20 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.338 3.75 3.75 0 013.467 5.338A3.75 3.75 0 0118 19.5H6.75z" /></svg>
                 <p className="text-white/40 font-body text-sm">Drag and drop images here, or click to browse</p>
-                <p className="text-white/20 font-body text-xs mt-1">Supports JPG, PNG, GIF. Multiple files at once.</p>
+                <p className="text-white/20 font-body text-xs mt-1">JPG, PNG, WebP, or SVG. Multiple files at once. Images over 2048px are resized and re-encoded to WebP.</p>
               </>
             )}
           </div>
+
+          {/* Compression controls */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <label
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-2 cursor-pointer text-white/50 hover:text-white/70 font-body text-xs"
+            >
+              <input
+                type="checkbox"
+                checked={preserveOriginal}
+                onChange={(e) => setPreserveOriginal(e.target.checked)}
+                className="accent-gvc-gold"
+              />
+              Preserve original (skip compression)
+            </label>
+            <button
+              onClick={optimizeExisting}
+              disabled={optimizeRunning || loading}
+              className="px-4 py-2 rounded-lg border border-white/15 text-white/70 hover:text-white hover:border-gvc-gold/40 font-body text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {optimizeRunning ? "Optimizing..." : `Optimize existing (${assets.length})`}
+            </button>
+          </div>
+
+          {optimizeRunning && optimizeProgress.total > 0 && (
+            <div className="mt-3 rounded-lg bg-black/30 border border-white/[0.06] p-3">
+              <div className="flex items-center justify-between text-white/60 font-body text-xs mb-2">
+                <span className="truncate pr-2">{optimizeProgress.label}</span>
+                <span className="tabular-nums whitespace-nowrap">
+                  {optimizeProgress.done}/{optimizeProgress.total} · saved {formatBytes(optimizeProgress.savedBytes)}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className="h-full bg-gvc-gold transition-all"
+                  style={{ width: `${Math.round((optimizeProgress.done / optimizeProgress.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Category management */}

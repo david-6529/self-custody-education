@@ -9,7 +9,6 @@ const ALLOWED_MIME = new Set([
   "image/png",
   "image/jpeg",
   "image/jpg",
-  "image/gif",
   "image/webp",
   "image/svg+xml",
 ]);
@@ -113,13 +112,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ uploaded, count: uploaded.length }, { status: 201 });
 }
 
-// PATCH /api/brand/admin — update asset category, categories, tags, or filename
+// PATCH /api/brand/admin — update asset category, categories, tags, filename,
+// or swap image_url (used by the retroactive optimizer). When image_url is
+// changed, the previous blob is deleted so we don't keep paying for it.
 export async function PATCH(req: NextRequest) {
   const authFail = requireAdmin(req);
   if (authFail) return authFail;
 
   await ensureBrandTables();
-  const { id, category, categories, tags, filename } = await req.json();
+  const { id, category, categories, tags, filename, image_url } = await req.json();
 
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -141,6 +142,17 @@ export async function PATCH(req: NextRequest) {
   }
   if (filename) {
     await pool.query("UPDATE brand_assets SET filename = $1 WHERE id = $2", [filename, id]);
+  }
+  if (typeof image_url === "string" && image_url) {
+    const { rows: prev } = await pool.query(
+      "SELECT image_url FROM brand_assets WHERE id = $1",
+      [id]
+    );
+    const oldUrl: string | undefined = prev[0]?.image_url;
+    await pool.query("UPDATE brand_assets SET image_url = $1 WHERE id = $2", [image_url, id]);
+    if (oldUrl && oldUrl !== image_url) {
+      await del(oldUrl).catch(() => {});
+    }
   }
 
   return NextResponse.json({ ok: true });

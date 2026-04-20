@@ -9,7 +9,6 @@ const ALLOWED_CONTENT_TYPES = [
   "image/png",
   "image/jpeg",
   "image/jpg",
-  "image/gif",
   "image/webp",
   "image/svg+xml",
 ];
