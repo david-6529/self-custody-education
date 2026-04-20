@@ -63,8 +63,6 @@ export default function BrandAdmin() {
   const [uploadCategory, setUploadCategory] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [preserveOriginal, setPreserveOriginal] = useState(false);
-  const [optimizeRunning, setOptimizeRunning] = useState(false);
-  const [optimizeProgress, setOptimizeProgress] = useState({ done: 0, total: 0, savedBytes: 0, label: "" });
   const [newCatSlug, setNewCatSlug] = useState("");
   const [newCatLabel, setNewCatLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -214,97 +212,6 @@ export default function BrandAdmin() {
     uploadFiles(e.dataTransfer.files);
   }
 
-  async function optimizeExisting() {
-    const adminToken = getAdminToken();
-    if (!adminToken) return;
-
-    // Candidates: everything except SVGs, which don't benefit from raster compression
-    const candidates = assets.filter((a) => {
-      const url = a.image_url.toLowerCase();
-      return !url.endsWith(".svg") && !url.includes(".svg?");
-    });
-
-    if (!candidates.length) {
-      alert("No optimizable assets found.");
-      return;
-    }
-
-    const confirmMsg =
-      `This will re-download, compress, and re-upload ${candidates.length} asset(s) one at a time.\n\n` +
-      `Each optimized version replaces the original; the old blob is deleted.\n\n` +
-      `You can leave the page — it runs in the tab and will stop if you close it.\n\n` +
-      `Continue?`;
-    if (!window.confirm(confirmMsg)) return;
-
-    setOptimizeRunning(true);
-    setOptimizeProgress({ done: 0, total: candidates.length, savedBytes: 0, label: "" });
-
-    let done = 0;
-    let savedBytes = 0;
-    const failures: { name: string; reason: string }[] = [];
-
-    for (const asset of candidates) {
-      setOptimizeProgress({ done, total: candidates.length, savedBytes, label: asset.filename });
-      try {
-        const res = await fetch(asset.image_url);
-        if (!res.ok) throw new Error(`Fetch ${res.status}`);
-        const blob = await res.blob();
-        const originalSize = blob.size;
-        const guessedType = blob.type || "image/png";
-        const tempFile = new File([blob], asset.filename, { type: guessedType });
-
-        const compressed = await compressImage(tempFile);
-        if (!compressed.changed) {
-          done++;
-          continue;
-        }
-
-        const primary = (asset.categories && asset.categories[0]) || asset.category;
-        const path = `brand-assets/${primary}/${Date.now()}-${sanitizeName(compressed.file.name)}`;
-        const clientPayload = JSON.stringify({
-          adminToken,
-          category: primary,
-          categories: asset.categories && asset.categories.length > 0 ? asset.categories : [primary],
-        });
-        const uploadResult = await upload(path, compressed.file, {
-          access: "public",
-          handleUploadUrl: "/api/brand/admin/upload",
-          clientPayload,
-          contentType: compressed.file.type,
-        });
-
-        // Swap image_url in DB; PATCH handles old-blob cleanup
-        const patchRes = await adminFetch("/api/brand/admin", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: asset.id, image_url: uploadResult.url }),
-        });
-        if (!patchRes.ok) {
-          const errBody = await patchRes.json().catch(() => ({}));
-          throw new Error(errBody.error || `PATCH HTTP ${patchRes.status}`);
-        }
-
-        savedBytes += originalSize - compressed.file.size;
-      } catch (e) {
-        failures.push({ name: asset.filename, reason: e instanceof Error ? e.message : String(e) });
-      }
-      done++;
-      setOptimizeProgress({ done, total: candidates.length, savedBytes, label: asset.filename });
-    }
-
-    setOptimizeRunning(false);
-    setOptimizeProgress({ done: 0, total: 0, savedBytes: 0, label: "" });
-    await fetchData();
-
-    const summary =
-      `Optimize complete.\n\n` +
-      `Processed ${candidates.length} asset(s)\n` +
-      `Saved ${formatBytes(savedBytes)} total\n` +
-      (failures.length > 0
-        ? `\nFailed ${failures.length}:\n${failures.map((f) => `• ${f.name}: ${f.reason}`).join("\n")}`
-        : "");
-    alert(summary);
-  }
 
   async function renameAsset(id: string) {
     if (!editName.trim()) { setEditingId(null); return; }
@@ -450,11 +357,11 @@ export default function BrandAdmin() {
             )}
           </div>
 
-          {/* Compression controls */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          {/* Preserve original toggle */}
+          <div className="mt-4">
             <label
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-2 cursor-pointer text-white/50 hover:text-white/70 font-body text-xs"
+              className="flex items-center gap-2 cursor-pointer text-white/50 hover:text-white/70 font-body text-xs w-fit"
             >
               <input
                 type="checkbox"
@@ -464,31 +371,7 @@ export default function BrandAdmin() {
               />
               Preserve original (skip compression)
             </label>
-            <button
-              onClick={optimizeExisting}
-              disabled={optimizeRunning || loading}
-              className="px-4 py-2 rounded-lg border border-white/15 text-white/70 hover:text-white hover:border-gvc-gold/40 font-body text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {optimizeRunning ? "Optimizing..." : `Optimize existing (${assets.length})`}
-            </button>
           </div>
-
-          {optimizeRunning && optimizeProgress.total > 0 && (
-            <div className="mt-3 rounded-lg bg-black/30 border border-white/[0.06] p-3">
-              <div className="flex items-center justify-between text-white/60 font-body text-xs mb-2">
-                <span className="truncate pr-2">{optimizeProgress.label}</span>
-                <span className="tabular-nums whitespace-nowrap">
-                  {optimizeProgress.done}/{optimizeProgress.total} · saved {formatBytes(optimizeProgress.savedBytes)}
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <div
-                  className="h-full bg-gvc-gold transition-all"
-                  style={{ width: `${Math.round((optimizeProgress.done / optimizeProgress.total) * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Category management */}
