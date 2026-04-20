@@ -1,34 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import pool, { ensureTable } from "@/lib/db";
 
-const ALLOWED_MIME = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/gif",
-  "image/webp",
-]);
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_LEN = 4000;
 const RATE_LIMIT_WINDOW_MIN = 60;
 const RATE_LIMIT_MAX = 5;
 
-function validateImage(file: File): string | null {
-  if (!ALLOWED_MIME.has(file.type)) {
-    return `Unsupported file type: ${file.type || "unknown"}`;
+// Only allow blob URLs from our own Vercel Blob store. Prevents submitters from
+// pointing at arbitrary external URLs and using our DB as a bookmark farm.
+function isValidBlobUrl(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  try {
+    const u = new URL(url);
+    return u.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return `File ${file.name} exceeds 10MB limit`;
-  }
-  if (file.size === 0) {
-    return "Empty file";
-  }
-  return null;
-}
-
-function sanitizeName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
 }
 
 function getClientIp(request: NextRequest): string {
@@ -62,25 +48,31 @@ export async function POST(request: NextRequest) {
   try {
     await ensureTable();
 
-    const formData = await request.formData();
-    const title = formData.get("title") as string;
-    const prompt = formData.get("prompt") as string;
-    const tokenId = formData.get("tokenId") as string;
-    const xHandle = formData.get("xHandle") as string;
-    const image = formData.get("image") as File;
-    const description = formData.get("description") as string;
-    const moreDetails = formData.get("moreDetails") as string;
-    const honeypot = formData.get("website") as string | null;
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const title = typeof body.title === "string" ? body.title : "";
+    const prompt = typeof body.prompt === "string" ? body.prompt : "";
+    const tokenId = typeof body.tokenId === "string" ? body.tokenId : "";
+    const xHandle = typeof body.xHandle === "string" ? body.xHandle : "";
+    const description = typeof body.description === "string" ? body.description : "";
+    const moreDetails = typeof body.moreDetails === "string" ? body.moreDetails : "";
+    const honeypot = typeof body.website === "string" ? body.website : "";
+    const imageUrl = body.imageUrl;
+    const refImageUrls = Array.isArray(body.refImageUrls) ? body.refImageUrls : [];
 
     // Honeypot — real users leave this empty; bots fill all fields
-    if (honeypot && honeypot.trim().length > 0) {
-      // Respond as if success to avoid tipping off the bot
+    if (honeypot.trim().length > 0) {
       return NextResponse.json({ id: "ok", status: "pending" }, { status: 201 });
     }
 
-    if (!title || !prompt || !tokenId || !description || !image) {
+    if (!title || !prompt || !tokenId || !description || !imageUrl) {
       return NextResponse.json(
-        { error: "Missing required fields: title, prompt, tokenId, description, image" },
+        { error: "Missing required fields: title, prompt, tokenId, description, imageUrl" },
         { status: 400 }
       );
     }
@@ -88,58 +80,45 @@ export async function POST(request: NextRequest) {
     if (
       title.length > 200 ||
       prompt.length > MAX_TEXT_LEN ||
-      (description && description.length > MAX_TEXT_LEN) ||
-      (moreDetails && moreDetails.length > MAX_TEXT_LEN)
+      description.length > MAX_TEXT_LEN ||
+      moreDetails.length > MAX_TEXT_LEN
     ) {
       return NextResponse.json({ error: "Input exceeds max length" }, { status: 400 });
     }
 
-    const imageErr = validateImage(image);
-    if (imageErr) {
-      return NextResponse.json({ error: imageErr }, { status: 400 });
+    if (!isValidBlobUrl(imageUrl)) {
+      return NextResponse.json({ error: "Invalid imageUrl" }, { status: 400 });
+    }
+    if (refImageUrls.some((u) => !isValidBlobUrl(u))) {
+      return NextResponse.json({ error: "Invalid refImageUrls" }, { status: 400 });
+    }
+    if (refImageUrls.length > 10) {
+      return NextResponse.json({ error: "Too many reference images (max 10)" }, { status: 400 });
     }
 
     const ip = getClientIp(request);
     const allowed = await checkRateLimit(ip);
     if (!allowed) {
       return NextResponse.json(
-        {
-          error: `Too many submissions. Please try again in ${RATE_LIMIT_WINDOW_MIN} minutes.`,
-        },
+        { error: `Too many submissions. Please try again in ${RATE_LIMIT_WINDOW_MIN} minutes.` },
         { status: 429 }
       );
     }
 
-    // Upload main image to Vercel Blob
-    const blob = await put(
-      `prompt-submissions/${Date.now()}-${sanitizeName(image.name)}`,
-      image,
-      { access: "public", contentType: image.type }
-    );
-
-    // Upload reference images if any (validated)
-    const refUrls: string[] = [];
-    for (let i = 0; i < 10; i++) {
-      const refFile = formData.get(`refImage${i}`) as File | null;
-      if (!refFile) break;
-      const refErr = validateImage(refFile);
-      if (refErr) {
-        return NextResponse.json({ error: refErr }, { status: 400 });
-      }
-      const refBlob = await put(
-        `prompt-submissions/ref-${Date.now()}-${sanitizeName(refFile.name)}`,
-        refFile,
-        { access: "public", contentType: refFile.type }
-      );
-      refUrls.push(refBlob.url);
-    }
-
-    // Insert into database
     const { rows } = await pool.query(
       `INSERT INTO prompt_submissions (title, prompt, token_id, image_url, x_handle, description, more_details, ref_images, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
        RETURNING id, title, status, created_at`,
-      [title, prompt, tokenId, blob.url, xHandle || null, description || null, moreDetails || null, refUrls.length > 0 ? JSON.stringify(refUrls) : null]
+      [
+        title,
+        prompt,
+        tokenId,
+        imageUrl,
+        xHandle || null,
+        description,
+        moreDetails || null,
+        refImageUrls.length > 0 ? JSON.stringify(refImageUrls) : null,
+      ]
     );
 
     await recordRateLimitHit(ip);

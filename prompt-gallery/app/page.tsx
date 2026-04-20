@@ -4,7 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
 import PROMPTS, { CATEGORIES, Prompt } from "./prompts";
+
+function sanitizeName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
 
 function PromptIcon({ type, className = "w-6 h-6" }: { type: string; className?: string }) {
   const icons: Record<string, React.ReactNode> = {
@@ -165,11 +170,11 @@ export default function Home() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (Vercel serverless limit)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
   function validateFileSize(file: File): boolean {
     if (file.size > MAX_FILE_SIZE) {
-      setSubmitFileError(`"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max file size is 4.5MB. Try compressing or resizing the image.`);
+      setSubmitFileError(`"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max file size is 10MB. Try compressing or resizing the image.`);
       return false;
     }
     setSubmitFileError("");
@@ -204,7 +209,7 @@ export default function Home() {
     const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/"));
     const oversized = files.filter((f) => f.size > MAX_FILE_SIZE);
     if (oversized.length > 0) {
-      setSubmitFileError(`${oversized.map((f) => `"${f.name}"`).join(", ")} too large. Max 4.5MB per file.`);
+      setSubmitFileError(`${oversized.map((f) => `"${f.name}"`).join(", ")} too large. Max 10MB per file.`);
       const valid = files.filter((f) => f.size <= MAX_FILE_SIZE);
       if (valid.length === 0) return;
       setSubmitRefFiles((prev) => [...prev, ...valid]);
@@ -224,37 +229,63 @@ export default function Home() {
   async function handleSubmit() {
     if (!submitTitle || !submitPromptText || !submitTokenId || !submitDescription.trim() || !submitFile) return;
     setSubmitStatus("sending");
+    setSubmitFileError("");
 
     try {
-      const formData = new FormData();
-      formData.append("title", submitTitle);
-      formData.append("prompt", submitPromptText);
-      formData.append("tokenId", submitTokenId);
-      formData.append("xHandle", submitHandle);
-      formData.append("image", submitFile);
-      if (submitDescription) formData.append("description", submitDescription);
-      if (submitMoreDetails) formData.append("moreDetails", submitMoreDetails);
-      submitRefFiles.forEach((f, i) => formData.append(`refImage${i}`, f));
-      // Honeypot — real users never fill this, bots usually do
-      const hp = (document.getElementById("submit-hp-website") as HTMLInputElement | null)?.value || "";
-      formData.append("website", hp);
+      // 1. Upload main image directly to Blob
+      const mainPath = `prompt-submissions/${Date.now()}-${sanitizeName(submitFile.name)}`;
+      const mainBlob = await upload(mainPath, submitFile, {
+        access: "public",
+        handleUploadUrl: "/api/submissions/upload",
+        contentType: submitFile.type,
+      });
 
+      // 2. Upload reference images in parallel
+      const refUrls: string[] = [];
+      if (submitRefFiles.length > 0) {
+        const refBlobs = await Promise.all(
+          submitRefFiles.map((f) =>
+            upload(
+              `prompt-submissions/ref-${Date.now()}-${sanitizeName(f.name)}`,
+              f,
+              { access: "public", handleUploadUrl: "/api/submissions/upload", contentType: f.type }
+            )
+          )
+        );
+        refUrls.push(...refBlobs.map((b) => b.url));
+      }
+
+      // 3. POST metadata + blob URLs
+      const hp = (document.getElementById("submit-hp-website") as HTMLInputElement | null)?.value || "";
       const res = await fetch("/api/submissions", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: submitTitle,
+          prompt: submitPromptText,
+          tokenId: submitTokenId,
+          xHandle: submitHandle,
+          description: submitDescription,
+          moreDetails: submitMoreDetails,
+          imageUrl: mainBlob.url,
+          refImageUrls: refUrls,
+          website: hp,
+        }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Submission failed");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Submission failed (HTTP ${res.status})`);
       }
 
       setSubmitStatus("sent");
       setShowSuccessModal(true);
     } catch (e: any) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error("Submission error:", e);
+      setSubmitFileError(msg);
       setSubmitStatus("error");
-      setTimeout(() => setSubmitStatus("idle"), 3000);
+      setTimeout(() => setSubmitStatus("idle"), 5000);
     }
   }
 
@@ -858,7 +889,7 @@ export default function Home() {
                     Drag and drop or click to upload
                   </p>
                   <p className="text-white/20 font-body text-xs">
-                    PNG, JPG, or WebP. Max 4.5MB.
+                    PNG, JPG, or WebP. Max 10MB.
                   </p>
                 </div>
               ) : (
