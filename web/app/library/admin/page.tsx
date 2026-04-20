@@ -108,25 +108,58 @@ export default function BrandAdmin() {
       categories: [uploadCategory],
     });
 
+    const failures: { name: string; reason: string }[] = [];
     await Promise.all(
       toUpload.map(async (file) => {
         const path = `brand-assets/${uploadCategory}/${Date.now()}-${sanitizeName(file.name)}`;
         try {
-          await upload(path, file, {
+          const result = await upload(path, file, {
             access: "public",
             handleUploadUrl: "/api/brand/admin/upload",
             clientPayload,
             contentType: file.type,
-            multipart: true,
           });
+
+          // Finalize: the webhook-based onUploadCompleted is unreliable here, so
+          // we explicitly POST the blob URL back to our server for DB insert.
+          const finalizeRes = await fetch("/api/brand/admin/upload", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${adminToken}`,
+            },
+            body: JSON.stringify({
+              url: result.url,
+              pathname: result.pathname,
+              category: uploadCategory,
+              categories: [uploadCategory],
+              filename: file.name,
+            }),
+          });
+          if (!finalizeRes.ok) {
+            const errBody = await finalizeRes.json().catch(() => ({}));
+            throw new Error(errBody.error || `Finalize HTTP ${finalizeRes.status}`);
+          }
         } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
           console.error(`Upload failed for ${file.name}:`, e);
+          if (/client token/i.test(msg)) {
+            localStorage.removeItem(TOKEN_KEY);
+          }
+          failures.push({ name: file.name, reason: msg });
         }
       })
     );
 
     await fetchData();
     setUploading(false);
+
+    if (failures.length > 0) {
+      alert(
+        `Upload failed for ${failures.length} file(s):\n\n` +
+          failures.map((f) => `• ${f.name}\n  ${f.reason}`).join("\n\n")
+      );
+    }
   }
 
   function handleDrop(e: React.DragEvent) {
