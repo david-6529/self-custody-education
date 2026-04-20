@@ -31,13 +31,13 @@ body {
 
 /* Grid background via pseudo-element. The SVG itself uses a 10%-white stroke,
    so no extra CSS opacity is applied — otherwise the two opacities stack and
-   the grid disappears on the gvc-black body. */
+   the grid disappears on the gvc-black body. No background-size override: the
+   browser tiles the SVG at its intrinsic 100×100, matching gvcgallery.xyz. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   background-image: url('/grid.svg');
-  background-size: 40px 40px;
   background-repeat: repeat;
   background-position: center;
   pointer-events: none;
