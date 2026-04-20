@@ -254,64 +254,75 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             Or try it in your terminal with <code className="text-gvc-gold/50 font-mono text-xs ml-1">npx create-gvc-app</code>
           </motion.p>
 
-          {/* Go Make Something Awesome — matches the gvc-gallery divider */}
+          {/* Go Make Something Awesome — three-line headline, bounces in on load */}
           <motion.div
-            className="mt-20 mb-10 flex flex-col items-center gap-4 select-none"
+            className="mt-20 mb-10 flex flex-col items-center gap-4 select-none w-full"
             initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
             <motion.div
               className="h-[2px] bg-gradient-to-r from-transparent via-gvc-gold to-transparent"
               initial={{ width: 0 }}
-              whileInView={{ width: "60%" }}
-              viewport={{ once: true }}
+              animate={{ width: "60%" }}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
             />
 
-            <motion.h2
-              className="font-display text-center text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-none"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.12, delayChildren: 0.4 } },
-              }}
-            >
-              {["GO", "MAKE", "SOMETHING", "AWESOME!"].map((word, i) => (
-                <motion.span
-                  key={word}
-                  className={`inline-block mx-2 ${i === 3 ? "text-gvc-gold" : "text-white"}`}
+            {(() => {
+              const LINES = [["GO", "MAKE"], ["SOMETHING"], ["AWESOME!"]];
+              const words = LINES.flat();
+              const goldIndex = words.length - 1;
+              let runningIndex = 0;
+              return (
+                <motion.h2
+                  className="font-display text-center text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[1.05]"
+                  initial="hidden"
+                  animate="visible"
                   variants={{
-                    hidden: { opacity: 0, y: 30, scale: 0.85 },
-                    visible: {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      transition: { type: "spring", stiffness: 200, damping: 15 },
-                    },
-                  }}
-                  whileHover={{ scale: 1.1, color: "#FFE048", transition: { duration: 0.2 } }}
-                  style={{
-                    cursor: "default",
-                    textShadow:
-                      i === 3
-                        ? "0 0 30px rgba(255,224,72,0.6), 0 2px 0 #D4A800, 0 4px 0 #B8920A, 0 6px 0 #9C7C00, 0 8px 15px rgba(0,0,0,0.4)"
-                        : "0 2px 0 #c0c0c0, 0 4px 0 #a0a0a0, 0 6px 0 #808080, 0 8px 15px rgba(0,0,0,0.4)",
+                    hidden: {},
+                    visible: { transition: { staggerChildren: 0.12, delayChildren: 0.4 } },
                   }}
                 >
-                  {word}
-                </motion.span>
-              ))}
-            </motion.h2>
+                  {LINES.map((line, lineIdx) => (
+                    <div key={lineIdx} className="block">
+                      {line.map((word) => {
+                        const i = runningIndex++;
+                        const isGold = i === goldIndex;
+                        return (
+                          <motion.span
+                            key={word}
+                            className={`inline-block mx-2 ${isGold ? "text-gvc-gold" : "text-white"}`}
+                            variants={{
+                              hidden: { opacity: 0, y: 30, scale: 0.85 },
+                              visible: {
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                                transition: { type: "spring", stiffness: 200, damping: 15 },
+                              },
+                            }}
+                            whileHover={{ scale: 1.1, color: "#FFE048", transition: { duration: 0.2 } }}
+                            style={{
+                              cursor: "default",
+                              textShadow: isGold
+                                ? "0 0 30px rgba(255,224,72,0.6), 0 2px 0 #D4A800, 0 4px 0 #B8920A, 0 6px 0 #9C7C00, 0 8px 15px rgba(0,0,0,0.4)"
+                                : "0 2px 0 #c0c0c0, 0 4px 0 #a0a0a0, 0 6px 0 #808080, 0 8px 15px rgba(0,0,0,0.4)",
+                            }}
+                          >
+                            {word}
+                          </motion.span>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </motion.h2>
+              );
+            })()}
 
             <motion.div
               className="h-[2px] bg-gradient-to-r from-transparent via-gvc-gold to-transparent"
               initial={{ width: 0 }}
-              whileInView={{ width: "60%" }}
-              viewport={{ once: true }}
+              animate={{ width: "60%" }}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
             />
           </motion.div>
