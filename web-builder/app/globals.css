@@ -29,7 +29,9 @@ body {
   position: relative;
 }
 
-/* Grid background via pseudo-element */
+/* Grid background via pseudo-element. The SVG itself uses a 10%-white stroke,
+   so no extra CSS opacity is applied — otherwise the two opacities stack and
+   the grid disappears on the gvc-black body. */
 body::before {
   content: '';
   position: fixed;
@@ -38,7 +40,6 @@ body::before {
   background-size: 40px 40px;
   background-repeat: repeat;
   background-position: center;
-  opacity: 0.15;
   pointer-events: none;
   z-index: 0;
 }
