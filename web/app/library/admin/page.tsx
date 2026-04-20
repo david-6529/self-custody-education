@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+function sanitizeName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
 
 const TOKEN_KEY = "gvc_admin_token";
 
@@ -79,19 +86,43 @@ export default function BrandAdmin() {
   useEffect(() => { fetchData(); }, []);
 
   async function uploadFiles(files: FileList | File[]) {
-    const fileArr = Array.from(files).filter((f) => f.type.startsWith("image/") || f.type === "image/gif");
+    const fileArr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (!fileArr.length || !uploadCategory) return;
+
+    const adminToken = getAdminToken();
+    if (!adminToken) return;
+
+    const oversize = fileArr.filter((f) => f.size > MAX_UPLOAD_BYTES);
+    if (oversize.length > 0) {
+      alert(`Skipping files over 10MB:\n${oversize.map((f) => f.name).join("\n")}`);
+    }
+    const toUpload = fileArr.filter((f) => f.size <= MAX_UPLOAD_BYTES);
+    if (!toUpload.length) return;
 
     setUploading(true);
 
-    // Batch uploads in groups of 5 to avoid timeouts
-    for (let i = 0; i < fileArr.length; i += 5) {
-      const batch = fileArr.slice(i, i + 5);
-      const fd = new FormData();
-      fd.append("category", uploadCategory);
-      batch.forEach((f, idx) => fd.append(`file${idx}`, f));
-      await adminFetch("/api/brand/admin", { method: "POST", body: fd }).catch(() => {});
-    }
+    // Direct-to-Blob client uploads — bypasses the 4.5MB serverless body limit
+    const clientPayload = JSON.stringify({
+      adminToken,
+      category: uploadCategory,
+      categories: [uploadCategory],
+    });
+
+    await Promise.all(
+      toUpload.map(async (file) => {
+        const path = `brand-assets/${uploadCategory}/${Date.now()}-${sanitizeName(file.name)}`;
+        try {
+          await upload(path, file, {
+            access: "public",
+            handleUploadUrl: "/api/brand/admin/upload",
+            clientPayload,
+            contentType: file.type,
+          });
+        } catch (e) {
+          console.error(`Upload failed for ${file.name}:`, e);
+        }
+      })
+    );
 
     await fetchData();
     setUploading(false);

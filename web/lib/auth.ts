@@ -19,6 +19,12 @@ export function requireAdmin(req: NextRequest): NextResponse | null {
   return null;
 }
 
+export function verifyAdminToken(token: string | null | undefined): boolean {
+  const expected = process.env.ADMIN_TOKEN;
+  if (!expected || !token) return false;
+  return timingSafeEqual(token, expected);
+}
+
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
