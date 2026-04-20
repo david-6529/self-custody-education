@@ -264,18 +264,18 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             <motion.div
               className="h-[2px] bg-gradient-to-r from-transparent via-gvc-gold to-transparent"
               initial={{ width: 0 }}
-              animate={{ width: "60%" }}
+              animate={{ width: "75%" }}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
             />
 
             {(() => {
-              const LINES = [["GO", "MAKE"], ["SOMETHING"], ["AWESOME!"]];
+              const LINES = [["GO", "MAKE", "SOMETHING"], ["AWESOME!!!"]];
               const words = LINES.flat();
               const goldIndex = words.length - 1;
               let runningIndex = 0;
               return (
                 <motion.h2
-                  className="font-display text-center text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[1.05]"
+                  className="font-display text-center text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight leading-[1.05]"
                   initial="hidden"
                   animate="visible"
                   variants={{
@@ -322,7 +322,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             <motion.div
               className="h-[2px] bg-gradient-to-r from-transparent via-gvc-gold to-transparent"
               initial={{ width: 0 }}
-              animate={{ width: "60%" }}
+              animate={{ width: "75%" }}
               transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
             />
           </motion.div>
