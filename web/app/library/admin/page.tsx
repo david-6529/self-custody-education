@@ -117,6 +117,7 @@ export default function BrandAdmin() {
             handleUploadUrl: "/api/brand/admin/upload",
             clientPayload,
             contentType: file.type,
+            multipart: true,
           });
         } catch (e) {
           console.error(`Upload failed for ${file.name}:`, e);
