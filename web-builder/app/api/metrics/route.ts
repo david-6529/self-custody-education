@@ -26,13 +26,18 @@ export async function GET(req: NextRequest) {
     await ensureMetricsTables();
 
     const today = new Date();
+    // npm chart starts when tracking went live on 2026-04-14 (or 90 days
+    // back, whichever is more recent — keeps legacy pre-launch noise out
+    // of the chart even once we're more than 90 days past launch).
+    const TRACKING_START = new Date("2026-04-14T00:00:00Z");
     const ninetyDaysAgo = new Date(today);
     ninetyDaysAgo.setDate(today.getDate() - 90);
+    const npmStart = ninetyDaysAgo < TRACKING_START ? TRACKING_START : ninetyDaysAgo;
 
     // Run all fetches in parallel, defend against any one failing.
     const [npmLast30, npmRange, ghRepo, ghReleases, ghViews, ghClones, ghReferrers, ghPaths, gaReport] = await Promise.all([
         fetchNpmTotal(30),
-        fetchNpmDaily(formatDate(ninetyDaysAgo), formatDate(today)),
+        fetchNpmDaily(formatDate(npmStart), formatDate(today)),
         fetchGhRepo(),
         fetchGhReleases(),
         fetchGhTraffic("views"),

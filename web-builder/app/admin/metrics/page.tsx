@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MetricsPayload {
     config: { npmPackage: string; githubRepo: string; hasGithubToken: boolean; gaConfigured: boolean };
@@ -259,7 +259,7 @@ export default function MetricsPage() {
                         {/* npm daily chart */}
                         <section className="mb-8">
                             <h2 className="text-sm font-semibold text-neutral-300 mb-3">
-                                npm daily downloads — last 90 days
+                                npm daily downloads — since 4/14
                             </h2>
                             <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4">
                                 <LineChart
@@ -443,7 +443,26 @@ function LineChart({
     color: string;
     height?: number;
 }) {
+    const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+    const [containerWidth, setContainerWidth] = useState(600);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Track the rendered width of the container so screen-space pointer
+    // coordinates can be mapped back to the SVG viewBox without relying
+    // on responsive scaling math that drifts on resize.
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const el = containerRef.current;
+        const ro = new ResizeObserver(() => {
+            setContainerWidth(el.getBoundingClientRect().width || 600);
+        });
+        ro.observe(el);
+        setContainerWidth(el.getBoundingClientRect().width || 600);
+        return () => ro.disconnect();
+    }, []);
+
     if (!points.length) return <p className="text-xs text-neutral-500">No data.</p>;
+
     const W = 600;
     const H = height;
     const pad = { top: 8, right: 8, bottom: 16, left: 32 };
@@ -457,21 +476,69 @@ function LineChart({
         })
         .join(" ");
     const areaPath = `${path} L${pad.left + (points.length - 1) * stepX},${H - pad.bottom} L${pad.left},${H - pad.bottom} Z`;
+
+    function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
+        const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
+        const xInSvg = ((e.clientX - rect.left) / rect.width) * W;
+        // Nearest data point index.
+        const idx = Math.round((xInSvg - pad.left) / stepX);
+        const clamped = Math.max(0, Math.min(points.length - 1, idx));
+        setHoverIdx(clamped);
+    }
+
+    const hp = hoverIdx !== null ? points[hoverIdx] : null;
+    const hx = hoverIdx !== null ? pad.left + hoverIdx * stepX : 0;
+    const hy = hp ? H - pad.bottom - (hp.value / max) * (H - pad.top - pad.bottom) : 0;
+
+    // Tooltip position in pixels for absolute positioning of the HTML bubble.
+    const scale = containerWidth / W;
+    const tipX = hx * scale;
+    // Keep tooltip from overflowing right edge.
+    const tipStyle: React.CSSProperties = { left: Math.min(containerWidth - 100, Math.max(0, tipX - 50)) };
+
     return (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none">
-            {/* gridlines */}
-            {[0.25, 0.5, 0.75, 1].map(f => {
-                const y = H - pad.bottom - f * (H - pad.top - pad.bottom);
-                return <line key={f} x1={pad.left} x2={W - pad.right} y1={y} y2={y} stroke="#262626" strokeDasharray="2 3" />;
-            })}
-            <path d={areaPath} fill={color} fillOpacity={0.1} />
-            <path d={path} fill="none" stroke={color} strokeWidth={1.5} />
-            {/* y-axis: 0 + max */}
-            <text x={4} y={H - pad.bottom + 4} fontSize="9" fill="#525252">0</text>
-            <text x={4} y={pad.top + 8} fontSize="9" fill="#525252">{Math.round(max).toLocaleString()}</text>
-            {/* x-axis: first + last labels */}
-            <text x={pad.left} y={H - 2} fontSize="9" fill="#525252">{points[0].label}</text>
-            <text x={W - pad.right} y={H - 2} fontSize="9" fill="#525252" textAnchor="end">{points[points.length - 1].label}</text>
-        </svg>
+        <div ref={containerRef} className="relative w-full">
+            <svg
+                viewBox={`0 0 ${W} ${H}`}
+                className="w-full block"
+                preserveAspectRatio="none"
+                onPointerMove={onPointerMove}
+                onPointerLeave={() => setHoverIdx(null)}
+            >
+                {/* gridlines */}
+                {[0.25, 0.5, 0.75, 1].map(f => {
+                    const y = H - pad.bottom - f * (H - pad.top - pad.bottom);
+                    return <line key={f} x1={pad.left} x2={W - pad.right} y1={y} y2={y} stroke="#262626" strokeDasharray="2 3" />;
+                })}
+                <path d={areaPath} fill={color} fillOpacity={0.1} />
+                <path d={path} fill="none" stroke={color} strokeWidth={1.5} />
+
+                {/* Hover guide */}
+                {hp && (
+                    <>
+                        <line x1={hx} x2={hx} y1={pad.top} y2={H - pad.bottom} stroke={color} strokeOpacity={0.35} strokeWidth={1} />
+                        <circle cx={hx} cy={hy} r={3.5} fill={color} stroke="#0a0a0a" strokeWidth={1} />
+                    </>
+                )}
+
+                {/* y-axis: 0 + max */}
+                <text x={4} y={H - pad.bottom + 4} fontSize="9" fill="#525252">0</text>
+                <text x={4} y={pad.top + 8} fontSize="9" fill="#525252">{Math.round(max).toLocaleString()}</text>
+                {/* x-axis: first + last labels */}
+                <text x={pad.left} y={H - 2} fontSize="9" fill="#525252">{points[0].label}</text>
+                <text x={W - pad.right} y={H - 2} fontSize="9" fill="#525252" textAnchor="end">{points[points.length - 1].label}</text>
+            </svg>
+
+            {/* HTML-based tooltip (positioned absolutely over the chart) */}
+            {hp && (
+                <div
+                    className="pointer-events-none absolute top-1 bg-neutral-900 border border-neutral-700 rounded-md px-2 py-1 text-[11px] shadow-lg"
+                    style={tipStyle}
+                >
+                    <div className="text-neutral-400">{hp.label}</div>
+                    <div className="font-semibold tabular-nums">{hp.value.toLocaleString()}</div>
+                </div>
+            )}
+        </div>
     );
 }
