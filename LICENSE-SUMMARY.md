@@ -47,7 +47,7 @@ Build cool stuff for fun. Talk to us before you build something that makes money
 
 ## Want to build something commercial?
 
-Email legal@toaststudio.tv with:
+Email legal@toast.tv with:
 1. What the Build is and how it works
 2. How you want to monetize it
 3. Which Builder Kit Assets / GVC IP you're using
@@ -65,7 +65,7 @@ Toast Studio decides case-by-case. We're not obligated to grant a license, respo
 
 ## Contact
 
-Commercial licenses and legal questions: **legal@toaststudio.tv**
+Commercial licenses and legal questions: **legal@toast.tv**
 
 ---
 

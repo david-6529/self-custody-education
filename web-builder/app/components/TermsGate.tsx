@@ -77,7 +77,7 @@ export default function TermsGate({ open, onAccept, onCancel }: TermsGateProps) 
               Before you start
             </p>
             <h2 className="font-display font-black text-white text-2xl sm:text-3xl mb-4 leading-tight">
-              GVC Builder Kit Terms of Use
+              Terms of Use
             </h2>
 
             <div className="text-white/60 font-body text-sm leading-relaxed space-y-3 mb-5">
@@ -92,21 +92,21 @@ export default function TermsGate({ open, onAccept, onCancel }: TermsGateProps) 
               </ul>
               <p className="text-white/40 text-xs pt-1">
                 <a
-                  href={TERMS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gvc-gold/70 hover:text-gvc-gold underline underline-offset-2 transition-colors"
-                >
-                  Read the full Terms
-                </a>
-                {" · "}
-                <a
                   href={LICENSE_SUMMARY_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gvc-gold/70 hover:text-gvc-gold underline underline-offset-2 transition-colors"
                 >
-                  Plain-English summary
+                  Read the Terms summary
+                </a>
+                {" · "}
+                <a
+                  href={TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gvc-gold/70 hover:text-gvc-gold underline underline-offset-2 transition-colors"
+                >
+                  Full Terms
                 </a>
               </p>
             </div>
@@ -121,7 +121,7 @@ export default function TermsGate({ open, onAccept, onCancel }: TermsGateProps) 
                 className="mt-0.5 accent-gvc-gold"
               />
               <span className="text-white/70 font-body text-sm leading-relaxed">
-                I&apos;ve read and accept the GVC Builder Kit Terms of Use (v{WEB_TERMS_VERSION}).
+                I&apos;ve read and accept the Terms of Use (v{WEB_TERMS_VERSION}).
               </span>
             </label>
 

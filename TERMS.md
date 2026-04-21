@@ -104,7 +104,7 @@ License constitutes a material breach of these Terms.
 
 (c) Requesting a Commercial License. If you wish to engage in Commercial Use
 of a Build, you must submit a written request to Toast Studio at
-legal@toaststudio.tv describing: (i) the nature and functionality of the
+legal@toast.tv describing: (i) the nature and functionality of the
 Build; (ii) the proposed Commercial Use, including the intended monetization
 method; (iii) the Builder Kit Assets and GVC IP incorporated in the Build;
 and (iv) any other information reasonably requested by Toast Studio. Toast
@@ -405,7 +405,7 @@ PARTICIPATE IN A CLASS ACTION AGAINST TOAST STUDIO.
 first send a written notice of the dispute to the other party by certified
 U.S. Mail or another method that provides confirmation of delivery. Toast
 Studio's address for such notice is available by contacting
-legal@toaststudio.tv. The parties will make good faith efforts to resolve
+legal@toast.tv. The parties will make good faith efforts to resolve
 the claim through informal negotiations for a period of sixty (60) days
 after the notice is received.
 
@@ -443,7 +443,7 @@ hereunder without Toast Studio's prior written consent. Toast Studio may
 assign these Terms without restriction.
 
 (f) Contact. Questions about these Terms or requests for a Commercial
-License may be directed to: legal@toaststudio.tv.
+License may be directed to: legal@toast.tv.
 
 
 Toast Studio, Inc. All rights reserved. Good Vibes Club and all related
