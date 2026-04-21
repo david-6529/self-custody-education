@@ -9,7 +9,10 @@ import Script from "next/script";
  * Usage: <GoogleAnalytics /> once in the root layout.
  */
 export default function GoogleAnalytics() {
-    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    // Trim to survive env-var setters that append a trailing newline
+    // (e.g. `echo "..." | vercel env add`). GA silently rejects IDs with
+    // whitespace — hits return 204 but Realtime never populates.
+    const gaId = process.env.NEXT_PUBLIC_GA_ID?.trim();
     if (!gaId) return null;
 
     return (
