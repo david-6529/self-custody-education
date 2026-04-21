@@ -727,19 +727,25 @@ export default function Home() {
               </div>
 
               {(() => {
-                const refUrls = (selectedPrompt as any).refImageUrls || [];
+                const communityRefs: { url: string; title: string | null; description: string | null }[] =
+                  (selectedPrompt as any).refImages
+                  || ((selectedPrompt as any).refImageUrls || []).map((u: string) => ({ url: u, title: null, description: null }));
                 const isTpose = selectedPrompt.requiresTpose;
-                const isBuiltInRef = selectedPrompt.hasReferenceImage && !isTpose && !(selectedPrompt as any).refImageUrls?.length;
-                const isCommunityRef = refUrls.length > 0 && !isTpose;
-                const totalImages = 1 + (isTpose ? 2 : isBuiltInRef ? 1 : refUrls.length);
+                const isBuiltInRef = selectedPrompt.hasReferenceImage && !isTpose && communityRefs.length === 0;
+                const isCommunityRef = communityRefs.length > 0 && !isTpose;
+                const totalImages = 1 + (isTpose ? 2 : isBuiltInRef ? 1 : communityRefs.length);
+
+                if (typeof window !== "undefined" && isCommunityRef) {
+                  console.log("[prompt-machine] community refs:", communityRefs.length, communityRefs);
+                }
 
                 return (
                   <>
                     <p className="text-white/40 font-body text-sm mb-5 pl-11">
-                      This prompt requires {totalImages} images. Download them below, then upload all to Gemini along with the prompt.
+                      This prompt requires {totalImages} image{totalImages === 1 ? "" : "s"}. Download them below, then upload all to Gemini along with the prompt.
                     </p>
 
-                    <div className={`grid grid-cols-1 gap-4 mb-6 ${totalImages <= 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                       {/* Always: GVC character */}
                       <div className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                         <p className="text-white font-body text-sm font-semibold mb-2">Your GVC character</p>
@@ -794,11 +800,11 @@ export default function Home() {
                       )}
 
                       {/* Community: reference images from submission */}
-                      {isCommunityRef && ((selectedPrompt as any).refImages || refUrls.map((u: string) => ({ url: u, title: null, description: null }))).map((ref: { url: string; title: string | null; description: string | null }, i: number) => {
+                      {isCommunityRef && communityRefs.map((ref, i) => {
                         const label = ref.title || `Reference image ${i + 1}`;
                         const desc = ref.description;
                         return (
-                          <div key={ref.url + i} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
+                          <div key={`ref-${i}-${ref.url}`} className="rounded-xl bg-black/30 border border-gvc-gold/20 p-4 flex flex-col">
                             <p className="text-white font-body text-sm font-semibold mb-2">{label}</p>
                             {desc && <p className="text-white/40 font-body text-xs mb-3">{desc}</p>}
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
