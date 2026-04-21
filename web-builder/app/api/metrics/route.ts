@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { ensureMetricsTables, insertSnapshot, getHistoricalSeries } from "@/lib/metrics-db";
+import { fetchGaReport, isGaConfigured } from "@/lib/ga";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
     ninetyDaysAgo.setDate(today.getDate() - 90);
 
     // Run all fetches in parallel, defend against any one failing.
-    const [npmLast30, npmRange, ghRepo, ghReleases, ghViews, ghClones, ghReferrers, ghPaths] = await Promise.all([
+    const [npmLast30, npmRange, ghRepo, ghReleases, ghViews, ghClones, ghReferrers, ghPaths, gaReport] = await Promise.all([
         fetchNpmTotal(30),
         fetchNpmDaily(formatDate(ninetyDaysAgo), formatDate(today)),
         fetchGhRepo(),
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
         fetchGhTraffic("clones"),
         fetchGhPopular("referrers"),
         fetchGhPopular("paths"),
+        fetchGaReport(30),
     ]);
 
     // Persist today's snapshot (best-effort — failure doesn't block the response).
@@ -60,7 +62,13 @@ export async function GET(req: NextRequest) {
     const historical = await getHistoricalSeries(90).catch(() => []);
 
     return NextResponse.json({
-        config: { npmPackage: NPM_PACKAGE, githubRepo: GITHUB_REPO, hasGithubToken: !!GITHUB_TOKEN },
+        config: {
+            npmPackage: NPM_PACKAGE,
+            githubRepo: GITHUB_REPO,
+            hasGithubToken: !!GITHUB_TOKEN,
+            gaConfigured: isGaConfigured(),
+        },
+        ga: gaReport,
         npm: {
             last30Days: npmLast30?.downloads ?? null,
             daily: npmRange?.downloads ?? [],

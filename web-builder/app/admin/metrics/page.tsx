@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 
 interface MetricsPayload {
-    config: { npmPackage: string; githubRepo: string; hasGithubToken: boolean };
+    config: { npmPackage: string; githubRepo: string; hasGithubToken: boolean; gaConfigured: boolean };
+    ga: {
+        summary: { sessions: number; users: number; pageviews: number };
+        daily: Array<{ date: string; sessions: number; users: number; pageviews: number }>;
+        topPages: Array<{ label: string; sessions: number; users: number }>;
+        topSources: Array<{ label: string; sessions: number; users: number }>;
+        activeNow: number;
+    } | null;
     npm: {
         last30Days: number | null;
         daily: Array<{ day: string; downloads: number }>;
@@ -135,12 +142,73 @@ export default function MetricsPage() {
                 {data && (
                     <>
                         {/* Top cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
                             <Stat label="Stars" value={data.github.stars} />
                             <Stat label="Forks" value={data.github.forks} />
                             <Stat label="Open Issues" value={data.github.openIssues} />
                             <Stat label="npm — 30d" value={data.npm.last30Days?.toLocaleString() ?? "—"} />
+                            <Stat
+                                label="GA Users — 30d"
+                                value={data.ga ? data.ga.summary.users.toLocaleString() : "—"}
+                            />
                         </div>
+
+                        {/* GA traffic */}
+                        <section className="mb-8">
+                            <h2 className="text-sm font-semibold text-neutral-300 mb-3 flex items-center gap-3">
+                                <span>goodvibesclub.ai — Google Analytics</span>
+                                {data.ga && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/40 border border-emerald-700/50 text-emerald-200 font-normal">
+                                        {data.ga.activeNow} active now
+                                    </span>
+                                )}
+                            </h2>
+                            {!data.config.gaConfigured ? (
+                                <div className="bg-amber-950/30 border border-amber-900/60 rounded-xl p-4 text-sm">
+                                    <p className="text-amber-200 font-medium">GA not configured</p>
+                                    <p className="text-amber-200/70 mt-1 leading-relaxed">
+                                        Set <code>GA_PROPERTY_ID</code> and{" "}
+                                        <code>GA_SERVICE_ACCOUNT_JSON_BASE64</code> in Vercel and grant the service
+                                        account Viewer access on the GA4 property. Reload this page to pull data.
+                                    </p>
+                                </div>
+                            ) : !data.ga ? (
+                                <div className="bg-red-950/30 border border-red-900/60 rounded-xl p-4 text-sm text-red-200">
+                                    GA is configured but the report call failed. Check server logs for
+                                    the specific error (usually a permissions or property-ID mismatch).
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                        <Stat label="Sessions (30d)" value={data.ga.summary.sessions.toLocaleString()} />
+                                        <Stat label="Users (30d)" value={data.ga.summary.users.toLocaleString()} />
+                                        <Stat label="Pageviews (30d)" value={data.ga.summary.pageviews.toLocaleString()} />
+                                    </div>
+                                    <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 mb-3">
+                                        <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">
+                                            Daily sessions
+                                        </div>
+                                        <LineChart
+                                            points={data.ga.daily.map(d => ({ label: d.date, value: d.sessions }))}
+                                            color="#22d3ee"
+                                            height={160}
+                                        />
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-3">
+                                        <TopTable
+                                            title="Top pages"
+                                            rows={data.ga.topPages.map(r => ({ path: r.label, count: r.sessions, uniques: r.users }))}
+                                            labelKey="path"
+                                        />
+                                        <TopTable
+                                            title="Top sources"
+                                            rows={data.ga.topSources.map(r => ({ referrer: r.label, count: r.sessions, uniques: r.users }))}
+                                            labelKey="referrer"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </section>
 
                         {/* npm daily chart */}
                         <section className="mb-8">
