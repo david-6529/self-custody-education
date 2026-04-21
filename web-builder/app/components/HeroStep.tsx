@@ -259,7 +259,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ delay: 0.75, duration: 0.6 }}
-            className="mt-12 mb-8 h-px w-64 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+            className="mt-14 mb-10 h-[2px] w-80 bg-gradient-to-r from-transparent via-gvc-gold/70 to-transparent"
           />
 
           {/* Featured Builds */}
