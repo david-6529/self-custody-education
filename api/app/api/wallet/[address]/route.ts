@@ -5,10 +5,11 @@ export const revalidate = 60;
 
 export async function GET(
   _request: Request,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
   try {
-    const address = params.address.toLowerCase();
+    const { address: raw } = await params;
+    const address = raw.toLowerCase();
 
     const [tagResult, ensResult] = await Promise.all([
       pool.query("SELECT name FROM account_tags WHERE address = $1", [address]),
