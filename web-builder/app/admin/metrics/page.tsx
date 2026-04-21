@@ -149,20 +149,53 @@ export default function MetricsPage() {
                             <Stat label="Open Issues" value={data.github.openIssues} />
                             <Stat label="npm — 30d" value={data.npm.last30Days?.toLocaleString() ?? "—"} />
                             <Stat
-                                label="GA Users — 30d"
+                                label="GA Users (since 4/14)"
                                 value={data.ga ? data.ga.summary.users.toLocaleString() : "—"}
                             />
                         </div>
 
+                        {/* Real-time hero — stands on its own so the number
+                            is the first thing you see in the GA section. */}
+                        {data.ga && (
+                            <div
+                                className="relative mb-4 rounded-2xl p-6 flex items-center justify-between overflow-hidden"
+                                style={{
+                                    background: "linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(6,95,70,0.35) 100%)",
+                                    border: "1px solid rgba(16,185,129,0.35)",
+                                }}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <span className="relative flex h-3 w-3">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400"></span>
+                                    </span>
+                                    <div>
+                                        <div className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
+                                            Active now · goodvibesclub.ai
+                                        </div>
+                                        <div className="text-5xl font-bold tabular-nums text-white mt-1 leading-none">
+                                            {data.ga.activeNow.toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-emerald-200/70 mt-1">
+                                            Users on the site in the last 30 minutes
+                                        </div>
+                                    </div>
+                                </div>
+                                <a
+                                    href={`https://analytics.google.com/analytics/web/#/p${data.config.gaConfigured ? "" : ""}/realtime/overview`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] text-emerald-200/70 hover:text-emerald-100 transition-colors"
+                                >
+                                    View in GA →
+                                </a>
+                            </div>
+                        )}
+
                         {/* GA traffic */}
                         <section className="mb-8">
-                            <h2 className="text-sm font-semibold text-neutral-300 mb-3 flex items-center gap-3">
-                                <span>goodvibesclub.ai — Google Analytics</span>
-                                {data.ga && (
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/40 border border-emerald-700/50 text-emerald-200 font-normal">
-                                        {data.ga.activeNow} active now
-                                    </span>
-                                )}
+                            <h2 className="text-sm font-semibold text-neutral-300 mb-3">
+                                goodvibesclub.ai — daily totals
                             </h2>
                             {!data.config.gaConfigured ? (
                                 <div className="bg-amber-950/30 border border-amber-900/60 rounded-xl p-4 text-sm">
@@ -184,10 +217,18 @@ export default function MetricsPage() {
                                 </div>
                             ) : (
                                 <>
+                                    {data.ga.summary.sessions === 0 && data.ga.summary.pageviews === 0 && (
+                                        <div className="bg-blue-950/30 border border-blue-900/60 rounded-xl p-3 text-xs text-blue-200/80 mb-3">
+                                            No aggregated data yet for this window. GA4 has a 24-48h
+                                            processing lag for new properties — if the &ldquo;Active now&rdquo;
+                                            counter above is non-zero, events are flowing and daily totals
+                                            will catch up shortly.
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-3 gap-3 mb-3">
-                                        <Stat label="Sessions (30d)" value={data.ga.summary.sessions.toLocaleString()} />
-                                        <Stat label="Users (30d)" value={data.ga.summary.users.toLocaleString()} />
-                                        <Stat label="Pageviews (30d)" value={data.ga.summary.pageviews.toLocaleString()} />
+                                        <Stat label="Sessions (since 4/14)" value={data.ga.summary.sessions.toLocaleString()} />
+                                        <Stat label="Users (since 4/14)" value={data.ga.summary.users.toLocaleString()} />
+                                        <Stat label="Pageviews (since 4/14)" value={data.ga.summary.pageviews.toLocaleString()} />
                                     </div>
                                     <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 mb-3">
                                         <div className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">

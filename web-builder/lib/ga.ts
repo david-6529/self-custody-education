@@ -93,6 +93,22 @@ export interface GaReport {
 let lastGaError: string | null = null;
 export function getLastGaError() { return lastGaError; }
 
+/**
+ * Earliest date we want to query. GA was installed on goodvibesclub.ai on
+ * 2026-04-14 — anything before that is stale zeros from whenever the
+ * property was first provisioned. Clamp all date ranges to this so the
+ * charts don't have a long leading flatline.
+ */
+const GA_MIN_START_DATE = "2026-04-14";
+
+function clampedStartDate(daysBack: number): string {
+    const today = new Date();
+    const daysBackDate = new Date(today);
+    daysBackDate.setUTCDate(daysBackDate.getUTCDate() - daysBack);
+    const daysBackIso = daysBackDate.toISOString().slice(0, 10);
+    return daysBackIso < GA_MIN_START_DATE ? GA_MIN_START_DATE : daysBackIso;
+}
+
 export async function fetchGaReport(daysBack: number = 30): Promise<GaReport | null> {
     const client = getClient();
     const cfg = cachedConfig;
@@ -100,7 +116,7 @@ export async function fetchGaReport(daysBack: number = 30): Promise<GaReport | n
 
     const property = `properties/${cfg.propertyId}`;
     const endDate = "today";
-    const startDate = `${daysBack}daysAgo`;
+    const startDate = clampedStartDate(daysBack);
 
     try {
         const [daily, topPages, topSources, realtime] = await Promise.all([
