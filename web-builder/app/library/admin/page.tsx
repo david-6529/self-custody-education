@@ -370,7 +370,7 @@ export default function BrandAdmin() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml,.c4d,application/octet-stream"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,.c4d,application/octet-stream,application/vnd.clonk.c4group"
               multiple
               className="hidden"
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}

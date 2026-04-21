@@ -12,12 +12,18 @@ const IMAGE_CONTENT_TYPES = [
   "image/webp",
   "image/svg+xml",
 ];
-// Cinema 4D files: browsers typically send application/octet-stream for unknown
-// binary types; the other two are legacy MIME registrations we've seen.
+// Cinema 4D files. Different OS/browser combinations report wildly different
+// MIME types for .c4d: octet-stream (unknown binary fallback), x-cinema4d and
+// model/vnd.c4d (legacy registrations), and — confusingly — vnd.clonk.c4group,
+// which some systems map .c4d to because of the unrelated Clonk game. Empty
+// string covers the occasional Safari report. We rely on the pathname ending
+// in .c4d (enforced below) as the real gate, so this wide allowlist is safe.
 const C4D_CONTENT_TYPES = [
   "application/octet-stream",
   "application/x-cinema4d",
+  "application/vnd.clonk.c4group",
   "model/vnd.c4d",
+  "",
 ];
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;    // 10MB — raster images
 const MAX_3D_BYTES = 200 * 1024 * 1024;      // 200MB — Cinema 4D scene files
