@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 
 const brice = localFont({
   src: [
@@ -39,6 +40,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body className={`${brice.variable} ${mundial.variable} font-body`}>
         <div className="relative z-10">
           {children}
