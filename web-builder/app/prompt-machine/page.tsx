@@ -580,8 +580,7 @@ export default function Home() {
                 <div className="rounded-xl overflow-hidden bg-black/40 flex items-center justify-center">
                   <img src={selectedPrompt.exampleImage} alt={`Example: ${selectedPrompt.title}`} className="max-w-full max-h-[500px] object-contain" />
                 </div>
-                <div className="flex items-center justify-between gap-3 mt-3">
-                  <p className="text-white/20 font-body text-xs flex-1 text-left sm:text-center">Generated with Gemini. Your results will vary based on your character.</p>
+                <div className="flex flex-col items-center gap-3 mt-4">
                   <button
                     onClick={() => {
                       const url = selectedPrompt.exampleImage!;
@@ -590,11 +589,12 @@ export default function Home() {
                       const filename = `${slug || "example"}-example.${ext.length <= 4 ? ext : "png"}`;
                       downloadImage(url, filename);
                     }}
-                    className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gvc-gold text-gvc-black font-display font-bold rounded-xl hover:shadow-[0_0_20px_rgba(255,224,72,0.3)] transition-all"
                   >
                     Download
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                   </button>
+                  <p className="text-white/20 font-body text-xs text-center">Generated with Gemini. Your results will vary based on your character.</p>
                 </div>
               </div>
             </motion.div>
