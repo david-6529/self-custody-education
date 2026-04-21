@@ -580,7 +580,22 @@ export default function Home() {
                 <div className="rounded-xl overflow-hidden bg-black/40 flex items-center justify-center">
                   <img src={selectedPrompt.exampleImage} alt={`Example: ${selectedPrompt.title}`} className="max-w-full max-h-[500px] object-contain" />
                 </div>
-                <p className="text-white/20 font-body text-xs mt-2 text-center">Generated with Gemini. Your results will vary based on your character.</p>
+                <div className="flex items-center justify-between gap-3 mt-3">
+                  <p className="text-white/20 font-body text-xs flex-1 text-left sm:text-center">Generated with Gemini. Your results will vary based on your character.</p>
+                  <button
+                    onClick={() => {
+                      const url = selectedPrompt.exampleImage!;
+                      const slug = selectedPrompt.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                      const ext = (url.split("?")[0].split(".").pop() || "png").toLowerCase();
+                      const filename = `${slug || "example"}-example.${ext.length <= 4 ? ext : "png"}`;
+                      downloadImage(url, filename);
+                    }}
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors"
+                  >
+                    Download
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
