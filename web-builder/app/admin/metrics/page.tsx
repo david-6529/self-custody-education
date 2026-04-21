@@ -11,6 +11,7 @@ interface MetricsPayload {
         topSources: Array<{ label: string; sessions: number; users: number }>;
         activeNow: number;
     } | null;
+    gaError?: string | null;
     npm: {
         last30Days: number | null;
         daily: Array<{ day: string; downloads: number }>;
@@ -174,8 +175,12 @@ export default function MetricsPage() {
                                 </div>
                             ) : !data.ga ? (
                                 <div className="bg-red-950/30 border border-red-900/60 rounded-xl p-4 text-sm text-red-200">
-                                    GA is configured but the report call failed. Check server logs for
-                                    the specific error (usually a permissions or property-ID mismatch).
+                                    <p className="font-medium">GA is configured but the report call failed.</p>
+                                    {data.gaError && (
+                                        <pre className="mt-2 text-[11px] font-mono text-red-200/80 whitespace-pre-wrap break-words">
+                                            {data.gaError}
+                                        </pre>
+                                    )}
                                 </div>
                             ) : (
                                 <>

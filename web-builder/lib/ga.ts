@@ -87,6 +87,12 @@ export interface GaReport {
     activeNow: number;
 }
 
+// Most recent error message from fetchGaReport, for surfacing in the
+// admin UI when the call fails. Not a real caching pattern — just a
+// one-slot diagnostic for the next debug call.
+let lastGaError: string | null = null;
+export function getLastGaError() { return lastGaError; }
+
 export async function fetchGaReport(daysBack: number = 30): Promise<GaReport | null> {
     const client = getClient();
     const cfg = cachedConfig;
@@ -166,7 +172,9 @@ export async function fetchGaReport(daysBack: number = 30): Promise<GaReport | n
 
         return { summary, daily: dailyPoints, topPages: topPagesOut, topSources: topSourcesOut, activeNow };
     } catch (e) {
-        console.error("[ga] fetchReport failed:", (e as Error).message);
+        const msg = (e as Error).message || String(e);
+        lastGaError = msg;
+        console.error("[ga] fetchReport failed:", msg);
         return null;
     }
 }

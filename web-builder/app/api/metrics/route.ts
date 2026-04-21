@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { ensureMetricsTables, insertSnapshot, getHistoricalSeries } from "@/lib/metrics-db";
-import { fetchGaReport, isGaConfigured } from "@/lib/ga";
+import { fetchGaReport, isGaConfigured, getLastGaError } from "@/lib/ga";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
             gaConfigured: isGaConfigured(),
         },
         ga: gaReport,
+        gaError: gaReport ? null : getLastGaError(),
         npm: {
             last30Days: npmLast30?.downloads ?? null,
             daily: npmRange?.downloads ?? [],
