@@ -202,7 +202,7 @@ Anything you can imagine. The Builder Kit gives you a starting point, and you ta
 |---|---|
 | "A website or landing page" | Hero, about section, features grid, CTA, footer |
 | "A dashboard or tracker" | Stats cards, floor price, leaderboards, charts, live data |
-| "A game" | Game board, scoring, game-over screen |
+| "A game" | Game board, scoring, save/resume, daily puzzle seed, sound effects, shareable score cards, leaderboard, achievements, and streaks |
 | "A gallery" | Image grid, filtering, search, uploads |
 | "A voting or ranking page" | 1v1 matchups, polls, leaderboard |
 | "A lookup tool" | Search by wallet or token ID, see badges, traits, rarity |
@@ -233,10 +233,11 @@ When you pick extras during setup, they get added to your project's Claude guide
 | Power-up | What it gives you |
 |---|---|
 | **Badge collection** | All 101 GVC badges across 5 tiers with a collection UI |
-| **Leaderboard** | Daily, weekly, and all-time rankings |
-| **User accounts** | Let people sign up and save their progress |
-| **Game engine** | Scoring, daily challenges, and game logic ready to go |
-| **Audio** | Sound effects and music for games and interactive projects |
+| **Leaderboard** | Daily, weekly, and all-time rankings backed by Postgres, with rate limits so nobody floods the board |
+| **User accounts** | Username + password sign up, saved progress, protected pages |
+| **Game engine** | State machine, daily challenges, save/resume, touch controls, shareable score cards, anti-cheat replay |
+| **Audio** | Sound effects and music with mute/volume saved across visits |
+| **Achievements & streaks** | Unlockable badges, daily streak tracking, and toast celebrations when players hit a milestone |
 
 ### UI Extras
 
@@ -258,6 +259,7 @@ The Builder Kit reads your description and picks the right setup:
 |---|---|
 | "A dashboard that tracks GVC floor price" | Tracker + Collection data + Stats panel |
 | "A game where people vote on favorite GVCs" | Vote & Rank + NFT images + Leaderboard |
+| "A daily puzzle game with streaks and prizes" | Game + Game engine + Audio + Leaderboard + Achievements |
 | "A page for my GVC art collection" | Gallery + NFT image loading |
 | "A sweep tracker with wallet connect" | Tracker + Wallet + Collection data + On-chain reads |
 | "Something fun, not sure yet" | Blank Canvas. Build whatever you want |
