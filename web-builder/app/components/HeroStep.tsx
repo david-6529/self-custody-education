@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Terminal, Sparkles, Puzzle } from "lucide-react";
+import { ArrowRight, Terminal, Sparkles, Puzzle, Trophy, Swords, Palette, Disc3 } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import TermsGate, { hasAcceptedTerms } from "./TermsGate";
@@ -63,6 +63,42 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     url: "/prompt-machine",
     icon: Sparkles,
     description: "Want to bring your GVC characters to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
+  },
+  {
+    id: "rewards-pool",
+    name: "The Rewards Pool",
+    tabName: "Rewards Pool",
+    status: "live",
+    url: "https://vibepool.io/",
+    icon: Trophy,
+    description: "Collect Badges. Participate in the Eco. Access Rewards. VibePool is a dashboard that tracks the Rewards Pool and ongoing Vibe Strategy protocol activity.",
+  },
+  {
+    id: "vibe-off",
+    name: "Vibe Off!",
+    tabName: "Vibe Off!",
+    status: "live",
+    url: "https://vibeoff.xyz/",
+    icon: Swords,
+    description: "A matchup game that pits randomized GVCs against each other head-to-head, in the ultimate battle for aesthetic supremacy. Play the 1v1 mode or submit a pairing into DUOS (2v2).",
+  },
+  {
+    id: "gallery",
+    name: "The Gallery",
+    tabName: "The Gallery",
+    status: "live",
+    url: "https://gvcgallery.xyz/",
+    icon: Palette,
+    description: "From blank canvas to masterpiece! A space where artists, friends, and GVC community members can submit their handmade creations. Choose a blank and go make something awesome.",
+  },
+  {
+    id: "wheel-of-vibes",
+    name: "Wheel Of Vibes",
+    tabName: "Wheel of Vibes",
+    status: "live",
+    url: "https://wheelofvibes.com/",
+    icon: Disc3,
+    description: "An interactive name-randomizer. Drop in a list of names or ETH wallet addresses, hit spin, and the wheel lands on a random winner with a celebration overlay. It's wired into the GVC ecosystem so entries can be filtered or weighted by the badges a holder has unlocked through their NFTs.",
   },
   {
     id: "vibematch",
@@ -282,12 +318,12 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             Featured Builds
           </motion.h2>
 
-          {/* Tabs */}
+          {/* Tabs — 2 rows of 3 on sm+, 3 rows of 2 on mobile */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.85, duration: 0.5 }}
-            className="flex flex-wrap justify-center gap-2 mb-6"
+            className="w-full max-w-2xl grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6"
           >
             {FEATURED_BUILDS.map((build) => {
               const isActive = activeBuild === build.id;
@@ -296,14 +332,14 @@ export default function HeroStep({ onNext }: HeroStepProps) {
                 <button
                   key={build.id}
                   onClick={() => setActiveBuild(build.id)}
-                  className={`px-5 py-2.5 rounded-xl font-display font-bold text-sm flex items-center gap-2 transition-all ${
+                  className={`px-3 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
                     isActive
                       ? "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold"
                       : "border border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
                   }`}
                 >
-                  {build.tabName || build.name}
-                  {isSoon && <span className="text-[9px] opacity-60 ml-0.5">SOON</span>}
+                  <span className="truncate">{build.tabName || build.name}</span>
+                  {isSoon && <span className="text-[9px] opacity-60 flex-shrink-0">SOON</span>}
                 </button>
               );
             })}
