@@ -978,7 +978,7 @@ Use cases: rarity checker, token lookup, trait filtering, collection search, tra
 - Fonts: /public/fonts/ (Brice for headlines, Mundial for body)
 - Shaka icon: /public/shaka.png
 - GVC logotype: /public/gvc-logotype.svg
-- Background grid: /public/grid.svg
+- Background grid: /public/grid.svg (already applied via body::before in globals.css — do NOT add background-size or opacity overrides on top; the SVG ships with its own 10% white stroke, and extra opacity stacks to invisible)
 - Token metadata: /public/gvc-metadata.json (all 6,969 tokens with traits + images)
 
 ## Brand Asset Library
@@ -1139,7 +1139,7 @@ async function main() {
   if (command === "deploy") return runDeploy();
   if (command === "templates") return showTemplates();
   if (command === "--version" || command === "-v") {
-    console.log("create-gvc-app v0.5.4");
+    console.log("create-gvc-app v0.5.5");
     return;
   }
 
