@@ -6,10 +6,25 @@ import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 import { compressImage, formatBytes } from "@/lib/image-compress";
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;   // 10MB — raster images
+const MAX_3D_BYTES = 200 * 1024 * 1024;     // 200MB — Cinema 4D scenes
 
 function sanitizeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
+
+type FileKind = "image" | "c4d" | "reject";
+
+function classifyFile(file: File): FileKind {
+  const lowerName = file.name.toLowerCase();
+  if (file.type === "image/gif") return "reject";
+  if (file.type.startsWith("image/")) return "image";
+  if (lowerName.endsWith(".c4d")) return "c4d";
+  return "reject";
+}
+
+function maxBytesFor(kind: FileKind): number {
+  return kind === "c4d" ? MAX_3D_BYTES : MAX_IMAGE_BYTES;
 }
 
 const TOKEN_KEY = "gvc_admin_token";
@@ -88,54 +103,71 @@ export default function BrandAdmin() {
   useEffect(() => { fetchData(); }, []);
 
   async function uploadFiles(files: FileList | File[]) {
-    // Drop GIFs — we no longer accept them in the asset library
-    const rejectedGifs: string[] = [];
-    const fileArr = Array.from(files).filter((f) => {
-      if (f.type === "image/gif") {
-        rejectedGifs.push(f.name);
-        return false;
+    // Sort incoming files into image, c4d, or reject (GIFs or unknown types).
+    const rejected: string[] = [];
+    const classified: { file: File; kind: FileKind }[] = [];
+    for (const f of Array.from(files)) {
+      const kind = classifyFile(f);
+      if (kind === "reject") {
+        rejected.push(f.name);
+      } else {
+        classified.push({ file: f, kind });
       }
-      return f.type.startsWith("image/");
-    });
-    if (rejectedGifs.length > 0) {
-      alert(`GIFs are no longer supported. Skipped:\n${rejectedGifs.join("\n")}`);
     }
-    if (!fileArr.length || !uploadCategory) return;
+    if (rejected.length > 0) {
+      alert(
+        `Skipped files in unsupported formats (allowed: PNG, JPEG, WebP, SVG, .c4d):\n${rejected.join("\n")}`
+      );
+    }
+    if (!classified.length || !uploadCategory) return;
 
     const adminToken = getAdminToken();
     if (!adminToken) return;
 
     setUploading(true);
 
-    // Compress (unless user opted to preserve originals). Oversize check runs
-    // AFTER compression since a 12MB PNG might become a 1MB WebP.
-    const prepared: { file: File; originalName: string; savedBytes: number }[] = [];
+    // Prepare each file. Images get compressed (unless preserveOriginal).
+    // C4D files pass through untouched — they're binary scene files, not images.
+    const prepared: {
+      file: File;
+      kind: FileKind;
+      originalName: string;
+      savedBytes: number;
+    }[] = [];
     const compressFailures: { name: string; reason: string }[] = [];
-    for (const original of fileArr) {
-      if (preserveOriginal) {
-        prepared.push({ file: original, originalName: original.name, savedBytes: 0 });
+
+    for (const { file, kind } of classified) {
+      if (kind !== "image" || preserveOriginal) {
+        prepared.push({ file, kind, originalName: file.name, savedBytes: 0 });
         continue;
       }
       try {
-        const result = await compressImage(original);
+        const result = await compressImage(file);
         prepared.push({
           file: result.file,
-          originalName: original.name,
+          kind,
+          originalName: file.name,
           savedBytes: result.originalSize - result.compressedSize,
         });
       } catch (e) {
-        compressFailures.push({ name: original.name, reason: e instanceof Error ? e.message : String(e) });
+        compressFailures.push({ name: file.name, reason: e instanceof Error ? e.message : String(e) });
       }
     }
 
-    const oversize = prepared.filter((p) => p.file.size > MAX_UPLOAD_BYTES);
+    // Per-kind size caps: images at 10MB, C4D scenes at 200MB.
+    const oversize = prepared.filter((p) => p.file.size > maxBytesFor(p.kind));
     if (oversize.length > 0) {
       alert(
-        `Skipping files over 10MB even after compression:\n` +
-          oversize.map((p) => `${p.originalName} → ${formatBytes(p.file.size)}`).join("\n")
+        "Skipping files over their size cap:\n" +
+          oversize
+            .map((p) => {
+              const cap = p.kind === "c4d" ? "200MB" : "10MB";
+              return `${p.originalName} → ${formatBytes(p.file.size)} (limit ${cap})`;
+            })
+            .join("\n")
       );
     }
-    const toUpload = prepared.filter((p) => p.file.size <= MAX_UPLOAD_BYTES);
+    const toUpload = prepared.filter((p) => p.file.size <= maxBytesFor(p.kind));
     if (!toUpload.length) {
       setUploading(false);
       return;
@@ -338,7 +370,7 @@ export default function BrandAdmin() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,.c4d,application/octet-stream"
               multiple
               className="hidden"
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}
@@ -352,7 +384,7 @@ export default function BrandAdmin() {
               <>
                 <svg className="w-8 h-8 text-white/20 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.338 3.75 3.75 0 013.467 5.338A3.75 3.75 0 0118 19.5H6.75z" /></svg>
                 <p className="text-white/40 font-body text-sm">Drag and drop images here, or click to browse</p>
-                <p className="text-white/20 font-body text-xs mt-1">JPG, PNG, WebP, or SVG. Multiple files at once. Images over 2048px are resized and re-encoded to WebP.</p>
+                <p className="text-white/20 font-body text-xs mt-1">Images (JPG, PNG, WebP, SVG) up to 10MB and Cinema 4D scenes (.c4d) up to 200MB. Images over 2048px are resized and re-encoded to WebP; .c4d files upload as-is.</p>
               </>
             )}
           </div>
@@ -479,7 +511,14 @@ export default function BrandAdmin() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   className="group relative rounded-xl overflow-hidden bg-gvc-dark border border-white/[0.08] hover:border-gvc-gold/20 transition-all"
                 >
-                  <img src={asset.image_url} alt={asset.filename} className="w-full h-auto" />
+                  {asset.filename.toLowerCase().endsWith(".c4d") ? (
+                    <div className="w-full aspect-square bg-black/40 flex flex-col items-center justify-center gap-2 text-white/40 font-body text-xs">
+                      <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                      <span className="uppercase tracking-wider text-gvc-gold/70">C4D scene</span>
+                    </div>
+                  ) : (
+                    <img src={asset.image_url} alt={asset.filename} className="w-full h-auto" />
+                  )}
 
                   <div className="p-3">
                     {editingId === asset.id ? (

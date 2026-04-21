@@ -5,14 +5,22 @@ import { verifyAdminToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_CONTENT_TYPES = [
+const IMAGE_CONTENT_TYPES = [
   "image/png",
   "image/jpeg",
   "image/jpg",
   "image/webp",
   "image/svg+xml",
 ];
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+// Cinema 4D files: browsers typically send application/octet-stream for unknown
+// binary types; the other two are legacy MIME registrations we've seen.
+const C4D_CONTENT_TYPES = [
+  "application/octet-stream",
+  "application/x-cinema4d",
+  "model/vnd.c4d",
+];
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;    // 10MB — raster images
+const MAX_3D_BYTES = 200 * 1024 * 1024;      // 200MB — Cinema 4D scene files
 
 // PUT — client confirms a successful blob upload and we record it in the DB.
 // The onUploadCompleted webhook from @vercel/blob is unreliable in our setup,
@@ -68,7 +76,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (_pathname, clientPayload) => {
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
         const payload = clientPayload ? JSON.parse(clientPayload) : {};
 
         if (!verifyAdminToken(payload.adminToken)) {
@@ -87,9 +95,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           throw new Error("category required");
         }
 
+        // Scope the MIME allowlist + size cap to the file type we're expecting,
+        // inferred from the pathname extension. Keeps the octet-stream allowance
+        // (needed for .c4d) from being a backdoor for arbitrary binaries.
+        const lowerPath = pathname.toLowerCase();
+        const isC4d = lowerPath.endsWith(".c4d");
+        const allowedContentTypes = isC4d ? C4D_CONTENT_TYPES : IMAGE_CONTENT_TYPES;
+        const maximumSizeInBytes = isC4d ? MAX_3D_BYTES : MAX_IMAGE_BYTES;
+
         return {
-          allowedContentTypes: ALLOWED_CONTENT_TYPES,
-          maximumSizeInBytes: MAX_UPLOAD_BYTES,
+          allowedContentTypes,
+          maximumSizeInBytes,
           tokenPayload: JSON.stringify({
             primary,
             categories: categories.length > 0 ? categories : [primary],

@@ -56,7 +56,10 @@ export default function Library() {
   }
 
   async function copyForClaude(asset: BrandAsset) {
-    const text = `Use this image in my project:\nFilename: ${asset.filename}\nURL: ${asset.image_url}\nUsage: <img src="${asset.image_url}" alt="${asset.filename}" /> or with next/image: <Image src="${asset.image_url}" alt="${asset.filename}" width={400} height={300} />`;
+    const isC4d = asset.filename.toLowerCase().endsWith(".c4d");
+    const text = isC4d
+      ? `Use this Cinema 4D scene file in my project:\nFilename: ${asset.filename}\nURL: ${asset.image_url}\nFile type: Cinema 4D (.c4d) — a 3D scene file, not a browser-renderable image. Link to it for download (<a href="${asset.image_url}" download>Download scene</a>) or expose it as an asset for 3D tools. Do not attempt to render with <img> or next/image.`
+      : `Use this image in my project:\nFilename: ${asset.filename}\nURL: ${asset.image_url}\nUsage: <img src="${asset.image_url}" alt="${asset.filename}" /> or with next/image: <Image src="${asset.image_url}" alt="${asset.filename}" width={400} height={300} />`;
     await copyText(text);
     setCopiedClaudeId(asset.id);
     setTimeout(() => setCopiedClaudeId(null), 2000);
@@ -231,11 +234,18 @@ export default function Library() {
                     className="cursor-pointer"
                     onClick={() => setLightboxAsset(asset)}
                   >
-                    <img
-                      src={asset.image_url}
-                      alt={asset.filename}
-                      className="w-full h-auto"
-                    />
+                    {asset.filename.toLowerCase().endsWith(".c4d") ? (
+                      <div className="w-full aspect-square bg-black/40 flex flex-col items-center justify-center gap-2 text-white/40 font-body text-xs">
+                        <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                        <span className="uppercase tracking-wider text-gvc-gold/70">C4D scene</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={asset.image_url}
+                        alt={asset.filename}
+                        className="w-full h-auto"
+                      />
+                    )}
                   </div>
 
                   {/* Info */}
