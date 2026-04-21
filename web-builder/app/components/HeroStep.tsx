@@ -80,7 +80,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     status: "live",
     url: "https://vibeoff.xyz/",
     icon: Swords,
-    description: "A matchup game that pits randomized GVCs against each other head-to-head, in the ultimate battle for aesthetic supremacy. Play the 1v1 mode or submit a pairing into DUOS (2v2).",
+    description: "A matchup game that pits randomized GVCs against each other head-to-head, in the ultimate battle for aesthetic supremacy. Play the 1v1 mode or submit a pairing into DUOS.",
   },
   {
     id: "gallery",
@@ -89,7 +89,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     status: "live",
     url: "https://gvcgallery.xyz/",
     icon: Palette,
-    description: "From blank canvas to masterpiece! A space where artists, friends, and GVC community members can submit their handmade creations. Choose a blank and go make something awesome.",
+    description: "From blank canvas to masterpiece! A space where artists, friends, and GVC community members can submit their handmade creations. Choose a blank and make something awesome.",
   },
   {
     id: "wheel-of-vibes",
