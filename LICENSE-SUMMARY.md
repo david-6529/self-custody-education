@@ -41,6 +41,8 @@ Build cool stuff for fun. Talk to us before you build something that makes money
 - Market manipulation tools (wash trading, front-running, etc.)
 - Anything that impersonates Toast Studio, Good Vibes Club, or the team
 - Hate speech, harassment, or illegal content
+- Sexually explicit or adult content using GVC characters or brand assets
+- Gambling, wagering, or casino-style games involving real-money or crypto stakes
 - Anything that damages GVC's reputation or community
 
 ## Want to build something commercial?

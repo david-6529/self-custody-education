@@ -1,5 +1,5 @@
 GVC BUILDER KIT - TERMS OF USE
-Version: 1.0.0
+Version: 1.1.0
 Last Revised: April 21, 2026
 
 These Terms of Use ("Terms") constitute a binding legal agreement between you
@@ -202,9 +202,16 @@ that:
     trading, or facilitate any form of market manipulation;
     (v) impersonates Toast Studio, Good Vibes Club, or any GVC team member;
     (vi) promotes hate speech, harassment, violence, or illegal activity;
-    (vii) is likely to damage the reputation, goodwill, or community
-    standing of Good Vibes Club or Toast Studio; or
-    (viii) violates any applicable law, regulation, or third-party right.
+    (vii) contains, displays, or generates sexually explicit, pornographic,
+    or adult content, or uses GVC characters, Builder Kit Assets, or the
+    GVC IP in any sexually suggestive context;
+    (viii) is likely to damage the reputation, goodwill, or community
+    standing of Good Vibes Club or Toast Studio;
+    (ix) violates any applicable law, regulation, or third-party right; or
+    (x) facilitates, promotes, or constitutes gambling, wagering, betting,
+    lotteries, or games of chance involving real-money stakes,
+    cryptocurrency stakes, or any form of monetary value, whether or not
+    such activity is legal in the user's jurisdiction.
 
 (g) Builder API Restrictions. You may not: (i) resell, redistribute, or
 commercially license the raw data returned by the Builder API as a
@@ -296,6 +303,18 @@ your Builds within fourteen (14) days of receiving notice of revocation;
 revocation; and (iv) you may continue to use and distribute any original
 code you authored, provided it does not incorporate any GVC IP or Builder
 Kit Assets.
+
+(d) Reporting to Third-Party Platforms. In addition to any other rights or
+remedies available to it, Toast Studio reserves the right to report
+unauthorized use of the GVC IP, the Marks, or the Builder Kit Assets to
+hosting providers, domain registrars, blockchain name services, app
+stores, NFT marketplaces, social media platforms, advertising networks,
+payment processors, and any other third-party platform, and to request
+suspension, removal, or takedown of infringing content, accounts, domains,
+or applications. You agree that Toast Studio may identify you by name,
+username, wallet address, or other identifier in connection with any such
+report, and you waive any claim against Toast Studio arising from such
+reports, provided they are made in good faith.
 
 
 9. DISCLAIMERS; NO WARRANTIES

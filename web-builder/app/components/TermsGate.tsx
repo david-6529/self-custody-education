@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 // Matches the `Version:` header in /LICENSE and /TERMS.md. Bumping this forces
 // every visitor to re-accept the next time they try to scaffold a project.
-export const WEB_TERMS_VERSION = "1.0.0";
+export const WEB_TERMS_VERSION = "1.1.0";
 const STORAGE_KEY = "gvc-terms-accepted";
 const TERMS_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/TERMS.md";
 const LICENSE_SUMMARY_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/LICENSE-SUMMARY.md";

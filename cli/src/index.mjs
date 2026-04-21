@@ -15,7 +15,7 @@ const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
 // ── Terms of Use acceptance ─────────────────────────────────────────
 // Matches the `Version:` header in /LICENSE and /TERMS.md. Bumping this
 // number forces every existing user to re-accept on the next run.
-const TERMS_VERSION = "1.0.0";
+const TERMS_VERSION = "1.1.0";
 const TERMS_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/TERMS.md";
 const LICENSE_SUMMARY_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/LICENSE-SUMMARY.md";
 const ACCEPTANCE_PATH = path.join(os.homedir(), ".config", "create-gvc-app", "acceptance.json");
@@ -1612,7 +1612,7 @@ async function main() {
   if (command === "deploy") return runDeploy();
   if (command === "templates") return showTemplates();
   if (command === "--version" || command === "-v") {
-    console.log("create-gvc-app v0.7.0");
+    console.log("create-gvc-app v0.7.1");
     return;
   }
 
@@ -1645,7 +1645,7 @@ async function main() {
   showHeader();
 
   // ── Terms of Use gate ──
-  await ensureTermsAccepted({ nonInteractive, cliVersion: "0.7.0" });
+  await ensureTermsAccepted({ nonInteractive, cliVersion: "0.7.1" });
 
   // ── Preflight ──
   checkNodeVersion();
