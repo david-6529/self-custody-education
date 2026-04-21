@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Terminal, Sparkles, Puzzle } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import TermsGate, { hasAcceptedTerms } from "./TermsGate";
 
 // All 101 badge filenames
 const ALL_BADGES = [
@@ -76,8 +77,17 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
 export default function HeroStep({ onNext }: HeroStepProps) {
   const badges = useMemo(() => shuffleArray([...ALL_BADGES]).slice(0, 25), []);
   const [activeBuild, setActiveBuild] = useState<string>("prompt-machine");
+  const [termsOpen, setTermsOpen] = useState(false);
   const current = FEATURED_BUILDS.find((b) => b.id === activeBuild) || FEATURED_BUILDS[0];
   const CurrentIcon = current.icon;
+
+  function handleStartBuilding() {
+    if (hasAcceptedTerms()) {
+      onNext();
+    } else {
+      setTermsOpen(true);
+    }
+  }
 
   return (
     <motion.div
@@ -193,7 +203,7 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             transition={{ delay: 0.6, duration: 0.5 }}
             whileHover={{ scale: 1.04, y: -2 }}
             whileTap={{ scale: 0.97 }}
-            onClick={onNext}
+            onClick={handleStartBuilding}
             className="
               group relative inline-flex items-center gap-3 px-10 py-5
               bg-gvc-gold text-gvc-black font-display font-bold text-xl
@@ -374,6 +384,15 @@ export default function HeroStep({ onNext }: HeroStepProps) {
           </div>
         </div>
       </motion.div>
+
+      <TermsGate
+        open={termsOpen}
+        onCancel={() => setTermsOpen(false)}
+        onAccept={() => {
+          setTermsOpen(false);
+          onNext();
+        }}
+      />
     </motion.div>
   );
 }

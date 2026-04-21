@@ -1,5 +1,6 @@
 GVC BUILDER KIT - TERMS OF USE
-Last Revised: April 9, 2026
+Version: 1.0.0
+Last Revised: April 21, 2026
 
 These Terms of Use ("Terms") constitute a binding legal agreement between you
 ("you" or "your") and Toast Studio, Inc., a corporation organized under the
@@ -214,6 +215,14 @@ volume that constitutes abuse, as determined by Toast Studio in its sole
 discretion. Toast Studio reserves the right to implement rate limits,
 authentication requirements, or other access controls on the Builder API at
 any time.
+
+(h) Domain Names, Social Accounts, and Token Identifiers. You may not
+register, claim, or otherwise acquire any domain name, blockchain name
+service identifier (including ENS, Unstoppable Domains, or similar), social
+media handle, token ticker symbol, or other digital identifier that
+incorporates, is confusingly similar to, or is likely to be associated with
+the GVC IP, the Good Vibes Club brand, Vibetown, Toast Studio, or any
+Marks, without the prior written approval of Toast Studio.
 
 
 6. BUILDER API

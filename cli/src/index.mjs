@@ -4,12 +4,95 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import fs from "fs-extra";
 import path from "path";
+import os from "os";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TEMPLATES_DIR = path.join(__dirname, "..", "templates");
+
+// ── Terms of Use acceptance ─────────────────────────────────────────
+// Matches the `Version:` header in /LICENSE and /TERMS.md. Bumping this
+// number forces every existing user to re-accept on the next run.
+const TERMS_VERSION = "1.0.0";
+const TERMS_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/TERMS.md";
+const LICENSE_SUMMARY_URL = "https://github.com/brydisanto/gvc-builder-kit/blob/main/LICENSE-SUMMARY.md";
+const ACCEPTANCE_PATH = path.join(os.homedir(), ".config", "create-gvc-app", "acceptance.json");
+
+function readAcceptance() {
+  try {
+    return JSON.parse(fs.readFileSync(ACCEPTANCE_PATH, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeAcceptance(cliVersion) {
+  fs.mkdirSync(path.dirname(ACCEPTANCE_PATH), { recursive: true });
+  fs.writeFileSync(
+    ACCEPTANCE_PATH,
+    JSON.stringify(
+      {
+        termsVersion: TERMS_VERSION,
+        cliVersion,
+        acceptedAt: new Date().toISOString(),
+        acceptedBy: os.userInfo().username,
+      },
+      null,
+      2
+    )
+  );
+}
+
+async function ensureTermsAccepted({ nonInteractive, cliVersion }) {
+  const acceptance = readAcceptance();
+  if (acceptance && acceptance.termsVersion === TERMS_VERSION) return;
+
+  const flagAccept = process.argv.includes("--accept-terms");
+  const envAccept = process.env.GVC_ACCEPT_TERMS === "1" || process.env.GVC_ACCEPT_TERMS === "true";
+
+  if (flagAccept || envAccept) {
+    writeAcceptance(cliVersion);
+    return;
+  }
+
+  if (nonInteractive) {
+    console.error(
+      "\n  Error: Terms of Use acceptance required in non-interactive mode.\n" +
+      "  Pass --accept-terms or set GVC_ACCEPT_TERMS=1 after reviewing:\n" +
+      "    " + TERMS_URL + "\n"
+    );
+    process.exit(1);
+  }
+
+  console.log();
+  p.note(
+    [
+      "By using this CLI, you agree to the GVC Builder Kit Community License:",
+      "  • Non-commercial community use is free",
+      "  • Commercial use requires a separate license",
+      "  • You must follow GVC brand rules",
+      "",
+      "Full terms: " + TERMS_URL,
+      "Plain-English summary: " + LICENSE_SUMMARY_URL,
+    ].join("\n"),
+    "GVC Builder Kit Terms of Use (v" + TERMS_VERSION + ")"
+  );
+
+  const accepted = await p.confirm({
+    message: "Do you accept these terms?",
+    initialValue: false,
+  });
+
+  if (p.isCancel(accepted) || accepted !== true) {
+    p.cancel("Come back anytime. Run " + info("npx create-gvc-app") + " again once you've had a chance to review.");
+    process.exit(0);
+  }
+
+  writeAcceptance(cliVersion);
+  p.note(success("Terms accepted. Saved to " + ACCEPTANCE_PATH));
+}
 
 // ── Brand colors (terminal approximations) ──────────────────────────
 const gold = (text) => pc.yellow(text);
@@ -1529,7 +1612,7 @@ async function main() {
   if (command === "deploy") return runDeploy();
   if (command === "templates") return showTemplates();
   if (command === "--version" || command === "-v") {
-    console.log("create-gvc-app v0.6.0");
+    console.log("create-gvc-app v0.7.0");
     return;
   }
 
@@ -1560,6 +1643,9 @@ async function main() {
 
   // "create" or no command runs the scaffold flow
   showHeader();
+
+  // ── Terms of Use gate ──
+  await ensureTermsAccepted({ nonInteractive, cliVersion: "0.7.0" });
 
   // ── Preflight ──
   checkNodeVersion();
