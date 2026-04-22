@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prompt Card — Aspect Ratio Comparison</title>
+  <style>
+    :root { --gvc-gold: #FFE048; --gvc-black: #050505; --gvc-dark: #121212; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 48px 24px 96px;
+      background: var(--gvc-black); color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-image: url("/grid.svg"); background-repeat: repeat;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.02em; }
+    h1 span { color: var(--gvc-gold); }
+    .lede { color: rgba(255,255,255,0.5); margin: 0 0 40px; font-size: 14px; max-width: 720px; line-height: 1.5; }
+    section { margin: 48px 0; }
+    h2 { font-size: 16px; margin: 0 0 6px; color: var(--gvc-gold); letter-spacing: 0.06em; text-transform: uppercase; }
+    .sub { color: rgba(255,255,255,0.4); font-size: 13px; margin: 0 0 16px; max-width: 640px; line-height: 1.5; }
+    .ratio-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); margin-left: 8px; letter-spacing: 0.02em; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      position: relative;
+      background: var(--gvc-dark);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: all 0.25s ease;
+    }
+    .card:hover { border-color: rgba(255,224,72,0.25); transform: translateY(-2px); }
+    .pinned { border-left: 3px solid rgba(255,224,72,0.4); }
+    .hero {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .hero img { width: 100%; height: 100%; object-fit: contain; }
+    .body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+    .title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.4); font-size: 14px; flex-shrink: 0;
+    }
+    .title { font-weight: 700; font-size: 15px; margin: 0; }
+    .desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.5; margin: 0 0 10px; }
+    .meta { display: flex; align-items: center; gap: 8px; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: auto; padding-top: 8px; }
+    .cat-pill { padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
+    .badge {
+      position: absolute; top: 10px; right: 10px;
+      padding: 2px 8px; border-radius: 6px;
+      background: var(--gvc-gold); color: var(--gvc-black);
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Ratio variants */
+    .r-square .hero { aspect-ratio: 1 / 1; }
+    .r-43     .hero { aspect-ratio: 4 / 3; }
+    .r-32     .hero { aspect-ratio: 3 / 2; }
+    .r-1610   .hero { aspect-ratio: 16 / 10; }
+    .r-169    .hero { aspect-ratio: 16 / 9; }
+    .r-21     .hero { aspect-ratio: 2 / 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hero Aspect Ratios <span>· same card, different boxes</span></h1>
+    <p class="lede">Every card here uses the same real examples (full-body, t-pose, vibetown scene) with <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;font-size:12px;">object-fit: contain</code> so the full image always shows — the box shape just changes how much letterbox (dark backdrop) wraps each side. Pick the one that feels right and I'll apply it to the feature branch.</p>
+
+    <section>
+      <h2>1 : 1 (square)<span class="ratio-tag">most balanced</span></h2>
+      <p class="sub">Tight, balanced. Works well when most outputs are portraits/square. Wide renders (like the 3-up T-Pose sheet) letterbox top and bottom.</p>
+      <div class="grid r-square">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4 : 3<span class="ratio-tag">current</span></h2>
+      <p class="sub">Slightly wider than tall. Fits portrait-ish renders well with minimal letterbox. Landscape renders (Vibetown) get a bit of top/bottom padding. What the feature branch ships today.</p>
+      <div class="grid r-43">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>3 : 2<span class="ratio-tag">photo standard</span></h2>
+      <p class="sub">Classic DSLR photo ratio. A nudge wider than 4:3. Landscape outputs fit almost perfectly; portraits get small side margins.</p>
+      <div class="grid r-32">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>16 : 10<span class="ratio-tag">slight widescreen</span></h2>
+      <p class="sub">Wider. Landscape renders fill almost edge-to-edge. Portraits get noticeable left/right letterbox, but cards stay short so the grid scans fast.</p>
+      <div class="grid r-1610">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>16 : 9<span class="ratio-tag">video ratio</span></h2>
+      <p class="sub">Full widescreen. Great for scene/landscape outputs (Vibetown sings here). Portrait renders (T-Pose / Full Body) get a lot of side letterbox — might look cramped when the subject is a tall character.</p>
+      <div class="grid r-169">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>2 : 1 (cinemascope)<span class="ratio-tag">horizontal banner</span></h2>
+      <p class="sub">Super wide. Card becomes short and horizontal — good for wide panoramas or when you want a dense grid with lots of cards per viewport, less good for character showcases.</p>
+      <div class="grid r-21">
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/full-body.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">Full Body Character</h3></div><p class="desc">Generate your GVC as a complete 3D character.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card pinned"><span class="badge">Pinned</span><div class="hero"><img src="/examples/t-pose.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">◉</div><h3 class="title">T-Pose</h3></div><p class="desc">Generate your GVC in a T-Pose from 3 angles.</p><div class="meta"><span class="cat-pill">foundational</span><span>By @GoodVibesClub</span></div></div></div>
+        <div class="card"><div class="hero"><img src="/examples/welcome-to-vibetown.png" alt="" /></div><div class="body"><div class="title-row"><div class="icon">✦</div><h3 class="title">Welcome to Vibetown</h3></div><p class="desc">Place your GVC into the Vibetown street scene.</p><div class="meta"><span class="cat-pill">scene</span><span>By @GoodVibesClub</span></div></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>My take</h2>
+      <p class="sub" style="max-width: 720px;">
+        <strong style="color: #fff;">3:2 or 4:3</strong> is the sweet spot for this collection. GVC characters are tall portraits, scene prompts are landscapes — both tolerate a near-square box without crazy letterbox on either type.
+        <br /><br />
+        <strong style="color: #fff;">Go 16:10 or 16:9</strong> if you plan to lean into landscape/scene outputs as the headline prompts. Portraits will have visible side padding but stay readable.
+        <br /><br />
+        <strong style="color: #fff;">Avoid 2:1</strong> unless you're designing for very wide hero images specifically — character renders get squeezed into a tiny center band and look lost.
+      </p>
+    </section>
+  </div>
+</body>
+</html>
