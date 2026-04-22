@@ -788,10 +788,10 @@ export default function Home() {
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
                             <img src="/ref/ReferenceImage.png" alt="Proportion reference" className="w-full h-full object-cover" />
                           </div>
-                          <a href="/ref/ReferenceImage.png" download="Image-2-GVC-Proportion-Reference.png" className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                          <button onClick={() => downloadImage("/ref/ReferenceImage.png", "Image-2-GVC-Proportion-Reference.png")} className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
                             Download
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          </a>
+                          </button>
                         </div>
                       )}
 
@@ -808,10 +808,10 @@ export default function Home() {
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
                               <img src="/examples/welcome-to-vibetown.png" alt="Scene" className="w-full h-full object-cover" />
                             </div>
-                            <a href="/examples/welcome-to-vibetown.png" download="welcome-to-vibetown.png" className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                            <button onClick={() => downloadImage("/examples/welcome-to-vibetown.png", "welcome-to-vibetown.png")} className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
                               Download
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            </a>
+                            </button>
                           </div>
                         </>
                       )}
@@ -827,25 +827,36 @@ export default function Home() {
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/40 mb-3">
                               <img src={ref.url} alt={label} className="w-full h-full object-cover" />
                             </div>
-                            <a href={ref.url} download={`reference-${i + 1}.png`} className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors">
+                            <button
+                              onClick={() => {
+                                const ext = (ref.url.split("?")[0].split(".").pop() || "png").toLowerCase();
+                                const safeExt = ext.length <= 4 ? ext : "png";
+                                const slug = (ref.title || `reference-${i + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `reference-${i + 1}`;
+                                downloadImage(ref.url, `${slug}.${safeExt}`);
+                              }}
+                              className="mt-auto self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gvc-gold/10 border border-gvc-gold/20 text-gvc-gold text-xs font-body font-semibold hover:bg-gvc-gold/15 transition-colors"
+                            >
                               Download
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                            </a>
+                            </button>
                           </div>
                         );
                       })}
                     </div>
 
+                    <ol className="text-white/50 font-body text-sm space-y-2 list-decimal list-inside mb-4">
+                      <li>Download all images above</li>
+                      <li>Open <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" className="text-gvc-gold/60 hover:text-gvc-gold underline underline-offset-2 transition-colors font-semibold">Gemini</a>. We recommend using Gemini for the best results (but you can also use ChatGPT, Midjourney, Dall-E, etc).</li>
+                      <li>
+                        Upload <span className="text-white/80 font-semibold">
+                          {totalImages === 2 ? "both images" : `all ${totalImages} images`}
+                        </span> to the chat
+                      </li>
+                      <li>Paste the prompt and hit send</li>
+                    </ol>
                   </>
                 );
               })()}
-
-              <ol className="text-white/50 font-body text-sm space-y-2 list-decimal list-inside mb-4">
-                <li>Download all images above</li>
-                <li>Open <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" className="text-gvc-gold/60 hover:text-gvc-gold underline underline-offset-2 transition-colors font-semibold">Gemini</a>. We recommend using Gemini for the best results (but you can also use ChatGPT, Midjourney, Dall-E, etc).</li>
-                <li>Upload <span className="text-white/80 font-semibold">{selectedPrompt.requiresTpose ? "all three images" : "both images"}</span> to the chat</li>
-                <li>Paste the prompt and hit send</li>
-              </ol>
             </motion.div>
           )}
         </AnimatePresence>
