@@ -611,7 +611,7 @@ export default function Home() {
             {filteredPrompts.map((prompt, i) => (
               <motion.button key={prompt.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.05 }} onClick={() => { setSelectedPrompt(prompt); setPromptGenerated(false); }} className={`relative text-left rounded-2xl border transition-all duration-300 hover:scale-[1.02] overflow-hidden flex flex-col ${selectedPrompt?.id === prompt.id ? "bg-gvc-gold/[0.08] border-gvc-gold/30 shadow-[0_0_20px_rgba(255,224,72,0.15)]" : "bg-gvc-dark border-white/[0.08] hover:border-white/15"} ${prompt.pinned ? "border-l-[3px] border-l-gvc-gold/40" : ""}`}>
                 {/* Hero preview — full image, no cropping */}
-                <div className="w-full aspect-[4/3] bg-black/40 border-b border-white/[0.06] flex items-center justify-center overflow-hidden">
+                <div className="w-full aspect-video bg-black/40 border-b border-white/[0.06] flex items-center justify-center overflow-hidden">
                   {prompt.exampleImage ? (
                     <img
                       src={prompt.exampleImage}
