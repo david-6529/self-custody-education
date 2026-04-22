@@ -368,41 +368,45 @@ export default function Home() {
     return (prompt as any).generations || builtInGenerations[prompt.id] || 0;
   }
 
+  // All prompts (built-ins with override merge + community submissions) before
+  // any category filter. Separate memo so the tab strip can see the full
+  // category distribution without being affected by the currently-selected tab.
+  const allPrompts = useMemo(() => {
+    const communityAsPrompts = communityPrompts.map((cp: any) => ({
+      id: cp.id,
+      title: cp.title,
+      description: cp.description || cp.more_details || "",
+      category: cp.category || "scene",
+      template: cp.prompt || "",
+      icon: "sparkle" as const,
+      author: cp.x_handle ? `@${cp.x_handle}` : "@community",
+      exampleImage: cp.image_url,
+      exampleTokenId: cp.token_id,
+      generations: cp.generations || 0,
+      hasReferenceImage: cp.requires_ref_images && cp.ref_images,
+      refImageUrls: normalizeRefImages(cp.ref_images).map((r) => r.url),
+      refImages: normalizeRefImages(cp.ref_images),
+    } as any));
+
+    const builtInsWithOverrides = PROMPTS.map((p) => {
+      const ov = promptOverrides[p.id];
+      if (!ov) return p;
+      return {
+        ...p,
+        title: ov.title || p.title,
+        description: ov.description || p.description,
+        template: ov.prompt || p.template,
+        category: (ov.category as Prompt["category"]) || p.category,
+        exampleTokenId: ov.token_id || p.exampleTokenId,
+        author: ov.x_handle ? `@${ov.x_handle}` : p.author,
+      };
+    });
+
+    return [...builtInsWithOverrides, ...communityAsPrompts];
+  }, [communityPrompts, promptOverrides]);
+
   const filteredPrompts = useMemo(() => {
-      // Convert community prompts to the same shape as built-in prompts
-      const communityAsPrompts = communityPrompts.map((cp: any) => ({
-        id: cp.id,
-        title: cp.title,
-        description: cp.description || cp.more_details || "",
-        category: cp.category || "scene",
-        template: cp.prompt || "",
-        icon: "sparkle" as const,
-        author: cp.x_handle ? `@${cp.x_handle}` : "@community",
-        exampleImage: cp.image_url,
-        exampleTokenId: cp.token_id,
-        generations: cp.generations || 0,
-        hasReferenceImage: cp.requires_ref_images && cp.ref_images,
-        refImageUrls: normalizeRefImages(cp.ref_images).map((r) => r.url),
-        refImages: normalizeRefImages(cp.ref_images),
-      } as any));
-
-      // Apply admin-set overrides on top of the code defaults so text edits
-      // from the admin panel flow through without a redeploy.
-      const builtInsWithOverrides = PROMPTS.map((p) => {
-        const ov = promptOverrides[p.id];
-        if (!ov) return p;
-        return {
-          ...p,
-          title: ov.title || p.title,
-          description: ov.description || p.description,
-          template: ov.prompt || p.template,
-          category: (ov.category as Prompt["category"]) || p.category,
-          exampleTokenId: ov.token_id || p.exampleTokenId,
-          author: ov.x_handle ? `@${ov.x_handle}` : p.author,
-        };
-      });
-
-      const all = [...builtInsWithOverrides, ...communityAsPrompts];
+      const all = allPrompts;
       const list = category === "all"
         ? all
         : all.filter((p) => p.category === category || p.pinned);
@@ -414,7 +418,7 @@ export default function Home() {
         return 0; // newest = default order (built-in first, then DB order which is newest first)
       });
     },
-    [category, communityPrompts, sortBy, promptOverrides]
+    [category, allPrompts, sortBy]
   );
 
   const assembledPrompt = useMemo(() => {
@@ -554,21 +558,33 @@ export default function Home() {
           </div>
 
           {(() => {
-            // Build the tab list from the DB's prompt_categories (live admin
-            // edits) merged with slugs actually used by rendered prompts, so a
-            // new category tag from an admin PATCH shows up immediately even if
-            // the DB row hasn't reached the client yet. Falls back to the
-            // hardcoded CATEGORIES list on catastrophic API failure.
-            const seen = new Map<string, string>();
-            dbCategories.forEach((c) => seen.set(c.slug, c.label));
-            filteredPrompts.forEach((p) => {
+            // Only show tabs for categories with >= 1 prompt actually loaded.
+            // Empty categories (admin-created but not yet assigned) stay
+            // hidden until a prompt lands in them.
+            const populated = new Set<string>();
+            allPrompts.forEach((p) => {
               const slug = (p as any).category;
-              if (slug && !seen.has(slug)) {
-                seen.set(slug, slug.replace(/^./, (c: string) => c.toUpperCase()));
-              }
+              if (slug) populated.add(slug);
             });
-            const extras = Array.from(seen.entries()).map(([slug, label]) => ({ id: slug, label }));
-            const baseTabs = extras.length > 0 ? [{ id: "all", label: "All" }, ...extras] : CATEGORIES.map((c) => ({ id: c.id, label: c.label }));
+            const labelFor = (slug: string) => {
+              const fromDb = dbCategories.find((c) => c.slug === slug);
+              if (fromDb) return fromDb.label;
+              const fromCode = CATEGORIES.find((c) => c.id === slug);
+              if (fromCode) return fromCode.label;
+              return slug.replace(/(^|[-_])([a-z])/g, (_, sep: string, ch: string) => (sep ? " " : "") + ch.toUpperCase());
+            };
+            // Order: DB list first (seed + admin order), then anything still
+            // populated that isn't in the DB, keeping a stable strip.
+            const orderedSlugs: string[] = [];
+            dbCategories.forEach((c) => { if (populated.has(c.slug)) orderedSlugs.push(c.slug); });
+            allPrompts.forEach((p) => {
+              const slug = (p as any).category;
+              if (slug && populated.has(slug) && !orderedSlugs.includes(slug)) orderedSlugs.push(slug);
+            });
+            const extras = orderedSlugs.map((slug) => ({ id: slug, label: labelFor(slug) }));
+            const baseTabs = extras.length > 0
+              ? [{ id: "all", label: "All" }, ...extras]
+              : CATEGORIES.map((c) => ({ id: c.id, label: c.label }));
             return (
               <div className="flex items-center justify-between gap-4 mb-4">
                 <div className="flex flex-wrap gap-2">
