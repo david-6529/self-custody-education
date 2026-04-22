@@ -100,7 +100,7 @@ Add subtle Vibetown energy:
     pinned: true,
     template: `I've uploaded two images.
 
-MY CHARACTER (GVC-{TOKEN_ID}.png): This is my Good Vibes Club (GVC) NFT character. Use this as the definitive reference for identity - head, face, expression, outfit, colors, materials, and accessories.
+MY CHARACTER (GVC-{TOKEN_ID}.png): This is my Good Vibes Club (GVC) NFT character. Use this as the definitive reference for identity — head, face, expression, outfit, colors, materials, and accessories.
 
 PROPORTION REFERENCE (Image-2-GVC-Proportion-Reference.png): Use ONLY for body proportions, limb length, stance, and camera angles. Do NOT copy style, clothing, colors, or materials from this image.
 
@@ -140,7 +140,7 @@ Render in a vibrant, high-quality stylized 3D aesthetic:
 - cinematic but playful lighting
 
 POSE
-Single T Pose identical across all 3 angles:
+Single T-Pose identical across all 3 angles:
 - feet fully visible
 - arms naturally positioned
 - the pose must not change between views
@@ -152,10 +152,9 @@ CAMERA
 - rear view
 Full-body centered framing in each.
 Slight perspective (85mm lens feel).
-Character standing on a subtle elevated platform (toy collectible feel).
 
 BACKGROUND
-Minimal gradient background matching the character's color palette from GVC-{TOKEN_ID}.png.
+Minimal light grey background.
 Soft studio lighting, no distractions.
 
 OUTPUT

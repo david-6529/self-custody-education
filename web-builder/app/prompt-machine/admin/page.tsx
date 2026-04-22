@@ -126,6 +126,17 @@ export default function AdminPage() {
   const refFileInputRef = useRef<HTMLInputElement>(null);
   const [refUploadTarget, setRefUploadTarget] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, PromptOverride>>({});
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Close lightbox on Escape
+  useEffect(() => {
+    if (!lightboxUrl) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxUrl(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxUrl]);
 
   async function fetchData() {
     try {
@@ -574,10 +585,15 @@ export default function AdminPage() {
                   }`}
                 >
                   <div className="flex gap-4 p-4">
-                    {/* Image */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-black/40 flex-shrink-0">
+                    {/* Image — click to expand */}
+                    <button
+                      type="button"
+                      onClick={() => setLightboxUrl(sub.image_url)}
+                      className="w-20 h-20 rounded-lg overflow-hidden bg-black/40 flex-shrink-0 cursor-zoom-in hover:ring-2 hover:ring-gvc-gold/40 transition-all"
+                      aria-label="View full image"
+                    >
                       <img src={sub.image_url} alt={sub.title} className="w-full h-full object-cover" />
-                    </div>
+                    </button>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
@@ -740,9 +756,14 @@ export default function AdminPage() {
                                   {refs.map((ref, i) => (
                                     <div key={ref.url + i} className="flex gap-3 rounded-lg bg-black/30 border border-white/[0.06] p-3">
                                       <div className="relative group flex-shrink-0">
-                                        <a href={ref.url} target="_blank" rel="noopener noreferrer" className="w-24 h-24 rounded-lg overflow-hidden bg-black/40 border border-white/[0.08] hover:border-gvc-gold/30 transition-colors block">
+                                        <button
+                                          type="button"
+                                          onClick={() => setLightboxUrl(ref.url)}
+                                          className="w-24 h-24 rounded-lg overflow-hidden bg-black/40 border border-white/[0.08] hover:border-gvc-gold/30 transition-colors block cursor-zoom-in"
+                                          aria-label="View full image"
+                                        >
                                           <img src={ref.url} alt={ref.title || `Reference ${i + 1}`} className="w-full h-full object-cover" />
-                                        </a>
+                                        </button>
                                         <button
                                           onClick={(e) => {
                                             e.preventDefault();
@@ -941,6 +962,39 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* Lightbox — click thumb to expand, click backdrop or press Esc to close */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-8 cursor-zoom-out"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <motion.img
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              src={lightboxUrl}
+              alt="Submission image"
+              className="max-w-[95vw] max-h-[92vh] object-contain rounded-xl shadow-[0_0_60px_rgba(0,0,0,0.6)]"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 border border-white/20 text-white/80 hover:text-white hover:bg-black/80 transition-colors flex items-center justify-center"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
