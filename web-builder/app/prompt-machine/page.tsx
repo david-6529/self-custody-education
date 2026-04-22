@@ -426,9 +426,28 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2500);
   }
 
+  // IPFS gateway fallback chain — ipfs.io is frequently rate-limited/down,
+  // so we lead with dweb.link (Protocol Labs) and fall through to others via
+  // an onError handler on the <img>. See ipfsFallback() below.
+  const IPFS_GATEWAYS = [
+    "https://dweb.link/ipfs/",
+    "https://w3s.link/ipfs/",
+    "https://nftstorage.link/ipfs/",
+    "https://gateway.pinata.cloud/ipfs/",
+    "https://ipfs.io/ipfs/",
+  ];
   const imageUrl = tokenMeta?.image
-    ? tokenMeta.image.replace("ipfs://", "https://ipfs.io/ipfs/")
+    ? tokenMeta.image.replace("ipfs://", IPFS_GATEWAYS[0])
     : null;
+
+  function ipfsFallback(e: React.SyntheticEvent<HTMLImageElement>) {
+    const img = e.currentTarget;
+    const currentIdx = IPFS_GATEWAYS.findIndex((gw) => img.src.startsWith(gw));
+    const nextIdx = currentIdx + 1;
+    if (nextIdx < IPFS_GATEWAYS.length && tokenMeta?.image) {
+      img.src = tokenMeta.image.replace("ipfs://", IPFS_GATEWAYS[nextIdx]);
+    }
+  }
 
   return (
     <main className="min-h-screen relative overflow-hidden">
@@ -643,7 +662,7 @@ export default function Home() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-4 mt-2">
                   {imageUrl && (
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-black/40 flex-shrink-0">
-                      <img src={imageUrl} alt={tokenMeta.name} className="w-full h-full object-cover" />
+                      <img src={imageUrl} alt={tokenMeta.name} onError={ipfsFallback} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
