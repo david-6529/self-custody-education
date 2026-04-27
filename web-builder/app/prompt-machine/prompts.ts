@@ -11,6 +11,7 @@ export interface Prompt {
   hasReferenceImage?: boolean;
   requiresTpose?: boolean; // user must upload their own T-pose output instead of the standard reference
   pinned?: boolean;
+  skipPrefix?: boolean; // ship the prompt verbatim, without the GVC style prefix/suffix
 }
 
 const PROMPTS: Prompt[] = [

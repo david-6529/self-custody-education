@@ -386,6 +386,7 @@ export default function Home() {
       hasReferenceImage: cp.requires_ref_images && cp.ref_images,
       refImageUrls: normalizeRefImages(cp.ref_images).map((r) => r.url),
       refImages: normalizeRefImages(cp.ref_images),
+      skipPrefix: true,
     } as any));
 
     const builtInsWithOverrides = PROMPTS.map((p) => {
@@ -423,7 +424,7 @@ export default function Home() {
 
   const assembledPrompt = useMemo(() => {
     if (!selectedPrompt || !tokenMeta) return "";
-    return assemblePrompt(selectedPrompt.template, tokenMeta.traits, selectedPrompt.hasReferenceImage || selectedPrompt.requiresTpose, tokenId);
+    return assemblePrompt(selectedPrompt.template, tokenMeta.traits, selectedPrompt.skipPrefix || selectedPrompt.hasReferenceImage || selectedPrompt.requiresTpose, tokenId);
   }, [selectedPrompt, tokenMeta]);
 
   async function copyPrompt() {
