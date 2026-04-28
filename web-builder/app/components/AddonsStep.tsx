@@ -152,8 +152,8 @@ export default function AddonsStep({
                       transition-all duration-300
                       ${
                         isSelected
-                          ? "border-gvc-gold/30 bg-gvc-gold/[0.05]"
-                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.03]"
+                          ? "border-gvc-gold/30 bg-gvc-gold/[0.08]"
+                          : "border-white/[0.08] bg-gvc-dark hover:border-white/15"
                       }
                     `}
                   >

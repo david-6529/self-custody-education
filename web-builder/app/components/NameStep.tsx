@@ -99,8 +99,8 @@ export default function NameStep({
               error
                 ? "border-red-500/50 bg-red-500/5"
                 : value
-                ? "border-gvc-gold/30 bg-gvc-gold/[0.03] border-b-gvc-gold"
-                : "border-white/10 bg-white/[0.02]"
+                ? "border-gvc-gold/30 bg-gvc-dark border-b-gvc-gold"
+                : "border-white/[0.08] bg-gvc-dark"
             }
           `}
         >

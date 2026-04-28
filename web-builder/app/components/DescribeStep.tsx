@@ -204,8 +204,8 @@ export default function DescribeStep({
               error
                 ? "border-red-500/50 bg-red-500/5"
                 : value
-                ? "border-gvc-gold/20 bg-gvc-gold/[0.02]"
-                : "border-white/10 bg-white/[0.02]"
+                ? "border-gvc-gold/30 bg-gvc-dark"
+                : "border-white/[0.08] bg-gvc-dark"
             }
           `}
         >

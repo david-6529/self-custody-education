@@ -161,8 +161,8 @@ export default function TemplateStep({
                 relative text-left p-5 rounded-2xl border transition-all duration-300
                 ${
                   isSelected
-                    ? "gold-selected bg-gvc-gold/[0.06]"
-                    : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                    ? "gold-selected bg-gvc-gold/[0.08]"
+                    : "border-white/[0.08] bg-gvc-dark hover:border-white/15"
                 }
               `}
             >
