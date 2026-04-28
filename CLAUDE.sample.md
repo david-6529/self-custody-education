@@ -58,6 +58,7 @@ All GVC data comes from: `https://api-hazel-pi-72.vercel.app/api`
 - `GET /market-depth` - bid/offer depth, floor price, lowest listing
 - `GET /traders` - 30-day trade stats
 - `GET /wallet/[address]` - ENS name, Twitter handle for a wallet
+- `GET /wallet/[address]/tokens` - All GVC token IDs currently held by a wallet (live, ~60s freshness)
 - `GET /mentions` - recent X/Twitter mentions
 
 Do NOT use the OpenSea API directly. Use the GVC API above instead.
@@ -221,6 +222,7 @@ import { getStats, getHolders, getRecentSales } from "@/lib/gvc-api";
 | `getMarketDepth()` | Bid/offer depth at each price level |
 | `getTraders()` | Profitable flips with buy/sell prices and holding periods |
 | `resolveWallet(address)` | ENS name, Twitter handle, and community tag for a wallet |
+| `getWalletTokens(address)` | All GVC token IDs currently held by a wallet (live) |
 | `getMentions()` | Twitter/X mentions with engagement stats |
 
 Example:

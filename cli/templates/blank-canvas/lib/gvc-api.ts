@@ -183,6 +183,15 @@ export function resolveWallet(address: string) {
   }>(`/wallet/${address}`);
 }
 
+/** List all GVC token IDs currently held by a wallet (live, ~60s edge cache). */
+export function getWalletTokens(address: string) {
+  return fetchJSON<{
+    address: string;
+    tokens: string[];
+    count: number;
+  }>(`/wallet/${address}/tokens`);
+}
+
 // ── X/Twitter Mentions ───────────────────────────────────────────────
 
 /** Get recent X/Twitter mentions of GVC. */
