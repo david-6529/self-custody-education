@@ -6,45 +6,74 @@ import Image from "next/image";
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden">
-      {/* Background embers */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(8)].map((_, i) => (
+      {/* Background — mixed-variant embers + rising particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(32)].map((_, i) => {
+          const variant = i % 7 === 0 ? "ember-orb" : i % 3 === 0 ? "ember-lg" : "";
+          const twinkle = i % 5 === 2 ? " ember-twinkle" : "";
+          return (
+            <div
+              key={`e-${i}`}
+              className={`ember ${variant}${twinkle}`}
+              style={{
+                left: `${(i * 7.3 + 4) % 100}%`,
+                top: `${(i * 13.7 + 8) % 100}%`,
+                animationDelay: `${(i * 0.4) % 7}s`,
+                animationDuration: variant === "ember-orb" ? `${9 + (i % 4)}s` : `${5 + (i % 5)}s`,
+              }}
+            />
+          );
+        })}
+        {[...Array(10)].map((_, i) => (
           <div
-            key={i}
-            className="ember"
+            key={`r-${i}`}
+            className="rising-particle"
             style={{
-              left: `${10 + i * 11}%`,
-              top: `${15 + (i % 4) * 20}%`,
-              animationDelay: `${i * 0.7}s`,
-              animationDuration: `${4 + i * 0.6}s`,
+              left: `${(i * 11 + 3) % 100}%`,
+              animationDelay: `${i * 1.6}s`,
+              animationDuration: `${10 + (i % 4) * 2.5}s`,
             }}
           />
         ))}
       </div>
 
-      <div className="max-w-2xl mx-auto text-center relative z-10">
-        {/* Shaka */}
+      <div className="max-w-3xl mx-auto text-center relative z-10">
+        {/* Shaka — bigger, with idle-wiggle animation */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 150 }}
-          className="mb-6"
+          initial={{ opacity: 0, scale: 0.6, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 160, damping: 14 }}
+          className="flex justify-center mb-5"
         >
           <Image
             src="/shaka.png"
             alt="GVC"
-            width={80}
-            height={80}
-            className="mx-auto drop-shadow-[0_0_25px_rgba(255,224,72,0.3)]"
+            width={88}
+            height={88}
+            priority
+            className="shaka-idle drop-shadow-[0_0_25px_rgba(255,224,72,0.4)]"
           />
         </motion.div>
 
-        {/* Project name */}
+        {/* Subtitle pill — small, gold-tinted, sits above the title */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gvc-gold/10 border border-gvc-gold/20 mb-6"
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-gvc-gold animate-pulse" />
+          <span className="text-xs font-body text-gvc-gold uppercase tracking-widest">
+            Good Vibes Club Presents
+          </span>
+        </motion.div>
+
+        {/* Project name — larger, centered */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
-          className="text-4xl sm:text-6xl font-display font-black text-shimmer leading-tight mb-4"
+          transition={{ delay: 0.15, duration: 0.6 }}
+          className="font-display font-black text-shimmer uppercase leading-[0.9] tracking-tight text-5xl sm:text-6xl lg:text-7xl mb-6"
         >
           {{PROJECT_NAME}}
         </motion.h1>
@@ -53,8 +82,8 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gvc-green/10 border border-gvc-green/20 mb-8"
+          transition={{ delay: 0.25, duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gvc-green/10 border border-gvc-green/20 mb-10"
         >
           <div className="w-2 h-2 rounded-full bg-gvc-green animate-pulse" />
           <span className="text-sm text-gvc-green font-body">
@@ -66,8 +95,8 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-left max-w-md mx-auto mb-10 rounded-2xl bg-[#121212] border border-white/[0.08] p-6"
+          transition={{ delay: 0.35, duration: 0.6 }}
+          className="text-left max-w-md mx-auto mb-10 rounded-2xl bg-gvc-dark border border-white/[0.08] p-6"
         >
           <h2 className="text-lg font-display font-bold text-white mb-3">
             Start building

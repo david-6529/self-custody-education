@@ -23,7 +23,11 @@ This project was created with the GVC Builder Kit. It uses the Good Vibes Club b
 - Shimmer animation: `text-shimmer` class
 - Glassmorphism: `backdrop-blur-sm` with `bg-white/[0.04]` and `border-white/[0.08]`
 - Card hover glow: `card-glow` class
-- Gold embers: floating particle effect available via `ember` class
+- Gold embers: `.ember` (default), `.ember-lg` (bigger), `.ember-orb` (large blurred radial), `.ember-twinkle` (pulsing). Mix variants for richer ambient backgrounds (e.g. every 7th orb, every 3rd lg, every 5th twinkle).
+- Rising particles: `.rising-particle` — gold dots that sweep up the viewport with horizontal drift. ~10 of these complement ~32 embers in a hero.
+- Shaka idle: `.shaka-idle` — auto-wiggles every 5s, plus a hover wiggle. Use on the hero shaka image.
+
+**Canonical hero pattern** (matches the Builder Kit landing): centered column with shaka (80–88px, `.shaka-idle`) → small subtitle pill (`bg-gvc-gold/10 border-gvc-gold/20 rounded-full`, uppercase tracking-widest) → big title (`text-5xl sm:text-6xl lg:text-7xl font-display font-black uppercase leading-[0.9]`, optionally `text-shimmer`) → optional sub-copy. Keep titles big and centered; let long names wrap rather than shrinking.
 
 ### Design patterns
 - Dark backgrounds with gold accents
