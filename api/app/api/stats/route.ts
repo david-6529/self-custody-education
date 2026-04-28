@@ -3,13 +3,40 @@ import pool, { GVC_IMAGE_FILTER } from "@/lib/db";
 
 export const revalidate = 60;
 
+const OPENSEA_LISTINGS_URL =
+  "https://api.opensea.io/api/v2/listings/collection/good-vibes-club/all?limit=50";
+
+async function fetchOpenSeaFloor(): Promise<number | null> {
+  const key = process.env.OPENSEA_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(OPENSEA_LISTINGS_URL, {
+      headers: { accept: "application/json", "x-api-key": key },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const listings = data?.listings ?? [];
+    const prices = listings
+      .map((l: any) => {
+        const raw = l?.price?.current?.value;
+        return raw ? Number(raw) / 1e18 : null;
+      })
+      .filter((p: number | null): p is number => p !== null && p > 0);
+    if (!prices.length) return null;
+    return Math.min(...prices);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   try {
     // Live computation only. The cache_entries short-circuit was removed because
     // nothing in this repo refreshes `collection-stats` and stale rows were being
     // served indefinitely. Vercel's edge cache (revalidate=60 + s-maxage below)
     // already absorbs upstream load.
-    const [ethRes, vibestrRes, depthRes, salesStats] = await Promise.all([
+    const [ethRes, vibestrRes, openSeaFloor, depthRes, salesStats] = await Promise.all([
       // ETH price
       fetch(
         "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
@@ -22,7 +49,11 @@ export async function GET() {
         { next: { revalidate: 60 } }
       ).then((r) => r.json()).catch(() => null),
 
-      // Floor price from market-depth cache (lowest listing)
+      // Live floor from OpenSea (source of truth, requires OPENSEA_API_KEY)
+      fetchOpenSeaFloor(),
+
+      // Floor price from market-depth cache (kept as a fallback in case the
+      // external cache_entries writer comes back online)
       pool.query(
         "SELECT value FROM cache_entries WHERE key = 'market-depth-good-vibes-club' LIMIT 1"
       ).catch(() => ({ rows: [] })),
@@ -42,9 +73,9 @@ export async function GET() {
     const ethPrice = ethRes?.ethereum?.usd ?? 0;
     const vibestrPrice = parseFloat(vibestrRes?.pairs?.[0]?.priceUsd ?? "0");
 
-    // Floor price from market-depth (lowest listing) or fallback to price_cache
-    let floorPrice = 0;
-    if (depthRes.rows.length) {
+    // Floor price priority: OpenSea live → market-depth cache → 7d MIN sale
+    let floorPrice = openSeaFloor ?? 0;
+    if (!floorPrice && depthRes.rows.length) {
       const depth = depthRes.rows[0].value;
       floorPrice = depth.lowestListing ?? 0;
     }
