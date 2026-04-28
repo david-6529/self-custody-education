@@ -5,15 +5,10 @@ export const revalidate = 60;
 
 export async function GET() {
   try {
-    // Try cache first
-    const cached = await pool.query(
-      "SELECT value FROM cache_entries WHERE key = 'collection-stats' LIMIT 1"
-    );
-    if (cached.rows.length) {
-      return NextResponse.json(cached.rows[0].value);
-    }
-
-    // Fetch live prices and floor in parallel
+    // Live computation only. The cache_entries short-circuit was removed because
+    // nothing in this repo refreshes `collection-stats` and stale rows were being
+    // served indefinitely. Vercel's edge cache (revalidate=60 + s-maxage below)
+    // already absorbs upstream load.
     const [ethRes, vibestrRes, depthRes, salesStats] = await Promise.all([
       // ETH price
       fetch(
