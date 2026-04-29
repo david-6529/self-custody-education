@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Terminal, Sparkles, Puzzle, Trophy, Swords, Palette, Disc3 } from "lucide-react";
+import { ArrowRight, Terminal, Sparkles, Puzzle, Trophy, Swords, Palette, Disc3, Frame } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import TermsGate, { hasAcceptedTerms } from "./TermsGate";
@@ -52,6 +52,7 @@ type FeaturedBuild = {
   url?: string;
   icon: typeof Sparkles;
   description: string;
+  isNew?: boolean;
 };
 
 const FEATURED_BUILDS: FeaturedBuild[] = [
@@ -63,6 +64,16 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     url: "/prompt-machine",
     icon: Sparkles,
     description: "Want to bring your GVC characters to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
+  },
+  {
+    id: "framery",
+    name: "The Framery",
+    tabName: "The Framery",
+    status: "live",
+    url: "/framery",
+    icon: Frame,
+    description: "Turn ordinary images into beautiful sharable moments. Drop in any image (or up to five) and customize it to fit your vibe. Share a screen that stops the scroll.",
+    isNew: true,
   },
   {
     id: "rewards-pool",
@@ -318,27 +329,34 @@ export default function HeroStep({ onNext }: HeroStepProps) {
             Featured Builds
           </motion.h2>
 
-          {/* Tabs — 2 rows of 3 on sm+, 3 rows of 2 on mobile */}
+          {/* Tabs — row 1: 3 across, row 2: 4 across (2 cols on mobile) */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.85, duration: 0.5 }}
-            className="w-full max-w-2xl grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6"
+            className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-12 gap-2 mb-6"
           >
-            {FEATURED_BUILDS.map((build) => {
+            {FEATURED_BUILDS.map((build, i) => {
               const isActive = activeBuild === build.id;
               const isSoon = build.status === "soon";
+              const inFirstRow = i < 3;
+              const spanClass = inFirstRow ? "sm:col-span-4" : "sm:col-span-3";
               return (
                 <button
                   key={build.id}
                   onClick={() => setActiveBuild(build.id)}
-                  className={`px-3 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
+                  className={`${spanClass} px-3 sm:px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${
                     isActive
                       ? "bg-gvc-gold/15 border border-gvc-gold/30 text-gvc-gold"
                       : "border border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
                   }`}
                 >
                   <span className="truncate">{build.tabName || build.name}</span>
+                  {build.isNew && (
+                    <span className="text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-md bg-gvc-gold text-gvc-black flex-shrink-0">
+                      NEW
+                    </span>
+                  )}
                   {isSoon && <span className="text-[9px] opacity-60 flex-shrink-0">SOON</span>}
                 </button>
               );
