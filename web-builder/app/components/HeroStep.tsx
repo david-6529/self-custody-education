@@ -104,7 +104,7 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     id: "pin-drop",
     name: "Pin Drop",
     status: "soon",
-    url: "https://vibematch.app",
+    url: "https://pindropgame.com",
     icon: Puzzle,
     description: "A new puzzle game from Good Vibes Club. Players can match pins, score big, and win prizes. Climb to the top of the leaderboard and collect all 101 pins!",
   },
