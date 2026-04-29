@@ -244,6 +244,41 @@ const sales = await getRecentSales(5);
 
 Data refreshes every 60 seconds. No setup required.
 
+## Bundled Components (`components/`)
+
+Pre-built, on-brand UI primitives. Import and use rather than re-implementing — they already match the GVC visual language.
+
+| Component | Purpose |
+|---|---|
+| `Slider` | Gold-thumb range input with gold-fill track. Pair with the `.gvc-slider` CSS class (already in globals.css). Props: `value`, `min`, `max`, `step?`, `onChange`. |
+| `SectionHeader` | Compact labeled heading with icon + tracking-widest title + optional right-aligned subtitle. For control panels and settings groups. |
+| `ControlGroup` | Wraps a control with a top-row label and live value display. Use around any `Slider`, `Input`, or toggle. |
+| `ModeBtn` | Pill-style button for switching between modes. Active state is solid gold; inactive is white/55 hover. |
+| `Divider` | Standalone `border-t` divider with brand-appropriate opacity. |
+
+Example control panel section:
+
+```tsx
+import SectionHeader from "@/components/SectionHeader";
+import ControlGroup from "@/components/ControlGroup";
+import Slider from "@/components/Slider";
+import { Layers } from "lucide-react";
+
+<SectionHeader icon={<Layers className="w-3.5 h-3.5" />} title="Background" subtitle="Aurora gradient" />
+<ControlGroup label="Glow Intensity" value={`${intensity}`}>
+  <Slider value={intensity} min={0} max={100} onChange={setIntensity} />
+</ControlGroup>
+```
+
+## Bundled Libraries (`lib/`)
+
+| File | What it gives you |
+|---|---|
+| `lib/gvc-api.ts` | All GVC community API functions (`getStats`, `getHolders`, `getWalletTokens`, etc.) |
+| `lib/badge-helpers.ts` | `getHolderBadges`, `getVibestrTier`, `getCollectorMilestones` |
+| `lib/badge-engine.ts` | Offline badge evaluation (`BadgeRuleEngine`) |
+| `lib/compress-image.ts` | Client-side image downscale + recompress to WebP/JPEG, capped at ~220KB so uploads fit under Vercel's 4.5MB serverless body limit. Use before posting any user-supplied image to your API. Exports: `compressForUpload(file)`, `recompressDataUrl(url, opts?)`, `isOversized(url)`, `TARGET_BYTES`. |
+
 ## Code Snippets
 
 If you need to add blockchain data or GVC-specific features, reference the snippets in `snippets.ts`. Available patterns:
@@ -256,22 +291,33 @@ If you need to add blockchain data or GVC-specific features, reference the snipp
 6. **Badge card with tier glow** component
 7. **Animated stats card** component
 8. **Toast notifications** setup
+9. **Drag-drop file upload zone** with paste-from-clipboard support
 
 ## Project Structure
 
 ```
 app/
-  page.tsx          Main page
-  layout.tsx        Root layout (fonts, metadata)
-  globals.css       Brand tokens, animations, utilities
-  api/              API routes (if any)
-components/         Reusable components
+  page.tsx              Main page
+  layout.tsx            Root layout (fonts, metadata)
+  globals.css           Brand tokens, animations, utilities
+  api/                  API routes (if any)
+components/
+  Slider.tsx            Gold range input
+  SectionHeader.tsx     Labeled section heading
+  ControlGroup.tsx      Label + value + control wrapper
+  ModeBtn.tsx           Pill-style mode toggle
+  Divider.tsx           Thin brand divider
+lib/
+  gvc-api.ts            GVC community API helpers
+  badge-helpers.ts      Holder badge derivation
+  badge-engine.ts       Offline badge rule engine
+  compress-image.ts     Client-side image downscale/recompress
 public/
-  fonts/            Brice + Mundial font files
-  shaka.png         GVC shaka icon
-  gvc-logotype.svg  Good Vibes Club wordmark
-  grid.svg          Background grid texture
-  badges/           Badge images (if add-on installed)
+  fonts/                Brice + Mundial font files
+  shaka.png             GVC shaka icon
+  gvc-logotype.svg      Good Vibes Club wordmark
+  grid.svg              Background grid texture
+  badges/               Badge images (if add-on installed)
 ```
 
 ## Inspiration

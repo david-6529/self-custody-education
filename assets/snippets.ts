@@ -623,6 +623,107 @@ function handleCustom() {
 // <button onClick={handleCustom}>Custom Toast</button>
 `;
 
+// ----------------------------------------------------------------------------
+// SNIPPET 9: Drag & Drop File Upload Zone
+// File: components/DropZone.tsx
+//
+// Branded uploader: drag/drop, click-to-pick, hover highlight, paste-from-
+// clipboard hint, optional "Try a sample" button. Pair with lib/compress-image
+// (already in the template) before sending uploads to your server.
+// ----------------------------------------------------------------------------
+
+export const snippet_dropZone = `
+"use client";
+
+import { useRef, useState } from "react";
+import { Upload, Sparkles } from "lucide-react";
+
+interface DropZoneProps {
+  onFile: (file: File) => void;
+  onLoadSample?: () => void;
+  multi?: boolean;
+  accept?: string;
+}
+
+export default function DropZone({ onFile, onLoadSample, multi, accept = "image/*" }: DropZoneProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    files.forEach(onFile);
+  }
+
+  return (
+    <div
+      onDragEnter={() => setIsDragging(true)}
+      onDragLeave={() => setIsDragging(false)}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      className={
+        "w-full max-w-2xl rounded-2xl border-2 border-dashed transition-all cursor-pointer p-12 sm:p-16 text-center " +
+        (isDragging
+          ? "border-gvc-gold bg-gvc-gold/5 scale-[1.01]"
+          : "border-white/10 hover:border-gvc-gold/30 hover:bg-white/[0.02]")
+      }
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multi}
+        className="hidden"
+        onChange={(e) => {
+          Array.from(e.target.files ?? []).forEach(onFile);
+          e.target.value = "";
+        }}
+      />
+      <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gvc-gold/10 text-gvc-gold flex items-center justify-center">
+        <Upload className="w-7 h-7" />
+      </div>
+      <h2 className="font-display font-black text-2xl sm:text-3xl text-white uppercase tracking-tight mb-2">
+        {multi ? "Drop up to 5 images" : "Drop an image"}
+      </h2>
+      <p className="text-white/50 font-body text-sm mb-6 max-w-md mx-auto">
+        Drag in {multi ? "files" : "a file"}, paste from clipboard{" "}
+        <span className="font-mono text-white/70">⌘V</span>, or click to choose.
+      </p>
+      <div className="flex items-center justify-center gap-3 flex-wrap">
+        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gvc-gold text-gvc-black font-display font-bold text-xs uppercase tracking-wider">
+          <Upload className="w-3.5 h-3.5" />
+          Choose {multi ? "files" : "file"}
+        </span>
+        {onLoadSample && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onLoadSample();
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white/70 font-body text-xs uppercase tracking-wider transition"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Try a sample
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Optional clipboard paste support (mount in a parent useEffect):
+// useEffect(() => {
+//   const onPaste = (e: ClipboardEvent) => {
+//     const f = Array.from(e.clipboardData?.files ?? [])[0];
+//     if (f && f.type.startsWith("image/")) onFile(f);
+//   };
+//   window.addEventListener("paste", onPaste);
+//   return () => window.removeEventListener("paste", onPaste);
+// }, [onFile]);
+`;
+
 // ============================================================================
 // Snippet Index - Quick reference for all available snippets
 // ============================================================================
@@ -636,4 +737,5 @@ export const snippetIndex = [
   { id: 6, key: "snippet_badgeCard",           file: "components/BadgeCard.tsx",       description: "Badge card with tier-based glow effect" },
   { id: 7, key: "snippet_statCard",            file: "components/StatCard.tsx",        description: "Animated stat card with count-up effect" },
   { id: 8, key: "snippet_toastSetup",          file: "app/layout.tsx",                description: "GVC-themed toast notification setup" },
+  { id: 9, key: "snippet_dropZone",            file: "components/DropZone.tsx",        description: "Drag-drop file upload zone with paste support" },
 ] as const;

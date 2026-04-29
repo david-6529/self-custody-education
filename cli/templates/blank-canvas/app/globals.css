@@ -293,3 +293,41 @@ body::after {
     opacity: 0;
   }
 }
+
+/* ---------------------------------- */
+/* Range Slider                       */
+/* ---------------------------------- */
+
+.gvc-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+.gvc-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-gvc-gold);
+  border: 2px solid #050505;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 224, 72, 0.4), 0 0 12px rgba(255, 224, 72, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gvc-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 1px rgba(255, 224, 72, 0.6), 0 0 16px rgba(255, 224, 72, 0.5);
+}
+
+.gvc-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-gvc-gold);
+  border: 2px solid #050505;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 224, 72, 0.4), 0 0 12px rgba(255, 224, 72, 0.3);
+}
