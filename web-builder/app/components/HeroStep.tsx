@@ -101,12 +101,12 @@ const FEATURED_BUILDS: FeaturedBuild[] = [
     description: "An interactive name-randomizer. Drop in a list of names or ETH wallet addresses, hit spin, and the wheel lands on a random winner with a celebration overlay. It's wired into the GVC ecosystem so entries can be filtered or weighted by the badges a holder has unlocked through their NFTs.",
   },
   {
-    id: "vibematch",
-    name: "VibeMatch",
+    id: "pin-drop",
+    name: "Pin Drop",
     status: "soon",
     url: "https://vibematch.app",
     icon: Puzzle,
-    description: "A new puzzle game from Good Vibes Club. Players can match badges, win prizes, and climb to the top of the leaderboard!",
+    description: "A new puzzle game from Good Vibes Club. Players can match pins, score big, and win prizes. Climb to the top of the leaderboard and collect all 101 pins!",
   },
 ];
 
