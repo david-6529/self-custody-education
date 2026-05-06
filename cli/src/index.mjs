@@ -972,7 +972,6 @@ function generateStarterPage(templateType, projectName, description, addons, pro
     `### Assets (already in /public/)`,
     `- \`/shaka.png\` -GVC shaka hand icon (use with next/image)`,
     `- \`/gvc-logotype.svg\` -Good Vibes Club wordmark`,
-    `- \`/grid.svg\` -background grid texture`,
     `- \`/gvc-metadata.json\` -all 6,969 token traits and IPFS image URLs`,
     ``,
     `### Brand Asset Library (hosted)`,
@@ -1451,7 +1450,6 @@ Use cases: rarity checker, token lookup, trait filtering, collection search, tra
 - Fonts: /public/fonts/ (Brice for headlines, Mundial for body)
 - Shaka icon: /public/shaka.png
 - GVC logotype: /public/gvc-logotype.svg
-- Background grid: /public/grid.svg (already applied via body::before in globals.css — do NOT add background-size or opacity overrides on top; the SVG ships with its own 10% white stroke, and extra opacity stacks to invisible)
 - Token metadata: /public/gvc-metadata.json (all 6,969 tokens with traits + images)
 
 ## Brand Asset Library
