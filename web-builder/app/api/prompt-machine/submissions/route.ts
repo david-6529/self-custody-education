@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool, { ensureTable } from "@/lib/db";
 
+const MAX_PROMPT_LEN = 20000;
 const MAX_TEXT_LEN = 4000;
 const RATE_LIMIT_WINDOW_MIN = 60;
 const RATE_LIMIT_MAX = 5;
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     if (
       title.length > 200 ||
-      prompt.length > MAX_TEXT_LEN ||
+      prompt.length > MAX_PROMPT_LEN ||
       description.length > MAX_TEXT_LEN ||
       moreDetails.length > MAX_TEXT_LEN
     ) {
