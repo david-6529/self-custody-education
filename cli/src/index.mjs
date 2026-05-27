@@ -214,6 +214,13 @@ const ADDONS = [
   { value: "on-chain-reads",    label: "Blockchain lookups",          hint: "check wallet balances and read smart contracts" },
   { value: "badge-collection",  label: "Badge collection",            hint: "101 GVC badges with tiers and glow effects" },
   { value: "vercel-kv",         label: "Save and store data",         hint: "persistent storage for scores, votes, and settings" },
+  // ── Game Pack v1 (extracted from Pin Drop + VibeMatch) ──
+  { value: "daily-challenge",   label: "Daily challenge + streaks",   hint: "one seeded run per day with streak meter and bonus emission — biggest retention lever" },
+  { value: "tier-system",       label: "Tier system",                 hint: "rarity bands (Common → Cosmic) with tier-gated unlocks and profile signals" },
+  { value: "soft-currency",     label: "Soft currency + ledger",      hint: "earnable in-game currency with audited ledger, idempotent grants, anti-grind caps" },
+  { value: "referral-invites",  label: "Referral invites",            hint: "shareable codes, state-encoded URLs, automatic credit on join" },
+  { value: "anti-cheat",        label: "Anti-cheat + flag review",    hint: "server-side replay validation, anomaly heuristics, admin flag-for-review queue" },
+  { value: "admin-panel",       label: "Admin panel",                 hint: "gated /admin with auto-discovered sections for the Game Pack addons you selected (requires User accounts)" },
 ];
 
 // ── Keyword matching for add-on suggestions ──────────────────────────
@@ -269,6 +276,31 @@ const SUGGESTION_RULES = [
   {
     keywords: ["store", "save", "database", "cache", "persist", "redis"],
     addon: "vercel-kv",
+  },
+  // ── Game Pack v1 ──
+  {
+    keywords: ["daily", "streak", "everyday", "retention", "comeback", "seeded", "daily seed"],
+    addon: "daily-challenge",
+  },
+  {
+    keywords: ["tier", "rank", "rarity", "band", "common", "rare", "legendary", "cosmic", "progression"],
+    addon: "tier-system",
+  },
+  {
+    keywords: ["currency", "caps", "coins", "tokens", "credits", "wallet balance", "ledger", "gacha", "reroll", "spend", "earn"],
+    addon: "soft-currency",
+  },
+  {
+    keywords: ["referral", "invite", "share", "viral", "friend", "challenge friend"],
+    addon: "referral-invites",
+  },
+  {
+    keywords: ["cheat", "anti-cheat", "validate", "replay", "anomaly", "fraud", "fairness"],
+    addon: "anti-cheat",
+  },
+  {
+    keywords: ["admin", "moderation", "review", "dashboard admin", "control panel", "backend admin"],
+    addon: "admin-panel",
   },
 ];
 
@@ -874,6 +906,764 @@ if (!session.userId) return NextResponse.json({ error: "Unauthorized" }, { statu
 \`\`\`
 
 Don't allow username changes without a fresh password confirmation.`,
+
+  "daily-challenge": `### Daily Challenge Pattern
+
+One unique, seeded game state per calendar day. Streak counter. Bonus emission. The single biggest D2/D7/D30 retention lever for any minigame — extracted from VibeMatch.
+
+#### Schema
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS daily_runs (
+  id BIGSERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  run_date DATE NOT NULL,
+  seed TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  duration_ms INTEGER,
+  moves_json JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, run_date)
+);
+CREATE INDEX IF NOT EXISTS idx_daily_runs_date_score ON daily_runs (run_date, score DESC);
+
+CREATE TABLE IF NOT EXISTS daily_streaks (
+  user_id TEXT PRIMARY KEY,
+  current_streak INTEGER NOT NULL DEFAULT 0,
+  longest_streak INTEGER NOT NULL DEFAULT 0,
+  last_play_date DATE
+);
+\`\`\`
+
+\`UNIQUE (user_id, run_date)\` enforces one official daily run per player. Practice runs go through a separate table or no table.
+
+#### Seed generation (\`lib/daily-seed.ts\`)
+
+\`\`\`ts
+import { createHash } from "crypto";
+
+const PROJECT_NAMESPACE = "your-project-slug";  // change per project — prevents seed collision across builds
+
+export function getDailySeed(date = new Date(), tz = "America/New_York"): string {
+  const iso = date.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+  return createHash("sha256").update(\`\${PROJECT_NAMESPACE}-\${iso}\`).digest("hex").slice(0, 16);
+}
+
+export function todayKey(tz = "America/New_York"): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: tz });
+}
+\`\`\`
+
+Same date + same project → same seed for every player. Different date → different seed. Deterministic, no DB hit.
+
+#### Streak bump
+
+Run once per official daily run, idempotent for the same day:
+
+\`\`\`ts
+export async function bumpDailyStreak(userId: string, tz = "America/New_York") {
+  const today = todayKey(tz);
+  const { rows } = await pool.query(
+    \`INSERT INTO daily_streaks (user_id, current_streak, longest_streak, last_play_date)
+     VALUES ($1, 1, 1, $2::date)
+     ON CONFLICT (user_id) DO UPDATE SET
+       current_streak = CASE
+         WHEN daily_streaks.last_play_date = EXCLUDED.last_play_date THEN daily_streaks.current_streak
+         WHEN daily_streaks.last_play_date = EXCLUDED.last_play_date - INTERVAL '1 day' THEN daily_streaks.current_streak + 1
+         ELSE 1
+       END,
+       longest_streak = GREATEST(daily_streaks.longest_streak,
+         CASE WHEN daily_streaks.last_play_date = EXCLUDED.last_play_date - INTERVAL '1 day' THEN daily_streaks.current_streak + 1 ELSE 1 END),
+       last_play_date = EXCLUDED.last_play_date
+     RETURNING current_streak, longest_streak\`,
+    [userId, today]
+  );
+  return rows[0];
+}
+\`\`\`
+
+#### Integration with other addons
+
+- **\`soft-currency\` present**: on daily run completion, credit base reward + streak multiplier. Example: \`5 + Math.min(streak, 30) * 2\` capsules. Use the currency ledger's idempotency key \`\${userId}:daily:\${today}\` so replays don't double-credit.
+- **\`achievements\` present**: unlock \`streak-3\`, \`streak-7\`, \`streak-30\` thresholds on streak bump.
+- **\`referral-invites\` present**: render a "Challenge a friend with today's seed" share button. Encode \`?seed=\${seed}&date=\${today}\` in the share URL.
+- **\`anti-cheat\` present**: validate the submitted run server-side before writing to \`daily_runs\` (replay moves against the seed).
+- **\`leaderboard\` present**: separate "Daily" tab queries \`WHERE run_date = $1 ORDER BY score DESC LIMIT 100\`.
+
+#### UI components
+
+- **\`<StreakMeter>\`** — pill showing current streak with a small flame icon. Color shifts: 1-2 days subtle, 3-6 warm, 7+ on-fire gold glow.
+- **\`<DailyResetTimer>\`** — countdown to next reset (TZ-aware), shown after the player completes today's run.
+- **Game over screen** — show today's percentile (\`SELECT COUNT(*) FROM daily_runs WHERE run_date = $1 AND score < $2\`).`,
+
+  "tier-system": `### Tier System Pattern
+
+Stratified rarity bands for any scored or collected quantity. Drives status signals, gated unlocks, and player progression. Extracted from VibeMatch's 7-tier band model and Pin Drop's 5-tier badge engine.
+
+#### Schema
+
+Tier bands are config, not data — checked into the codebase. The DB just stores per-user computed tier and tier history.
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS user_tier_progress (
+  user_id TEXT PRIMARY KEY,
+  metric TEXT NOT NULL,        -- which metric drives tier: "score" | "badges_owned" | "lifetime_caps"
+  value NUMERIC NOT NULL,      -- current value of that metric
+  tier_slug TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tier_history (
+  id BIGSERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  from_tier TEXT,
+  to_tier TEXT NOT NULL,
+  reached_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+\`\`\`
+
+#### Tier definitions (\`lib/tiers.ts\`)
+
+\`\`\`ts
+export interface TierBand {
+  slug: string;
+  label: string;
+  min: number;
+  color: string;
+  glow: string;
+  perks?: string[];  // tier-gated features
+}
+
+export const TIERS: TierBand[] = [
+  { slug: "common",    label: "Common",    min: 0,    color: "#9CA3AF", glow: "rgba(156,163,175,0.3)" },
+  { slug: "uncommon",  label: "Uncommon",  min: 100,  color: "#34D399", glow: "rgba(52,211,153,0.4)" },
+  { slug: "rare",      label: "Rare",      min: 500,  color: "#60A5FA", glow: "rgba(96,165,250,0.5)" },
+  { slug: "epic",      label: "Epic",      min: 2000, color: "#A78BFA", glow: "rgba(167,139,250,0.5)" },
+  { slug: "legendary", label: "Legendary", min: 5000, color: "#F59E0B", glow: "rgba(245,158,11,0.6)" },
+  { slug: "cosmic",    label: "Cosmic",    min: 15000, color: "#FFE048", glow: "rgba(255,224,72,0.8)", perks: ["cosmic-frame", "leaderboard-badge"] },
+];
+
+export function tierFor(value: number): TierBand {
+  let current = TIERS[0];
+  for (const t of TIERS) if (value >= t.min) current = t;
+  return current;
+}
+
+export function nextTier(value: number): TierBand | null {
+  return TIERS.find((t) => t.min > value) ?? null;
+}
+\`\`\`
+
+Tune the \`min\` thresholds to your game's scoring curve. Cosmic should feel rare (top ~1% of players).
+
+#### Tier update (call after every score-affecting event)
+
+\`\`\`ts
+export async function updateUserTier(userId: string, metric: string, newValue: number) {
+  const newTier = tierFor(newValue);
+  const { rows } = await pool.query(
+    \`INSERT INTO user_tier_progress (user_id, metric, value, tier_slug)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (user_id) DO UPDATE SET value = $3, tier_slug = $4, updated_at = NOW()
+     RETURNING (SELECT tier_slug FROM user_tier_progress WHERE user_id = $1) AS prev_tier\`,
+    [userId, metric, newValue, newTier.slug]
+  );
+  const prev = rows[0]?.prev_tier;
+  if (prev && prev !== newTier.slug) {
+    await pool.query(
+      "INSERT INTO tier_history (user_id, from_tier, to_tier) VALUES ($1, $2, $3)",
+      [userId, prev, newTier.slug]
+    );
+    return { tierUp: true, from: prev, to: newTier.slug };
+  }
+  return { tierUp: false };
+}
+\`\`\`
+
+#### Gating features by tier
+
+\`\`\`ts
+export function hasPerk(userTier: string, perk: string): boolean {
+  const idx = TIERS.findIndex((t) => t.slug === userTier);
+  return TIERS.slice(0, idx + 1).some((t) => t.perks?.includes(perk));
+}
+\`\`\`
+
+#### Integration with other addons
+
+- **\`achievements\` present**: emit \`tier-up-\${slug}\` achievement on tier change.
+- **\`soft-currency\` present**: tier-up reward (e.g., 50 caps on uncommon, 250 on rare, etc).
+- **\`leaderboard\` present**: optional tier badge next to username on rankings.
+- **\`auth\` present**: surface tier on user profile + colored glow on their avatar.
+
+#### UI components
+
+- **\`<TierBadge tier={user.tier} />\`** — small pill with tier color and glow.
+- **\`<TierProgress value={user.score} />\`** — progress bar to next tier with the next-tier label.
+- **\`<TierUpToast />\`** — full-screen flash on tier-up with the new tier glow.`,
+
+  "soft-currency": `### Soft Currency Pattern
+
+Earned game currency (caps, vibes, points, whatever you call it) with a strict ledger for auditability. No double-spends. Admin-grantable. Built for IAP wrap-around later. Extracted from VibeMatch's arcade tokens and Pin Drop's economy.
+
+#### Schema — never store balances without the ledger
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS user_balances (
+  user_id TEXT PRIMARY KEY,
+  balance BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0),
+  lifetime_earned BIGINT NOT NULL DEFAULT 0,
+  lifetime_spent BIGINT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS currency_ledger (
+  id BIGSERIAL PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  delta BIGINT NOT NULL,            -- positive = earn, negative = spend
+  reason TEXT NOT NULL,             -- "daily-bonus" | "referral" | "purchase" | "tier-up" | "admin-grant" | etc
+  ref_id TEXT,                      -- foreign id (run_id, referral_id, order_id)
+  idempotency_key TEXT UNIQUE,      -- prevents double-credit on retries
+  balance_after BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_ledger_user_created ON currency_ledger (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ledger_reason ON currency_ledger (reason);
+\`\`\`
+
+The \`idempotency_key\` is the safety net. Bug in a route fires the credit twice → \`UNIQUE\` constraint blocks the second write. Always pass it.
+
+#### Earn / spend (\`lib/currency.ts\`)
+
+\`\`\`ts
+export async function credit(
+  userId: string,
+  amount: number,
+  reason: string,
+  opts: { refId?: string; idempotencyKey: string }
+): Promise<{ balance: number; alreadyCredited: boolean }> {
+  if (amount <= 0) throw new Error("credit() requires positive amount");
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const existing = await client.query(
+      "SELECT balance_after FROM currency_ledger WHERE idempotency_key = $1",
+      [opts.idempotencyKey]
+    );
+    if (existing.rows.length) {
+      await client.query("COMMIT");
+      return { balance: Number(existing.rows[0].balance_after), alreadyCredited: true };
+    }
+    const { rows } = await client.query(
+      \`INSERT INTO user_balances (user_id, balance, lifetime_earned)
+       VALUES ($1, $2, $2)
+       ON CONFLICT (user_id) DO UPDATE SET
+         balance = user_balances.balance + EXCLUDED.balance,
+         lifetime_earned = user_balances.lifetime_earned + EXCLUDED.lifetime_earned,
+         updated_at = NOW()
+       RETURNING balance\`,
+      [userId, amount]
+    );
+    const newBalance = Number(rows[0].balance);
+    await client.query(
+      \`INSERT INTO currency_ledger (user_id, delta, reason, ref_id, idempotency_key, balance_after)
+       VALUES ($1, $2, $3, $4, $5, $6)\`,
+      [userId, amount, reason, opts.refId ?? null, opts.idempotencyKey, newBalance]
+    );
+    await client.query("COMMIT");
+    return { balance: newBalance, alreadyCredited: false };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+export async function spend(
+  userId: string,
+  amount: number,
+  reason: string,
+  opts: { refId?: string; idempotencyKey: string }
+): Promise<{ balance: number; ok: boolean }> {
+  // Atomic balance check + decrement. CHECK constraint on user_balances.balance
+  // prevents going negative. If the UPDATE affects 0 rows, the user can't afford it.
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const existing = await client.query(
+      "SELECT balance_after FROM currency_ledger WHERE idempotency_key = $1",
+      [opts.idempotencyKey]
+    );
+    if (existing.rows.length) {
+      await client.query("COMMIT");
+      return { balance: Number(existing.rows[0].balance_after), ok: true };
+    }
+    const result = await client.query(
+      \`UPDATE user_balances
+       SET balance = balance - $2, lifetime_spent = lifetime_spent + $2, updated_at = NOW()
+       WHERE user_id = $1 AND balance >= $2
+       RETURNING balance\`,
+      [userId, amount]
+    );
+    if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return { balance: 0, ok: false };
+    }
+    const newBalance = Number(result.rows[0].balance);
+    await client.query(
+      \`INSERT INTO currency_ledger (user_id, delta, reason, ref_id, idempotency_key, balance_after)
+       VALUES ($1, $2, $3, $4, $5, $6)\`,
+      [userId, -amount, reason, opts.refId ?? null, opts.idempotencyKey, newBalance]
+    );
+    await client.query("COMMIT");
+    return { balance: newBalance, ok: true };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+\`\`\`
+
+#### Daily earn cap (anti-grind)
+
+Add a check before \`credit()\`:
+
+\`\`\`ts
+const todays = await pool.query(
+  "SELECT COALESCE(SUM(delta), 0) AS earned FROM currency_ledger WHERE user_id = $1 AND delta > 0 AND created_at::date = CURRENT_DATE",
+  [userId]
+);
+if (Number(todays.rows[0].earned) >= DAILY_EARN_CAP) {
+  return { balance: ..., cappedOut: true };
+}
+\`\`\`
+
+#### Reroll / gacha primitive
+
+\`\`\`ts
+export async function reroll(userId: string, cost: number, pool: GachaItem[], runId: string) {
+  const result = await spend(userId, cost, "reroll", { idempotencyKey: \`reroll:\${runId}\` });
+  if (!result.ok) return { error: "insufficient-balance" };
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  return { item, newBalance: result.balance };
+}
+\`\`\`
+
+#### Integration with other addons
+
+- **\`daily-challenge\`**: credits base + streak-bonus on daily run completion.
+- **\`tier-system\`**: tier-up rewards via \`credit\` with \`reason="tier-up"\`.
+- **\`referral-invites\`**: credit on successful referral with \`reason="referral"\` and the referral id as \`refId\`.
+- **\`achievements\`**: optional reward on unlock.
+- **\`admin-panel\`**: ledger view + manual grant/deduct endpoints.`,
+
+  "referral-invites": `### Referral Invites Pattern
+
+Shareable invite codes with state-encoded URLs, automatic credit on join, and abuse protection. Powers viral growth without spammy mechanics. Extracted from VibeMatch's referral achievements.
+
+#### Schema
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS referral_codes (
+  user_id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,        -- short, human-friendly, e.g. "BRYN-7K2"
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS referrals (
+  id BIGSERIAL PRIMARY KEY,
+  referrer_id TEXT NOT NULL,
+  referred_id TEXT NOT NULL UNIQUE,  -- a user can only be referred once
+  code_used TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',  -- pending | qualified | rewarded | rejected
+  qualified_at TIMESTAMPTZ,
+  rewarded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals (referrer_id);
+\`\`\`
+
+Two-step: a referral is "pending" on signup, then "qualified" when the referred user does something meaningful (completes a daily run, hits a score threshold). This prevents bot-farms of throwaway accounts.
+
+#### Code generation (\`lib/referrals.ts\`)
+
+\`\`\`ts
+function makeCode(username: string): string {
+  const prefix = username.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+  const suffix = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+  return \`\${prefix}-\${suffix}\`;
+}
+
+export async function ensureReferralCode(userId: string, username: string): Promise<string> {
+  const { rows } = await pool.query(
+    "SELECT code FROM referral_codes WHERE user_id = $1",
+    [userId]
+  );
+  if (rows.length) return rows[0].code;
+  // Collision retry — UNIQUE will fail on dup, regenerate
+  for (let i = 0; i < 5; i++) {
+    const code = makeCode(username);
+    try {
+      await pool.query(
+        "INSERT INTO referral_codes (user_id, code) VALUES ($1, $2)",
+        [userId, code]
+      );
+      return code;
+    } catch (e: any) {
+      if (e.code !== "23505") throw e;
+    }
+  }
+  throw new Error("Could not generate unique referral code");
+}
+\`\`\`
+
+#### Share URL encoding
+
+\`\`\`ts
+export function shareUrl(opts: { code: string; seed?: string; score?: number }): string {
+  const url = new URL(process.env.NEXT_PUBLIC_BASE_URL!);
+  url.searchParams.set("ref", opts.code);
+  if (opts.seed) url.searchParams.set("seed", opts.seed);  // "challenge a friend with today's seed"
+  if (opts.score) url.searchParams.set("beat", String(opts.score));
+  return url.toString();
+}
+\`\`\`
+
+Client picks up \`?ref=...\` from the URL on first load, stashes in localStorage until they sign up, then sends it to \`/api/referrals/claim\`.
+
+#### Claim on signup (\`POST /api/referrals/claim\`)
+
+\`\`\`ts
+const { code } = await req.json();
+const session = await getIronSession<Session>(cookies(), sessionOptions);
+if (!session.userId) return NextResponse.json({ error: "Sign in first" }, { status: 401 });
+
+const { rows: codeRows } = await pool.query(
+  "SELECT user_id FROM referral_codes WHERE code = $1",
+  [code]
+);
+if (!codeRows.length) return NextResponse.json({ error: "Invalid code" }, { status: 404 });
+const referrerId = codeRows[0].user_id;
+if (referrerId === session.userId) return NextResponse.json({ error: "Can't refer yourself" }, { status: 400 });
+
+try {
+  await pool.query(
+    \`INSERT INTO referrals (referrer_id, referred_id, code_used, status)
+     VALUES ($1, $2, $3, 'pending')\`,
+    [referrerId, session.userId, code]
+  );
+  return NextResponse.json({ ok: true });
+} catch (e: any) {
+  if (e.code === "23505") return NextResponse.json({ error: "Already referred" }, { status: 409 });
+  throw e;
+}
+\`\`\`
+
+#### Qualification + reward (call on first daily run completion)
+
+\`\`\`ts
+export async function qualifyReferral(referredUserId: string) {
+  const { rows } = await pool.query(
+    \`UPDATE referrals
+     SET status = 'qualified', qualified_at = NOW()
+     WHERE referred_id = $1 AND status = 'pending'
+     RETURNING id, referrer_id\`,
+    [referredUserId]
+  );
+  if (!rows.length) return null;
+  const { id, referrer_id } = rows[0];
+
+  // If soft-currency is wired in, reward both sides
+  if (typeof credit === "function") {
+    await credit(referrer_id, 100, "referral", { refId: String(id), idempotencyKey: \`ref:\${id}:referrer\` });
+    await credit(referredUserId, 50, "referral-signup", { refId: String(id), idempotencyKey: \`ref:\${id}:referred\` });
+  }
+  await pool.query(
+    "UPDATE referrals SET status = 'rewarded', rewarded_at = NOW() WHERE id = $1",
+    [id]
+  );
+  return { referrerId: referrer_id };
+}
+\`\`\`
+
+#### Integration with other addons
+
+- **\`soft-currency\`**: rewards on qualified referral (see above).
+- **\`daily-challenge\`**: hook \`qualifyReferral\` into daily run completion.
+- **\`achievements\`**: \`refer-1\`, \`refer-5\`, \`refer-10\` thresholds.
+- **\`tier-system\`**: optional tier boost from total referrals.
+- **\`admin-panel\`**: top-referrers leaderboard, manual qualify/reject, abuse review (same IP / device).
+
+#### UI components
+
+- **\`<ReferralCard>\`** — user's code, share buttons (copy, X, native share), referral count, last-N-day delta.
+- **Welcome banner** — when a new user lands with \`?ref=CODE\`, show "Invited by @username — sign up to claim your bonus".`,
+
+  "anti-cheat": `### Anti-Cheat Pattern
+
+Server-side replay validation + anomaly heuristics + flag-for-review. Don't try to block submissions at the wire — accept, validate, flag suspicious. Extracted from VibeMatch's game-anomalies and anti-automation.
+
+#### Schema
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS flagged_runs (
+  id BIGSERIAL PRIMARY KEY,
+  run_id TEXT NOT NULL,           -- foreign id into daily_runs / leaderboard_scores / etc
+  user_id TEXT NOT NULL,
+  reason TEXT NOT NULL,           -- "impossible-score" | "sub-human-speed" | "replay-mismatch" | "rate-limit" | etc
+  details JSONB,
+  flagged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by TEXT,
+  action TEXT,                    -- "approve" | "reject" | "ban-user"
+  action_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_flagged_unreviewed ON flagged_runs (flagged_at DESC) WHERE reviewed_at IS NULL;
+\`\`\`
+
+#### Validators (\`lib/anti-cheat.ts\`)
+
+Each validator returns \`null\` for OK, or a \`{ reason, details }\` object to flag.
+
+\`\`\`ts
+export interface RunSubmission {
+  userId: string;
+  seed: string;
+  score: number;
+  durationMs: number;
+  moves: unknown[];
+}
+
+export type FlagReason = "impossible-score" | "sub-human-speed" | "replay-mismatch" | "rate-limit" | "stale-seed";
+export interface FlagResult { reason: FlagReason; details: Record<string, unknown>; }
+
+// 1. Impossible score for the seed — replay moves server-side
+export function validateReplay(s: RunSubmission, applyMove: (state: any, move: any) => any, initialState: (seed: string) => any): FlagResult | null {
+  try {
+    let state = initialState(s.seed);
+    for (const m of s.moves) state = applyMove(state, m);
+    if (state.score !== s.score) {
+      return { reason: "replay-mismatch", details: { expected: state.score, submitted: s.score } };
+    }
+  } catch (e: any) {
+    return { reason: "replay-mismatch", details: { error: e.message } };
+  }
+  return null;
+}
+
+// 2. Sub-human speed — average ms per move below physical threshold
+export function validateSpeed(s: RunSubmission, minMsPerMove = 80): FlagResult | null {
+  if (s.moves.length === 0) return null;
+  const avg = s.durationMs / s.moves.length;
+  if (avg < minMsPerMove) {
+    return { reason: "sub-human-speed", details: { avgMsPerMove: avg, moveCount: s.moves.length, durationMs: s.durationMs } };
+  }
+  return null;
+}
+
+// 3. Stale seed — submitted seed doesn't match today's expected seed
+export function validateSeedFreshness(s: RunSubmission, expectedSeed: string): FlagResult | null {
+  if (s.seed !== expectedSeed) {
+    return { reason: "stale-seed", details: { submitted: s.seed, expected: expectedSeed } };
+  }
+  return null;
+}
+\`\`\`
+
+#### Submission wrapper
+
+\`\`\`ts
+export async function submitRun(s: RunSubmission, expectedSeed: string, applyMove: any, initialState: any) {
+  const flags: FlagResult[] = [];
+  const r = validateReplay(s, applyMove, initialState);            if (r) flags.push(r);
+  const sp = validateSpeed(s);                                      if (sp) flags.push(sp);
+  const ss = validateSeedFreshness(s, expectedSeed);                if (ss) flags.push(ss);
+
+  // Accept the write, flag asynchronously. Don't show users a hard fail —
+  // their run is recorded as "pending review" and gets hidden from public
+  // leaderboards until reviewed. Real users almost never trip these checks.
+  const { rows } = await pool.query(
+    \`INSERT INTO daily_runs (user_id, run_date, seed, score, duration_ms, moves_json)
+     VALUES ($1, CURRENT_DATE, $2, $3, $4, $5::jsonb) RETURNING id\`,
+    [s.userId, s.seed, s.score, s.durationMs, JSON.stringify(s.moves)]
+  );
+  const runId = String(rows[0].id);
+
+  if (flags.length) {
+    for (const f of flags) {
+      await pool.query(
+        "INSERT INTO flagged_runs (run_id, user_id, reason, details) VALUES ($1, $2, $3, $4::jsonb)",
+        [runId, s.userId, f.reason, JSON.stringify(f.details)]
+      );
+    }
+  }
+  return { runId, flagged: flags.length > 0 };
+}
+\`\`\`
+
+#### Rate-limit by user + IP
+
+Reuse the \`submission_rate_log\` pattern. Cap per-user submissions to leaderboards / daily runs to a reasonable rate (e.g., 30/hour). Flag, don't block.
+
+#### Public leaderboard query — exclude unreviewed flagged runs
+
+\`\`\`sql
+SELECT * FROM daily_runs r
+WHERE r.run_date = CURRENT_DATE
+  AND NOT EXISTS (
+    SELECT 1 FROM flagged_runs f
+    WHERE f.run_id = r.id::text AND f.reviewed_at IS NULL
+  )
+ORDER BY r.score DESC LIMIT 100
+\`\`\`
+
+After admin review, an \`action = "approve"\` re-exposes the run; \`action = "reject"\` keeps it hidden permanently.
+
+#### Integration with other addons
+
+- **\`daily-challenge\` / \`leaderboard\`**: wrap their submit routes with \`submitRun()\`.
+- **\`auth\`**: ban repeat offenders by setting a flag on \`users\` (add \`banned BOOLEAN DEFAULT false\` column).
+- **\`admin-panel\`**: queue of unreviewed flagged runs with approve / reject / ban actions.`,
+
+  "admin-panel": `### Admin Panel Pattern
+
+Single \`/admin\` route, bcrypt-gated, that composes per-addon admin sections. Auto-discovers which other Game Pack addons are installed and only renders sections for those. Mirrors the Prompt Machine admin in the Builder Kit. **Requires \`auth\` addon.**
+
+#### Auth gate
+
+Use the \`auth\` addon's session pattern with one extra check — an \`is_admin\` flag on the users table:
+
+\`\`\`sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+\`\`\`
+
+Bootstrap your first admin via SQL: \`UPDATE users SET is_admin = true WHERE username = 'you';\`
+
+\`\`\`ts
+// lib/admin-auth.ts
+export async function requireAdmin() {
+  const session = await getIronSession<Session>(cookies(), sessionOptions);
+  if (!session.userId) throw new Response("Unauthorized", { status: 401 });
+  const { rows } = await pool.query("SELECT is_admin FROM users WHERE id = $1", [session.userId]);
+  if (!rows[0]?.is_admin) throw new Response("Forbidden", { status: 403 });
+  return session;
+}
+\`\`\`
+
+Wrap every admin API route with \`requireAdmin()\` at the top.
+
+#### Layout (\`/admin/page.tsx\`)
+
+Tabbed layout. Each tab is a conditional section — only rendered if the relevant Postgres table exists. Cheap runtime detection:
+
+\`\`\`ts
+async function detectSections(): Promise<string[]> {
+  const tables = ["daily_runs", "user_tier_progress", "currency_ledger", "referrals", "flagged_runs"];
+  const { rows } = await pool.query(
+    "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = ANY($1)",
+    [tables]
+  );
+  const found = new Set(rows.map((r) => r.table_name));
+  const sections: string[] = [];
+  if (found.has("daily_runs")) sections.push("daily-runs");
+  if (found.has("user_tier_progress")) sections.push("tiers");
+  if (found.has("currency_ledger")) sections.push("currency");
+  if (found.has("referrals")) sections.push("referrals");
+  if (found.has("flagged_runs")) sections.push("flagged");
+  return sections;
+}
+\`\`\`
+
+#### Section: Daily Challenges (\`daily-runs\`)
+
+- Table: today's top 50 with score, duration, user, flagged-status
+- Actions: hide-from-leaderboard (toggle), force-recompute-streak (in case of bad data)
+- Stats card: today's player count, median score, completion rate
+
+\`\`\`ts
+// GET /api/admin/daily-runs?date=YYYY-MM-DD
+const { rows } = await pool.query(
+  \`SELECT r.*, u.username,
+     EXISTS(SELECT 1 FROM flagged_runs f WHERE f.run_id = r.id::text AND f.reviewed_at IS NULL) AS flagged
+   FROM daily_runs r LEFT JOIN users u ON u.id = r.user_id
+   WHERE r.run_date = $1::date
+   ORDER BY r.score DESC LIMIT 100\`,
+  [date]
+);
+\`\`\`
+
+#### Section: Tiers (\`tiers\`)
+
+- Histogram of users per tier
+- Search: lookup user → see tier history
+- Action: manually adjust user's metric (rare — for bug fixes)
+
+#### Section: Currency (\`currency\`)
+
+- Ledger view: latest 200 entries, filterable by reason + user
+- Stats: total caps in circulation, top 10 holders, total earned-vs-spent
+- Actions: \`POST /api/admin/currency/grant\` (with reason + idempotency key) and \`/refund\` (negative grant, ref_id to original)
+
+\`\`\`ts
+// POST /api/admin/currency/grant
+const { userId, amount, reason } = await req.json();
+const key = \`admin-grant:\${Date.now()}:\${userId}\`;
+await credit(userId, amount, \`admin-grant:\${reason}\`, { idempotencyKey: key });
+\`\`\`
+
+Every admin grant is logged in the ledger like any other entry — full audit trail.
+
+#### Section: Referrals (\`referrals\`)
+
+- Top 20 referrers by \`COUNT(*) WHERE status = 'rewarded'\`
+- Pending referrals (signed up but haven't qualified yet)
+- Action: manually qualify (override the activity gate, useful for legitimate edge cases) or reject (suspected farming)
+
+#### Section: Flagged Runs (\`flagged\`)
+
+The most important one — anti-cheat review queue. Show oldest-unreviewed first.
+
+\`\`\`ts
+// GET /api/admin/flagged
+const { rows } = await pool.query(
+  \`SELECT f.*, u.username, r.score, r.seed
+   FROM flagged_runs f
+   LEFT JOIN users u ON u.id = f.user_id
+   LEFT JOIN daily_runs r ON r.id::text = f.run_id
+   WHERE f.reviewed_at IS NULL
+   ORDER BY f.flagged_at ASC LIMIT 50\`
+);
+\`\`\`
+
+Action buttons per row:
+
+- **Approve** — \`UPDATE flagged_runs SET reviewed_at = NOW(), reviewed_by = $admin, action = 'approve'\`. Run becomes visible on leaderboards.
+- **Reject** — same with \`action = 'reject'\`. Run stays hidden permanently. Score doesn't count toward tier/currency.
+- **Ban user** — same with \`action = 'ban-user'\`, plus \`UPDATE users SET banned = true WHERE id = $user_id\`. Cancels their session.
+
+#### UI
+
+Each section is its own client component. Lazy-load with React.Suspense — admins viewing the Tiers tab shouldn't pay for fetching flagged-runs data. Use a single header with section tabs and a small "v1" badge.
+
+#### Brand
+
+Apply GVC brand rules to admin too — grid background, gold accents, all-caps section titles. Admin pages aren't an excuse to look like phpMyAdmin.
+
+#### Routes summary
+
+- \`GET /admin\` — gated page
+- \`GET /api/admin/daily-runs?date=...\`
+- \`GET /api/admin/tiers/histogram\`
+- \`GET /api/admin/currency/ledger?user_id=...&reason=...&limit=200\`
+- \`POST /api/admin/currency/grant\`
+- \`POST /api/admin/currency/refund\`
+- \`GET /api/admin/referrals/top\`
+- \`POST /api/admin/referrals/qualify\`
+- \`GET /api/admin/flagged\`
+- \`POST /api/admin/flagged/review\` (body: \`{ flagId, action }\`)`,
 };
 
 // ── Starter page ────────────────────────────────────────────────────
