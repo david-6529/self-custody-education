@@ -221,6 +221,7 @@ const ADDONS = [
   { value: "referral-invites",  label: "Referral invites",            hint: "shareable codes, state-encoded URLs, automatic credit on join" },
   { value: "anti-cheat",        label: "Anti-cheat + flag review",    hint: "server-side replay validation, anomaly heuristics, admin flag-for-review queue" },
   { value: "admin-panel",       label: "Admin panel",                 hint: "gated /admin with auto-discovered sections for the Game Pack addons you selected (requires User accounts)" },
+  { value: "bubble-gum-mode",   label: "Bubble Gum Mode (theme)",     hint: "alternate light/pink theme toggle with activation blast, ambient floating coins, and CSS override layer over the standard dark/gold brand" },
 ];
 
 // ── Keyword matching for add-on suggestions ──────────────────────────
@@ -301,6 +302,10 @@ const SUGGESTION_RULES = [
   {
     keywords: ["admin", "moderation", "review", "dashboard admin", "control panel", "backend admin"],
     addon: "admin-panel",
+  },
+  {
+    keywords: ["bubble gum", "bubblegum", "pink theme", "light theme", "theme toggle", "alternate theme", "dark mode toggle"],
+    addon: "bubble-gum-mode",
   },
 ];
 
@@ -1664,6 +1669,433 @@ Apply GVC brand rules to admin too — grid background, gold accents, all-caps s
 - \`POST /api/admin/referrals/qualify\`
 - \`GET /api/admin/flagged\`
 - \`POST /api/admin/flagged/review\` (body: \`{ flagId, action }\`)`,
+
+  "bubble-gum-mode": `### Bubble Gum Mode (Alternate Light/Pink Theme)
+
+A playful light + pink celebratory counterpart to the default GVC dark + gold brand. Toggleable. Switching INTO Bubble Gum fires a one-time "blast" — a radial burst of 6.9 coins + a pink flash. While active: ambient floating gum coins, pink glows, magenta accents. Extracted from projecteruption.
+
+#### The architectural rule (read this first)
+
+**You build every component ONCE using the standard GVC dark/gold Tailwind classes.** Bubble Gum Mode is a single CSS override block (\`.bubblegum .<utility> { ... !important }\`) that remaps those utilities to the light/pink palette. A \`.bubblegum\` class on \`<body>\` flips the whole site.
+
+- Components stay theme-agnostic. Never write two versions of anything.
+- New sections automatically support both themes if they use standard GVC utility classes.
+- The ONLY JS-level theme awareness needed is for **dynamic inline colors** (computed hex at runtime, e.g. a tier color). Run those through \`tierInk()\` (below).
+
+This is why the override layer uses \`!important\` everywhere — it has to win against utility-class specificity.
+
+#### Asset
+
+\`gum-badge.webp\` ships in /public/ (the 6.9 gum coin, ~60KB, transparent background). Used by both the ambient floating layer and the activation blast.
+
+#### Color mapping
+
+| Role | Dark (default) | Bubble Gum |
+|---|---|---|
+| Page background | \`#050505\` | \`#FFE3F3\` |
+| Body text | \`#FFFFFF\` | \`#3A0E2E\` (dark plum) |
+| Card surface (\`bg-gvc-dark\`) | \`#121212\` | \`#FFF5FB\` |
+| Subtle surface (\`bg-gvc-gray\`) | \`#1F1F1F\` | \`#FFEAF7\` |
+| Black insets / pills | black | \`rgba(255,129,224,0.10)\` |
+| Gold text (\`text-gvc-gold\`) | \`#FFE048\` | \`#CC2E9C\` (deep magenta) |
+| Gold fill (\`bg-gvc-gold\`) | \`#FFE048\` | \`#FF81E0\` (pink) |
+| Card glow | gold | pink \`rgba(255,129,224,...)\` |
+| Bottom radial glow | gold | pink |
+| Shimmer headline | gold gradient | deep pink \`#C42AA0 → #E257BE\` |
+
+Legibility-deepened accents (light colors washed out on pink — they darken):
+- Purple \`#A56BFF\` → \`#7A1FC8\`
+- Light blue \`#5BA8FF\` → \`#1E63D6\`
+- \`text-gvc-orange\` → \`#C73600\`
+- \`text-gvc-green\` → \`#0B7A0B\`
+
+Signature pink: **\`#FF81E0\`**. Readable pink text: **\`#CC2E9C\`**. Body text plum: **\`#3A0E2E\`**.
+
+#### CSS override layer (append to \`globals.css\`)
+
+\`\`\`css
+/* ============================================================ */
+/* BUBBLE GUM MODE — light / pink theme (toggled via body class) */
+/* ============================================================ */
+
+body.bubblegum {
+  background-color: #FFE3F3;
+  color: #3A0E2E;
+}
+body.bubblegum::after {
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,129,224,0.30) 0%, rgba(255,129,224,0.12) 40%, transparent 72%);
+}
+
+/* Surfaces */
+.bubblegum .bg-gvc-black { background-color: #FFE3F3 !important; }
+.bubblegum .bg-gvc-dark { background-color: #FFF5FB !important; }
+.bubblegum .bg-gvc-dark\\/60 { background-color: rgba(255,245,251,0.72) !important; }
+.bubblegum .bg-gvc-dark\\/80 { background-color: rgba(255,245,251,0.88) !important; }
+.bubblegum .bg-gvc-gray { background-color: #FFEAF7 !important; }
+
+/* Black insets — faint pink wash */
+.bubblegum .bg-black,
+.bubblegum .bg-black\\/30,
+.bubblegum .bg-black\\/40,
+.bubblegum .bg-black\\/50,
+.bubblegum .bg-black\\/60,
+.bubblegum .bg-black\\/70,
+.bubblegum .bg-black\\/90 { background-color: rgba(255,129,224,0.10) !important; }
+
+/* Text: white → dark plum (cover every alpha variant you use) */
+.bubblegum .text-white { color: #3A0E2E !important; }
+.bubblegum .text-white\\/90 { color: rgba(58,14,46,0.9) !important; }
+.bubblegum .text-white\\/80 { color: rgba(58,14,46,0.8) !important; }
+.bubblegum .text-white\\/75 { color: rgba(58,14,46,0.74) !important; }
+.bubblegum .text-white\\/70 { color: rgba(58,14,46,0.7) !important; }
+.bubblegum .text-white\\/60 { color: rgba(58,14,46,0.62) !important; }
+.bubblegum .text-white\\/55 { color: rgba(58,14,46,0.58) !important; }
+.bubblegum .text-white\\/50 { color: rgba(58,14,46,0.55) !important; }
+.bubblegum .text-white\\/40 { color: rgba(58,14,46,0.5) !important; }
+.bubblegum .text-white\\/30 { color: rgba(58,14,46,0.4) !important; }
+
+/* Gold → bubblegum pink */
+.bubblegum .text-gvc-gold { color: #CC2E9C !important; }
+.bubblegum .text-gvc-gold\\/80 { color: rgba(204,46,156,0.8) !important; }
+.bubblegum .text-gvc-gold\\/60 { color: rgba(204,46,156,0.6) !important; }
+.bubblegum .bg-gvc-gold { background-color: #FF81E0 !important; }
+.bubblegum .bg-gvc-gold\\/5 { background-color: rgba(255,129,224,0.10) !important; }
+
+/* Gold borders → pink */
+.bubblegum .border-gvc-gold\\/15 { border-color: rgba(255,129,224,0.35) !important; }
+.bubblegum .border-gvc-gold\\/20 { border-color: rgba(255,129,224,0.4) !important; }
+.bubblegum .border-gvc-gold\\/30 { border-color: rgba(255,129,224,0.5) !important; }
+.bubblegum .border-gvc-gold\\/40 { border-color: rgba(255,129,224,0.6) !important; }
+.bubblegum .border-gvc-gold\\/50 { border-color: rgba(255,129,224,0.7) !important; }
+
+/* White borders → pink stroke */
+.bubblegum .border-white\\/10 { border-color: rgba(255,129,224,0.4) !important; }
+.bubblegum .border-white\\/15 { border-color: rgba(255,129,224,0.45) !important; }
+.bubblegum .border-white\\/20 { border-color: rgba(255,129,224,0.5) !important; }
+.bubblegum .border-white\\/\\[0\\.04\\] { border-color: rgba(255,129,224,0.3) !important; }
+.bubblegum .border-white\\/\\[0\\.05\\] { border-color: rgba(255,129,224,0.32) !important; }
+.bubblegum .border-white\\/\\[0\\.06\\] { border-color: rgba(255,129,224,0.35) !important; }
+.bubblegum .border-white\\/\\[0\\.08\\] { border-color: rgba(255,129,224,0.38) !important; }
+
+/* Card gradients */
+.bubblegum .from-gvc-dark {
+  --tw-gradient-from: #FFF5FB var(--tw-gradient-from-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.bubblegum .to-\\[\\#0A0A0A\\] { --tw-gradient-to: #FFF0FA var(--tw-gradient-to-position) !important; }
+
+/* Shimmer headline → deep readable pink */
+.bubblegum .text-shimmer {
+  background-image: linear-gradient(110deg, #C42AA0 0%, #E257BE 48%, #C42AA0 54%, #C42AA0 100%);
+}
+/* Card glow → pink */
+.bubblegum .card-glow {
+  box-shadow: 0 0 20px rgba(255,129,224,0.25), 0 0 60px rgba(255,129,224,0.1);
+}
+
+/* Deepen accents that wash out on light pink */
+.bubblegum .text-\\[\\#A56BFF\\],
+.bubblegum .text-\\[\\#A56BFF\\]\\/70,
+.bubblegum .text-\\[\\#A56BFF\\]\\/80,
+.bubblegum .text-\\[\\#C49BFF\\] { color: #7A1FC8 !important; }
+.bubblegum .text-\\[\\#5BA8FF\\] { color: #1E63D6 !important; }
+.bubblegum .text-gvc-orange { color: #C73600 !important; }
+.bubblegum .text-gvc-green { color: #0B7A0B !important; }
+.bubblegum .bg-gvc-green\\/15 { background-color: rgba(11,122,11,0.12) !important; }
+.bubblegum .bg-gvc-green\\/10 { background-color: rgba(11,122,11,0.10) !important; }
+.bubblegum .border-gvc-green\\/40 { border-color: rgba(11,122,11,0.45) !important; }
+
+/* Drop dark text-shadow halos that muddy on light */
+.bubblegum .bar-fill-label { text-shadow: none; }
+
+/* ─── Effect keyframes ─── */
+
+/* Activation pink flash */
+.bubblegum-burst-fill {
+  position: absolute; inset: 0; opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255,129,224,0.45) 0%, rgba(255,155,232,0.2) 45%, rgba(255,208,240,0) 75%);
+  animation: gumFlash 0.9s ease-out forwards;
+}
+@keyframes gumFlash {
+  0%   { opacity: 0; transform: scale(0.4); }
+  20%  { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* Coins pop at center then sail outward. max-width/height MUST be unset:
+   Tailwind preflight sets img{max-width:100%} which resolves to 0 inside
+   a zero-width centering wrapper and clamps coins invisible. */
+.bubblegum-blast-badge {
+  position: absolute; left: 0; top: 0;
+  max-width: none; max-height: none;
+  pointer-events: none; opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: gumBlast 1.9s cubic-bezier(0.25, 0.9, 0.3, 1) forwards;
+  filter: drop-shadow(0 10px 26px rgba(214,48,156,0.6));
+}
+@keyframes gumBlast {
+  0%   { transform: translate(-50%, -50%) rotate(0deg) scale(0.2); opacity: 0; }
+  14%  { transform: translate(-50%, -50%) rotate(20deg) scale(1.25); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--spin)) scale(1.1); opacity: 0; }
+}
+
+/* Ambient floating coins (Bubble Gum) */
+.bubble-badge {
+  position: fixed; bottom: -90px; pointer-events: none; z-index: 0;
+  animation: badgeFloat linear infinite;
+  filter: drop-shadow(0 6px 14px rgba(255,129,224,0.45));
+}
+@keyframes badgeFloat {
+  0%   { transform: translateY(0) rotate(-8deg) scale(1); opacity: 0; }
+  8%   { opacity: 0.85; }
+  50%  { transform: translateY(-55vh) rotate(8deg) scale(1.05); opacity: 0.9; }
+  92%  { opacity: 0.5; }
+  100% { transform: translateY(-115vh) rotate(-6deg) scale(0.95); opacity: 0; }
+}
+
+/* Dark mode ambient: slow pulsing yellow glow at bottom */
+.bottom-glow-pulse {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 60vh;
+  background: radial-gradient(ellipse at 50% 120%, rgba(255,224,72,0.22) 0%, rgba(255,224,72,0.08) 38%, transparent 70%);
+  pointer-events: none; z-index: 0; transform-origin: bottom center;
+  animation: bottomGlowPulse 7s ease-in-out infinite;
+}
+@keyframes bottomGlowPulse {
+  0%, 100% { opacity: 0.5; transform: scaleY(0.96); }
+  50%      { opacity: 1;   transform: scaleY(1.05); }
+}
+@media (prefers-reduced-motion: reduce) { .bottom-glow-pulse { animation: none; opacity: 0.7; } }
+\`\`\`
+
+#### Theme hook (\`lib/use-gvc-theme.tsx\`)
+
+\`\`\`tsx
+"use client";
+import { createContext, useContext, useEffect, useState } from "react";
+
+type Theme = "dark" | "bubblegum";
+interface ThemeCtx {
+  theme: Theme;
+  light: boolean;
+  burst: boolean;
+  toggleTheme: () => void;
+}
+
+const Ctx = createContext<ThemeCtx | null>(null);
+
+export function GvcThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [burst, setBurst] = useState(false);
+
+  // Load saved preference once
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("gvc-theme") === "bubblegum") {
+      setTheme("bubblegum");
+    }
+  }, []);
+
+  // Sync body class + persist
+  useEffect(() => {
+    document.body.classList.toggle("bubblegum", theme === "bubblegum");
+    try { localStorage.setItem("gvc-theme", theme); } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "bubblegum" : "dark";
+    setTheme(next);
+    if (next === "bubblegum") {
+      // Restart cleanly on rapid re-toggles
+      setBurst(false);
+      window.requestAnimationFrame(() => setBurst(true));
+      window.setTimeout(() => setBurst(false), 2000);
+    }
+  };
+
+  return (
+    <Ctx.Provider value={{ theme, light: theme === "bubblegum", burst, toggleTheme }}>
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export function useGvcTheme() {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("useGvcTheme must be inside <GvcThemeProvider>");
+  return v;
+}
+\`\`\`
+
+Mount the provider in \`app/layout.tsx\` wrapping \`{children}\`. SSR renders dark; saved preference applies on mount. If you want to avoid the dark flash for returning Bubble Gum users, add a tiny inline \`<script>\` in \`<head>\` that reads localStorage and sets the body class before hydration.
+
+#### \`tierInk()\` — for dynamic inline colors only
+
+The override layer cannot touch \`style={{ color: someHex }}\`. Light hexes (gold, silver, light purple) become unreadable on pink. \`tierInk\` darkens any light color to readable luminance ONLY in Bubble Gum.
+
+\`\`\`ts
+// lib/tier-ink.ts
+export function tierInk(hex: string, light: boolean): string {
+  if (!light || !hex.startsWith("#") || hex.length < 7) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (lum <= 0.55) return hex;
+  const f = 0.42 / lum;
+  return \`rgb(\${Math.round(r * f)}, \${Math.round(g * f)}, \${Math.round(b * f)})\`;
+}
+\`\`\`
+
+Usage:
+
+\`\`\`tsx
+const { light } = useGvcTheme();
+<span style={{ color: tierInk(tier.color, light) }}>{tier.label}</span>
+\`\`\`
+
+**Wrap every dynamic inline color** (color / fill / borderColor / boxShadow hex) with \`tierInk\`. Static utility classes are handled by the override layer — no wrapping needed.
+
+#### Components
+
+\`\`\`tsx
+// components/ThemeToggle.tsx
+"use client";
+import { useGvcTheme } from "@/lib/use-gvc-theme";
+
+export function ThemeToggle() {
+  const { theme, toggleTheme } = useGvcTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      title={theme === "dark" ? "Switch to Bubble Gum Mode" : "Switch to Dark Mode"}
+      className={\`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-display text-xs font-black uppercase tracking-wider transition-all \${
+        theme === "bubblegum"
+          ? "border-[#FF81E0] bg-[#FF81E0] text-white shadow-[0_0_20px_rgba(255,129,224,0.5)]"
+          : "border-[#FF81E0]/40 text-[#FF81E0] hover:bg-[#FF81E0]/10"
+      }\`}
+    >
+      {theme === "bubblegum" ? "Dark Mode" : "Bubble Gum Mode"}
+    </button>
+  );
+}
+\`\`\`
+
+The label shows the theme you'll switch TO.
+
+\`\`\`tsx
+// components/BubbleGumAmbient.tsx
+"use client";
+import { useGvcTheme } from "@/lib/use-gvc-theme";
+
+export function BubbleGumAmbient() {
+  const { theme } = useGvcTheme();
+  if (theme === "dark") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="bottom-glow-pulse" />
+      </div>
+    );
+  }
+  const sizes = [70, 110, 150, 95, 190, 130];
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0">
+      {Array.from({ length: 12 }).map((_, i) => {
+        const size = sizes[i % sizes.length];
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src="/gum-badge.webp" alt="" className="bubble-badge"
+            style={{ left: \`\${(i * 8 + 3) % 94}%\`, width: \`\${size}px\`, height: \`\${size}px\`,
+              animationDuration: \`\${14 + (i % 5) * 3}s\`, animationDelay: \`\${(i * 1.7) % 15}s\` }} />
+        );
+      })}
+    </div>
+  );
+}
+\`\`\`
+
+\`\`\`tsx
+// components/BubbleGumBlast.tsx — the activation burst
+"use client";
+import { useGvcTheme } from "@/lib/use-gvc-theme";
+
+export function BubbleGumBlast() {
+  const { burst } = useGvcTheme();
+  if (!burst) return null;
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+      <div className="bubblegum-burst-fill" />
+      <div className="absolute left-1/2 top-1/2">
+        {Array.from({ length: 24 }).map((_, i) => {
+          const ring = i < 12 ? 0 : 1;
+          const angle = ((i % 12) / 12) * Math.PI * 2 + (ring ? 0.26 : 0);
+          const dist = (ring ? 38 : 55) + (i % 3) * 6;
+          const tx = Math.cos(angle) * dist;
+          const ty = Math.sin(angle) * dist;
+          const spin = (i % 2 ? 1 : -1) * (200 + (i % 4) * 70);
+          const size = 84 + (i % 4) * 24;
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={i} src="/gum-badge.webp" alt="" className="bubblegum-blast-badge"
+              style={{ width: \`\${size}px\`, height: \`\${size}px\`,
+                ["--tx" as any]: \`\${tx}vmax\`, ["--ty" as any]: \`\${ty}vmax\`, ["--spin" as any]: \`\${spin}deg\`,
+                animationDelay: \`\${(i % 4) * 0.04}s\` }} />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
+#### Wiring (\`app/layout.tsx\`)
+
+\`\`\`tsx
+import { GvcThemeProvider } from "@/lib/use-gvc-theme";
+import { BubbleGumAmbient } from "@/components/BubbleGumAmbient";
+import { BubbleGumBlast } from "@/components/BubbleGumBlast";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <GvcThemeProvider>
+          <BubbleGumAmbient />
+          <BubbleGumBlast />
+          {children}
+        </GvcThemeProvider>
+      </body>
+    </html>
+  );
+}
+\`\`\`
+
+Drop \`<ThemeToggle />\` in your nav.
+
+#### Legibility rules (do not skip these — they are hard-won)
+
+1. **No light-on-light.** Light accents (gold, light blue, light purple, pink fills used as text) must deepen for Bubble Gum. Text gold → \`#CC2E9C\`. Dynamic hex → \`tierInk\`.
+2. **Body text is dark plum \`#3A0E2E\`,** not pure black. Softer, on-brand. Alpha variants scale the plum, not white.
+3. **Kill dark text-shadow halos** (white-text-on-busy-bar shadows). On light they read as grey smudges. \`text-shadow: none\` in Bubble Gum.
+4. **Glows and fills go pink** (\`#FF81E0\` family). Card glow, bottom glow, progress fills, drop-shadows.
+5. **Inner "black" insets become faint pink wash** (\`rgba(255,129,224,0.10)\`), not dark boxes on a light tile.
+6. **Pills over colorful art** (badge hover names, point pills) force solid dark scrim + white text in both themes — do not rely on the gold→pink remap there.
+7. **No grid texture behind text** in either theme — hurts legibility.
+
+#### Authoring guardrail
+
+Build every component with standard GVC utility classes (\`bg-gvc-dark\`, \`text-white\`, \`text-gvc-gold\`, \`border-white/10\`, \`card-glow\`, etc) — those are covered by the override block. If you use a new alpha variant the override layer doesn't cover (e.g. \`text-white/65\`), add the corresponding \`.bubblegum .text-white\\/65 { ... }\` rule.
+
+Any dynamic inline color must run through \`tierInk(hex, light)\` or it will be unreadable in Bubble Gum.
+
+#### Acceptance checklist
+
+- [ ] Toggle flips body class, persists across reloads
+- [ ] Switching INTO Bubble Gum fires the blast + pink flash once (~2s), restarts cleanly on re-toggle
+- [ ] In Bubble Gum: light pink page, dark plum text, all gold accents are readable magenta, no light-on-light anywhere
+- [ ] Floating gum coins drift up in Bubble Gum; dark shows gold bottom glow
+- [ ] Dynamic tier hexes are readable in Bubble Gum (\`tierInk\` applied)
+- [ ] \`prefers-reduced-motion\` disables the bottom glow loop
+- [ ] Dark mode is visually unchanged from default GVC brand`,
 };
 
 // ── Starter page ────────────────────────────────────────────────────
@@ -1763,6 +2195,7 @@ function generateStarterPage(templateType, projectName, description, addons, pro
     `- \`/shaka.png\` -GVC shaka hand icon (use with next/image)`,
     `- \`/gvc-logotype.svg\` -Good Vibes Club wordmark`,
     `- \`/grid.svg\` -background grid texture`,
+    `- \`/gum-badge.webp\` -6.9 Bubble Gum coin (used by the bubble-gum-mode addon)`,
     `- \`/gvc-metadata.json\` -all 6,969 token traits and IPFS image URLs`,
     ``,
     `### Brand Asset Library (hosted)`,
@@ -2242,6 +2675,7 @@ Use cases: rarity checker, token lookup, trait filtering, collection search, tra
 - Shaka icon: /public/shaka.png
 - GVC logotype: /public/gvc-logotype.svg
 - Background grid: /public/grid.svg (already applied via body::before in globals.css — do NOT add background-size or opacity overrides on top; the SVG ships with its own 10% white stroke, and extra opacity stacks to invisible)
+- Bubble Gum coin: /public/gum-badge.webp (the 6.9 gum coin used by the bubble-gum-mode addon — ambient floating coins + activation blast)
 - Token metadata: /public/gvc-metadata.json (all 6,969 tokens with traits + images)
 
 ## Brand Asset Library
