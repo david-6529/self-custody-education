@@ -13,12 +13,22 @@ const SUGGESTION_RULES = [
   { keywords: ["track", "stat", "dashboard", "counter", "analytics", "chart"], addon: "stats-panel" },
   { keywords: ["vote", "rank", "leaderboard", "elo", "bracket", "competition"], addon: "leaderboard" },
   { keywords: ["game", "score", "play", "level", "quest", "arcade"], addon: "game-engine" },
-  { keywords: ["badge", "collect", "tier", "achievement", "unlock"], addon: "badge-collection" },
+  { keywords: ["badge", "collect"], addon: "badge-collection" },
+  { keywords: ["achievement", "unlock", "streak"], addon: "achievements" },
   { keywords: ["chain", "contract", "balance", "onchain", "on-chain"], addon: "on-chain-reads" },
   { keywords: ["ipfs", "image", "metadata", "pinata"], addon: "ipfs-images" },
   { keywords: ["sound", "audio", "music", "beat", "mix"], addon: "audio-mixer" },
   { keywords: ["login", "auth", "session", "sign in", "account"], addon: "auth" },
   { keywords: ["store", "save", "database", "cache", "persist", "redis"], addon: "vercel-kv" },
+  // Game Pack v1
+  { keywords: ["daily", "everyday", "retention", "comeback", "seeded"], addon: "daily-challenge" },
+  { keywords: ["tier", "rank", "rarity", "band", "common", "rare", "legendary", "cosmic", "progression"], addon: "tier-system" },
+  { keywords: ["currency", "caps", "coins", "credits", "ledger", "gacha", "reroll", "spend", "earn"], addon: "soft-currency" },
+  { keywords: ["referral", "invite", "share", "viral", "friend", "challenge friend"], addon: "referral-invites" },
+  { keywords: ["cheat", "anti-cheat", "validate", "replay", "anomaly", "fraud", "fairness"], addon: "anti-cheat" },
+  { keywords: ["admin", "moderation", "review", "control panel", "backend admin"], addon: "admin-panel" },
+  // Theme
+  { keywords: ["bubble gum", "bubblegum", "pink theme", "light theme", "theme toggle", "alternate theme"], addon: "bubble-gum-mode" },
 ];
 
 interface AddonDef {
@@ -40,11 +50,19 @@ const ADDONS: AddonDef[] = [
   { value: "audio-mixer", label: "Sound and music", hint: "Add sound effects and background music", category: "Games and community features" },
   { value: "leaderboard", label: "Leaderboard", hint: "Rank people by score, daily or all-time", category: "Games and community features" },
   { value: "badge-collection", label: "Badge collection", hint: "Let people collect and show off GVC badges", category: "Games and community features" },
+  { value: "achievements", label: "Achievements and streaks", hint: "Unlocks, toast notifications, and daily streak tracking", category: "Games and community features" },
   { value: "auth", label: "User accounts", hint: "Let people sign in and save their progress", category: "Games and community features" },
+  { value: "daily-challenge", label: "Daily challenge and streaks", hint: "One seeded run per day with streak meter — biggest retention lever", category: "Games and community features" },
+  { value: "tier-system", label: "Tier system", hint: "Rarity bands (Common to Cosmic) with tier-gated unlocks and profile signals", category: "Games and community features" },
+  { value: "soft-currency", label: "Soft currency and ledger", hint: "Earnable in-game currency with audited ledger and anti-grind caps", category: "Games and community features" },
+  { value: "referral-invites", label: "Referral invites", hint: "Shareable codes, encoded URLs, automatic credit on join", category: "Games and community features" },
+  { value: "anti-cheat", label: "Anti-cheat and flag review", hint: "Server-side replay validation, anomaly heuristics, admin review queue", category: "Games and community features" },
+  { value: "admin-panel", label: "Admin panel", hint: "Gated /admin with sections for the Game Pack addons you select (requires User accounts)", category: "Games and community features" },
   // Extra features
   { value: "stats-panel", label: "Stats and charts", hint: "Animated counters, charts, and dashboards", category: "Extra features" },
   { value: "toasts", label: "Pop-up notifications", hint: "Show success messages, alerts, and updates", category: "Extra features" },
   { value: "vercel-kv", label: "Save and store data", hint: "Remember things between visits, like scores or settings", category: "Extra features" },
+  { value: "bubble-gum-mode", label: "Bubble Gum Mode theme", hint: "Alternate light/pink theme toggle with activation blast and floating coins", category: "Extra features" },
 ];
 
 function getSuggestedAddons(description: string): Set<string> {

@@ -37,9 +37,14 @@ const SUGGESTION_RULES = [
     label: "Game starter kit",
   },
   {
-    keywords: ["badge", "collect", "tier", "achievement", "unlock"],
+    keywords: ["badge", "collect"],
     addon: "badge-collection",
     label: "Badge collection",
+  },
+  {
+    keywords: ["achievement", "unlock", "streak"],
+    addon: "achievements",
+    label: "Achievements and streaks",
   },
   {
     keywords: ["chain", "contract", "balance", "onchain", "on-chain"],
@@ -65,6 +70,43 @@ const SUGGESTION_RULES = [
     keywords: ["store", "save", "database", "cache", "persist", "redis"],
     addon: "vercel-kv",
     label: "Save and store data",
+  },
+  // Game Pack v1
+  {
+    keywords: ["daily", "everyday", "retention", "comeback", "seeded"],
+    addon: "daily-challenge",
+    label: "Daily challenge and streaks",
+  },
+  {
+    keywords: ["tier", "rank", "rarity", "band", "common", "rare", "legendary", "cosmic", "progression"],
+    addon: "tier-system",
+    label: "Tier system",
+  },
+  {
+    keywords: ["currency", "caps", "coins", "credits", "ledger", "gacha", "reroll", "spend", "earn"],
+    addon: "soft-currency",
+    label: "Soft currency and ledger",
+  },
+  {
+    keywords: ["referral", "invite", "share", "viral", "friend", "challenge friend"],
+    addon: "referral-invites",
+    label: "Referral invites",
+  },
+  {
+    keywords: ["cheat", "anti-cheat", "validate", "replay", "anomaly", "fraud", "fairness"],
+    addon: "anti-cheat",
+    label: "Anti-cheat and flag review",
+  },
+  {
+    keywords: ["admin", "moderation", "review", "control panel", "backend admin"],
+    addon: "admin-panel",
+    label: "Admin panel",
+  },
+  // Theme
+  {
+    keywords: ["bubble gum", "bubblegum", "pink theme", "light theme", "theme toggle", "alternate theme"],
+    addon: "bubble-gum-mode",
+    label: "Bubble Gum Mode theme",
   },
 ];
 
