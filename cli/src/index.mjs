@@ -222,6 +222,7 @@ const ADDONS = [
   { value: "anti-cheat",        label: "Anti-cheat + flag review",    hint: "server-side replay validation, anomaly heuristics, admin flag-for-review queue" },
   { value: "admin-panel",       label: "Admin panel",                 hint: "gated /admin with auto-discovered sections for the Game Pack addons you selected (requires User accounts)" },
   { value: "bubble-gum-mode",   label: "Bubble Gum Mode (theme)",     hint: "alternate light/pink theme toggle with activation blast, ambient floating coins, and CSS override layer over the standard dark/gold brand" },
+  { value: "stoke-level",       label: "Stoke Level + collector profile", hint: "GVC Rewards API integration — source of truth for Stoke, eligibility, badges, multipliers, and collector profile data" },
 ];
 
 // ── Keyword matching for add-on suggestions ──────────────────────────
@@ -306,6 +307,10 @@ const SUGGESTION_RULES = [
   {
     keywords: ["bubble gum", "bubblegum", "pink theme", "light theme", "theme toggle", "alternate theme", "dark mode toggle"],
     addon: "bubble-gum-mode",
+  },
+  {
+    keywords: ["stoke", "rewards", "collector", "collector profile", "collector score", "multiplier", "punk score", "eligibility", "stoke level"],
+    addon: "stoke-level",
   },
 ];
 
@@ -2096,6 +2101,274 @@ Any dynamic inline color must run through \`tierInk(hex, light)\` or it will be 
 - [ ] Dynamic tier hexes are readable in Bubble Gum (\`tierInk\` applied)
 - [ ] \`prefers-reduced-motion\` disables the bottom glow loop
 - [ ] Dark mode is visually unchanged from default GVC brand`,
+
+  "stoke-level": `### Stoke Level + Collector Profile Pattern
+
+**Source of truth for rewards, collector score, and collector profiles across the entire GVC ecosystem.** If your build shows a user's "score," "rank," or "rewards eligibility," it must read these values from the Rewards API — do not recompute them client-side or you will drift from canonical values.
+
+#### The one rule
+
+> Every number is computed and entity-resolved server-side. Read the values the API returns. Do not recompute Stoke yourself.
+
+This is the single most important constraint. The API resolves a user's full entity (profile wallet + delegated + vaulted wallets) and aggregates totals. A per-wallet balance check will wrongly drop legitimate holders because VIBESTR often sits on a delegate while GVCs sit on the profile wallet.
+
+#### Endpoints
+
+- \`GET {REWARDS_API_BASE}/api/rewards/wallet?address=0x...\` — full Stoke + multipliers + eligibility + badges for the entity that address belongs to. **30 req/min, per IP. Cache aggressively.**
+- \`GET {REWARDS_API_BASE}/api/badges\` — bulk snapshot for the whole population (entity-aggregated badges, profile names/avatars, linked wallet counts). One call, cheap, cache for several minutes.
+
+Base URL goes in env:
+
+\`\`\`
+REWARDS_API_BASE=https://gvc-front-end-m343-git-feat-rewards-pool-6-ddd255-gvc-be0679ff.vercel.app
+\`\`\`
+
+The host is a Vercel preview and can rotate. Keep it in env so swapping staging → production is a config change.
+
+#### Cache schema (proxy + cache, do not call the API directly from the client)
+
+\`\`\`sql
+CREATE TABLE IF NOT EXISTS rewards_wallet_cache (
+  address TEXT PRIMARY KEY,                 -- lowercased
+  data JSONB NOT NULL,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS rewards_population_cache (
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  data JSONB NOT NULL,
+  fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+\`\`\`
+
+5-minute TTL on both is the right default (matches how the GVC website caches them).
+
+#### Client lib (\`lib/rewards.ts\`)
+
+\`\`\`ts
+const BASE = process.env.REWARDS_API_BASE!;
+const TTL_MS = 5 * 60 * 1000;
+
+export interface RewardBadge {
+  id: string; name: string; tier: string; points: number;
+  multiplier: number; scored: boolean; threshold: number; image: string;
+}
+
+export interface PunkScore {
+  tier: string; multiplier: number; months: number | null; status: string;
+}
+
+export interface WalletRewards {
+  address: string;
+  entity: { primary_address: string; wallets: string[] };
+  is_eligible: boolean;
+  gvc_count: number;
+  vibestr_balance: number;
+  citizen_points: number;
+  badge_points: number;
+  base_points: number;
+  highest_tier_name: string | null;
+  highest_tier_multiplier: number;
+  vibestr_tier_name: string | null;
+  vibestr_tier_multiplier: number;
+  punk_score: PunkScore;
+  stoke_level: number;             // THE number — read this
+  badges: { main_tier: RewardBadge[]; vibestr_ladder: RewardBadge[]; specialty: RewardBadge[] };
+  meta: { computed_at: string; disclaimer: string };
+}
+
+export interface PopulationSnapshot {
+  badges: Record<string, string[]>;
+  profileData: Record<string, { customName?: string; profileImageUrl?: string }>;
+  linkedWalletCounts: Record<string, number>;
+}
+
+export async function getWalletRewards(address: string): Promise<WalletRewards> {
+  const addr = address.toLowerCase();
+  // 1. Check DB cache
+  const cached = await pool.query(
+    "SELECT data, fetched_at FROM rewards_wallet_cache WHERE address = $1",
+    [addr]
+  );
+  if (cached.rows.length) {
+    const age = Date.now() - new Date(cached.rows[0].fetched_at).getTime();
+    if (age < TTL_MS) return cached.rows[0].data as WalletRewards;
+  }
+  // 2. Fetch from Rewards API
+  const res = await fetch(\`\${BASE}/api/rewards/wallet?address=\${addr}\`);
+  if (res.status === 429) throw new Error("Rewards API rate limited (30/min) — back off");
+  if (!res.ok) throw new Error(\`Rewards API \${res.status}\`);
+  const data = (await res.json()) as WalletRewards;
+  // 3. Cache
+  await pool.query(
+    \`INSERT INTO rewards_wallet_cache (address, data, fetched_at)
+     VALUES ($1, $2::jsonb, NOW())
+     ON CONFLICT (address) DO UPDATE SET data = EXCLUDED.data, fetched_at = NOW()\`,
+    [addr, JSON.stringify(data)]
+  );
+  return data;
+}
+
+export async function getPopulationSnapshot(): Promise<PopulationSnapshot> {
+  const cached = await pool.query(
+    "SELECT data, fetched_at FROM rewards_population_cache WHERE id = 1"
+  );
+  if (cached.rows.length) {
+    const age = Date.now() - new Date(cached.rows[0].fetched_at).getTime();
+    if (age < TTL_MS) return cached.rows[0].data as PopulationSnapshot;
+  }
+  const res = await fetch(\`\${BASE}/api/badges\`);
+  if (!res.ok) throw new Error(\`Badges API \${res.status}\`);
+  const data = (await res.json()) as PopulationSnapshot;
+  await pool.query(
+    \`INSERT INTO rewards_population_cache (id, data, fetched_at) VALUES (1, $1::jsonb, NOW())
+     ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, fetched_at = NOW()\`,
+    [JSON.stringify(data)]
+  );
+  return data;
+}
+
+// Rate-limited batch fetch — stays under 30/min
+export async function getManyWalletRewards(addresses: string[]): Promise<Array<WalletRewards | { address: string; error: string }>> {
+  const out: Array<WalletRewards | { address: string; error: string }> = [];
+  for (let i = 0; i < addresses.length; i += 6) {
+    const batch = addresses.slice(i, i + 6);
+    const results = await Promise.all(
+      batch.map((a) =>
+        getWalletRewards(a).catch((e) => ({ address: a, error: String(e) }))
+      )
+    );
+    out.push(...results);
+    if (i + 6 < addresses.length) await new Promise((r) => setTimeout(r, 1500));
+  }
+  return out;
+}
+\`\`\`
+
+#### Proxy routes (always go through your own server, never expose the upstream URL)
+
+\`\`\`ts
+// app/api/stoke/[address]/route.ts
+import { NextResponse } from "next/server";
+import { getWalletRewards } from "@/lib/rewards";
+
+export async function GET(_: Request, { params }: { params: Promise<{ address: string }> }) {
+  const { address } = await params;
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+  try {
+    const data = await getWalletRewards(address);
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 502 });
+  }
+}
+\`\`\`
+
+\`\`\`ts
+// app/api/profiles/route.ts — bulk profile + badges snapshot
+import { NextResponse } from "next/server";
+import { getPopulationSnapshot } from "@/lib/rewards";
+
+export async function GET() {
+  try {
+    const data = await getPopulationSnapshot();
+    return NextResponse.json(data, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 502 });
+  }
+}
+\`\`\`
+
+#### ENS resolution (the Rewards API takes raw 0x only)
+
+\`\`\`ts
+export async function resolveEns(input: string): Promise<{ address: string; name: string | null; avatar: string | null }> {
+  const res = await fetch(\`https://api.ensideas.com/ens/resolve/\${input}\`);
+  if (!res.ok) throw new Error("ENS resolution failed");
+  return res.json();
+}
+\`\`\`
+
+When displaying a name + avatar, **prefer the GVC profile name/avatar from the bulk \`profileData\` over ENS.** GVC profile takes precedence; ENS is the fallback.
+
+#### UI components
+
+\`\`\`tsx
+// components/StokeLevel.tsx — the canonical number, always
+export function StokeLevel({ data }: { data: WalletRewards }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="font-display text-4xl text-shimmer">{data.stoke_level.toLocaleString()}</span>
+      <span className="text-white/40 text-xs uppercase tracking-wider">Stoke</span>
+    </div>
+  );
+}
+
+// components/MultiplierBreakdown.tsx
+// Shows base x highest-tier x VIBESTR x residency, in order
+// Useful on the collector profile page
+
+// components/CollectorProfile.tsx
+// Composes: name+avatar, Stoke, eligibility pill, badge grid
+// Pulls from getWalletRewards() + optionally the bulk profileData for name/avatar
+\`\`\`
+
+#### Eligibility gating
+
+\`\`\`ts
+const r = await getWalletRewards(address);
+if (!r.is_eligible) {
+  // show "Hold 1 GVC + 69K VIBESTR to unlock"
+}
+\`\`\`
+
+Never gate on a single wallet's on-chain balance — the entity may hold the VIBESTR on a delegate. Trust \`is_eligible\`.
+
+#### Building a leaderboard (no public endpoint yet)
+
+\`\`\`ts
+async function buildLeaderboard(top = 100): Promise<WalletRewards[]> {
+  const snap = await getPopulationSnapshot();
+  // Cheap pre-filter: addresses with at least one GVC badge and one VIBESTR badge
+  const candidates = Object.entries(snap.badges)
+    .filter(([_, ids]) =>
+      ids.includes("any_gvc") && ids.some((b) => b.startsWith("vibestr_") && b.endsWith("_tier"))
+    )
+    .map(([addr]) => addr);
+  // Fetch Stoke for each — rate-limited
+  const detailed = (await getManyWalletRewards(candidates))
+    .filter((r): r is WalletRewards => "stoke_level" in r);
+  return detailed.sort((a, b) => b.stoke_level - a.stoke_level).slice(0, top);
+}
+\`\`\`
+
+When \`/api/rewards/leaderboard\` ships upstream, swap this out for the canonical endpoint.
+
+#### Integration with other addons
+
+- **\`tier-system\`**: derive band from \`highest_tier_name\` directly — don't define your own GVC tier ladder.
+- **\`leaderboard\`**: rank by \`stoke_level\` instead of a custom score. The leaderboard helper above is the starting point.
+- **\`badge-collection\`**: pull badge state from \`badges.main_tier\` + \`vibestr_ladder\` + \`specialty\` arrays instead of querying a separate badge DB.
+- **\`soft-currency\`**: tier-up rewards and eligibility checks can key off \`stoke_level\` thresholds.
+- **\`daily-challenge\`**: streak bonus multiplied by Stoke-derived tier (more skin in the game = bigger daily reward).
+- **\`achievements\`**: unlock cosmetic achievements at Stoke milestones (5k, 10k, 50k, etc).
+
+#### Disclaimer
+
+Whenever you display Stoke numbers publicly, surface \`data.meta.disclaimer\` — that's the official caveat from the API. Required for staging-era surfaces because the numbers will move.
+
+#### What NOT to do
+
+- Don't recompute Stoke from \`base_points × multipliers\` on the client. You will drift.
+- Don't gate eligibility on a single wallet's balance. Use \`is_eligible\`.
+- Don't call the Rewards API from the browser. Proxy through your own server (the 30/min cap is per-IP — your server should be the only consumer of your upstream quota).
+- Don't snapshot staging numbers as official. The doc explicitly warns the values are non-final.`,
 };
 
 // ── Starter page ────────────────────────────────────────────────────

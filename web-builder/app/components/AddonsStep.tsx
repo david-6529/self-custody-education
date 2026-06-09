@@ -29,6 +29,8 @@ const SUGGESTION_RULES = [
   { keywords: ["admin", "moderation", "review", "control panel", "backend admin"], addon: "admin-panel" },
   // Theme
   { keywords: ["bubble gum", "bubblegum", "pink theme", "light theme", "theme toggle", "alternate theme"], addon: "bubble-gum-mode" },
+  // Rewards
+  { keywords: ["stoke", "rewards", "collector", "collector profile", "collector score", "multiplier", "punk score", "eligibility", "stoke level"], addon: "stoke-level" },
 ];
 
 interface AddonDef {
@@ -63,6 +65,7 @@ const ADDONS: AddonDef[] = [
   { value: "toasts", label: "Pop-up notifications", hint: "Show success messages, alerts, and updates", category: "Extra features" },
   { value: "vercel-kv", label: "Save and store data", hint: "Remember things between visits, like scores or settings", category: "Extra features" },
   { value: "bubble-gum-mode", label: "Bubble Gum Mode theme", hint: "Alternate light/pink theme toggle with activation blast and floating coins", category: "Extra features" },
+  { value: "stoke-level", label: "Stoke Level and collector profile", hint: "GVC Rewards API integration — source of truth for Stoke, eligibility, badges, multipliers, and collector data", category: "Connect to blockchain data" },
 ];
 
 function getSuggestedAddons(description: string): Set<string> {

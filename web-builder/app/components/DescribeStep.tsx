@@ -108,6 +108,12 @@ const SUGGESTION_RULES = [
     addon: "bubble-gum-mode",
     label: "Bubble Gum Mode theme",
   },
+  // Rewards
+  {
+    keywords: ["stoke", "rewards", "collector", "collector profile", "collector score", "multiplier", "punk score", "eligibility", "stoke level"],
+    addon: "stoke-level",
+    label: "Stoke Level and collector profile",
+  },
 ];
 
 const EXAMPLE_DESCRIPTIONS = [
