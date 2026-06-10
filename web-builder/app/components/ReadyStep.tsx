@@ -42,11 +42,23 @@ const ADDON_LABELS: Record<string, string> = {
   auth: "User accounts",
   "game-engine": "Game starter kit",
   "audio-mixer": "Sound and music",
+  achievements: "Achievements and streaks",
   toasts: "Pop-up notifications",
   "ipfs-images": "NFT image loading",
   "on-chain-reads": "Blockchain lookups",
   "badge-collection": "Badge collection",
   "vercel-kv": "Save and store data",
+  // Game Pack v1
+  "daily-challenge": "Daily challenge and streaks",
+  "tier-system": "Tier system",
+  "soft-currency": "Soft currency and ledger",
+  "referral-invites": "Referral invites",
+  "anti-cheat": "Anti-cheat and flag review",
+  "admin-panel": "Admin panel",
+  // Theme
+  "bubble-gum-mode": "Bubble Gum Mode theme",
+  // Rewards
+  "stoke-level": "Stoke Level and collector profile",
 };
 
 interface ReadyStepProps {
