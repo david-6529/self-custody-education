@@ -5,28 +5,48 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ExternalLink, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { BUILDS, TYPE_LABELS, type Build, type BuildType } from "@/lib/builds";
+import {
+  BUILDS,
+  TYPE_LABELS,
+  ORIGIN_LABELS,
+  handleUrl,
+  type Build,
+  type BuildType,
+  type BuildOrigin,
+} from "@/lib/builds";
 
-type FilterKey = "all" | BuildType;
+type TypeFilter = "all" | BuildType;
+type OriginFilter = "all" | BuildOrigin;
 
-const FILTERS: { key: FilterKey; label: string }[] = [
+const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "tool", label: TYPE_LABELS.tool },
   { key: "game", label: TYPE_LABELS.game },
+  { key: "ai-agent", label: TYPE_LABELS["ai-agent"] },
+  { key: "world-lore", label: TYPE_LABELS["world-lore"] },
   { key: "ecosystem", label: TYPE_LABELS.ecosystem },
   { key: "showcase", label: TYPE_LABELS.showcase },
 ];
 
+const ORIGIN_FILTERS: { key: OriginFilter; label: string }[] = [
+  { key: "all", label: "All builds" },
+  { key: "official", label: ORIGIN_LABELS.official },
+  { key: "vibeathon", label: ORIGIN_LABELS.vibeathon },
+];
+
 export default function BuildsPage() {
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [originFilter, setOriginFilter] = useState<OriginFilter>("all");
 
   const filtered = useMemo(() => {
-    const list = filter === "all" ? BUILDS : BUILDS.filter((b) => b.type === filter);
+    let list = BUILDS;
+    if (originFilter !== "all") list = list.filter((b) => b.origin === originFilter);
+    if (typeFilter !== "all") list = list.filter((b) => b.type === typeFilter);
     return [...list].sort((a, b) => {
       if (a.status === b.status) return 0;
       return a.status === "live" ? -1 : 1;
     });
-  }, [filter]);
+  }, [typeFilter, originFilter]);
 
   return (
     <div className="min-h-screen w-full">
@@ -76,28 +96,58 @@ export default function BuildsPage() {
             <span className="text-shimmer">Community Builds</span>
           </h1>
           <p className="font-body text-white/60 text-base sm:text-lg max-w-2xl">
-            Everything the Good Vibes Club community has shipped. Tools, games, ecosystem dashboards, and showcases — built by the team and by holders, all running today.
+            Everything the Good Vibes Club community has shipped — official builds plus the {BUILDS.filter((b) => b.origin === "vibeathon").length} community projects from the Vibeathon. Games, tools, agents, and worlds. Jump in, see who made it, follow the builders.
           </p>
         </motion.div>
 
-        {/* Filter tabs */}
+        {/* Origin filter (Official / Vibeathon) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex flex-wrap gap-2 mb-8"
+          transition={{ duration: 0.5, delay: 0.08 }}
+          className="flex flex-wrap gap-2 mb-3"
         >
-          {FILTERS.map((f) => {
-            const isActive = filter === f.key;
-            const count = f.key === "all" ? BUILDS.length : BUILDS.filter((b) => b.type === f.key).length;
+          {ORIGIN_FILTERS.map((f) => {
+            const isActive = originFilter === f.key;
+            const count =
+              f.key === "all" ? BUILDS.length : BUILDS.filter((b) => b.origin === f.key).length;
             return (
               <button
                 key={f.key}
-                onClick={() => setFilter(f.key)}
+                onClick={() => setOriginFilter(f.key)}
                 className={`px-4 py-2 rounded-full font-display font-bold text-xs uppercase tracking-wider transition-all ${
                   isActive
-                    ? "bg-gvc-gold/15 border border-gvc-gold/40 text-gvc-gold"
+                    ? "bg-gvc-gold/20 border border-gvc-gold/50 text-gvc-gold"
                     : "border border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+                }`}
+              >
+                {f.label}
+                <span className="ml-1.5 text-[10px] opacity-60">{count}</span>
+              </button>
+            );
+          })}
+        </motion.div>
+
+        {/* Type filter */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className="flex flex-wrap gap-2 mb-8"
+        >
+          {TYPE_FILTERS.map((f) => {
+            const isActive = typeFilter === f.key;
+            const pool = originFilter === "all" ? BUILDS : BUILDS.filter((b) => b.origin === originFilter);
+            const count = f.key === "all" ? pool.length : pool.filter((b) => b.type === f.key).length;
+            if (count === 0 && f.key !== "all") return null;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setTypeFilter(f.key)}
+                className={`px-3 py-1.5 rounded-full font-body text-xs transition-all ${
+                  isActive
+                    ? "bg-white/[0.06] border border-white/20 text-white/90"
+                    : "border border-white/[0.06] text-white/30 hover:text-white/60 hover:border-white/15"
                 }`}
               >
                 {f.label}
@@ -121,7 +171,7 @@ export default function BuildsPage() {
 
         {filtered.length === 0 && (
           <div className="text-center py-16 font-body text-white/40">
-            No builds in this category yet.
+            No builds match these filters.
           </div>
         )}
 
@@ -171,7 +221,7 @@ function BuildCard({ build }: { build: Build }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3 }}
-      className={`group relative h-full rounded-2xl border border-white/10 bg-gvc-dark p-5 sm:p-6 transition-all card-glow ${
+      className={`group relative h-full flex flex-col rounded-2xl border border-white/10 bg-gvc-dark p-5 sm:p-6 transition-all card-glow ${
         isSoon ? "opacity-70" : ""
       }`}
     >
@@ -183,6 +233,11 @@ function BuildCard({ build }: { build: Build }) {
           {build.isNew && (
             <span className="text-[9px] font-display font-black tracking-wider px-1.5 py-0.5 rounded-md bg-gvc-gold text-gvc-black">
               NEW
+            </span>
+          )}
+          {build.origin === "vibeathon" && (
+            <span className="text-[9px] font-display font-black tracking-wider px-1.5 py-0.5 rounded-md bg-pink-accent/15 border border-pink-accent/40 text-pink-accent">
+              VIBEATHON
             </span>
           )}
           <span
@@ -200,9 +255,29 @@ function BuildCard({ build }: { build: Build }) {
       <h3 className="font-display font-black text-lg sm:text-xl text-white mb-2 uppercase tracking-wide">
         {build.name}
       </h3>
-      <p className="font-body text-sm text-white/55 leading-relaxed mb-4 line-clamp-4">
+      <p className="font-body text-sm text-white/55 leading-relaxed mb-4 flex-grow">
         {build.description}
       </p>
+
+      {build.creator && (
+        <div className="mb-3 font-body text-xs text-white/40">
+          By{" "}
+          {build.creator.handle ? (
+            <a
+              href={handleUrl(build.creator.handle)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-white/65 hover:text-gvc-gold transition-colors"
+            >
+              {build.creator.name}{" "}
+              <span className="text-white/30">@{build.creator.handle}</span>
+            </a>
+          ) : (
+            <span className="text-white/65">{build.creator.name}</span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
         <span className="font-display font-bold text-[10px] uppercase tracking-wider text-white/30">
