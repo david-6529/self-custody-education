@@ -22,23 +22,17 @@ const nextConfig = {
         source: "/framery/:path*",
         destination: "https://screenshot-background-phi.vercel.app/framery/:path*",
       },
-    ];
-  },
-  async redirects() {
-    return [
-      // Vibeathon Community Builds — temporary 302 to the showcase's standalone
-      // URL until the owner ships basePath: '/builds'. Once that's live, swap
-      // this redirect back to the rewrite block above so /builds proxies in
-      // place under goodvibesclub.ai.
+      // Vibeathon Community Builds — proxied from the showcase Vercel project.
+      // Destination keeps the /builds prefix because the showcase ships with
+      // basePath: '/builds' on its side; its assets emit /builds/_next/...
+      // paths that need to land at that same prefix on the proxy target.
       {
         source: "/builds",
-        destination: "https://gvc-vibeathon-showcase.vercel.app/",
-        permanent: false,
+        destination: "https://gvc-vibeathon-showcase.vercel.app/builds",
       },
       {
         source: "/builds/:path*",
-        destination: "https://gvc-vibeathon-showcase.vercel.app/:path*",
-        permanent: false,
+        destination: "https://gvc-vibeathon-showcase.vercel.app/builds/:path*",
       },
     ];
   },
