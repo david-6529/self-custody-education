@@ -1,7 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Terminal, Sparkles, Puzzle, Trophy, Swords, Palette, Disc3, Frame } from "lucide-react";
+import { ArrowRight, Terminal } from "lucide-react";
+import Link from "next/link";
+import { FEATURED_BUILDS } from "@/lib/builds";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import TermsGate, { hasAcceptedTerms } from "./TermsGate";
@@ -43,83 +45,6 @@ const GVC_PORTRAITS = [
 interface HeroStepProps {
   onNext: () => void;
 }
-
-type FeaturedBuild = {
-  id: string;
-  name: string;
-  tabName?: string;
-  status: "live" | "soon";
-  url?: string;
-  icon: typeof Sparkles;
-  description: string;
-  isNew?: boolean;
-};
-
-const FEATURED_BUILDS: FeaturedBuild[] = [
-  {
-    id: "prompt-machine",
-    name: "The Prompt Machine",
-    tabName: "Prompt Machine",
-    status: "live",
-    url: "/prompt-machine",
-    icon: Sparkles,
-    description: "Want to bring your GVC characters to life? Use our curated prompts to generate custom images, avatars, and scenes (or submit your own for the community!)",
-  },
-  {
-    id: "framery",
-    name: "The Framery",
-    tabName: "The Framery",
-    status: "live",
-    url: "/framery",
-    icon: Frame,
-    description: "Turn ordinary images into beautiful sharable moments. Drop in any image (or up to five) and customize it to fit your vibe. Share a screen that stops the scroll.",
-    isNew: true,
-  },
-  {
-    id: "rewards-pool",
-    name: "The Rewards Pool",
-    tabName: "Rewards Pool",
-    status: "live",
-    url: "https://vibepool.io/",
-    icon: Trophy,
-    description: "Collect Badges. Participate in the Eco. Access Rewards. VibePool is a dashboard that tracks the Rewards Pool and ongoing Vibe Strategy protocol activity.",
-  },
-  {
-    id: "vibe-off",
-    name: "Vibe Off!",
-    tabName: "Vibe Off!",
-    status: "live",
-    url: "https://vibeoff.xyz/",
-    icon: Swords,
-    description: "A matchup game that pits randomized GVCs against each other head-to-head, in the ultimate battle for aesthetic supremacy. Play the 1v1 mode or submit a pairing into DUOS.",
-  },
-  {
-    id: "gallery",
-    name: "The Gallery",
-    tabName: "The Gallery",
-    status: "live",
-    url: "https://gvcgallery.xyz/",
-    icon: Palette,
-    description: "From blank canvas to masterpiece! A space where artists, friends, and GVC community members can submit their handmade creations. Choose a blank and make something awesome.",
-  },
-  {
-    id: "wheel-of-vibes",
-    name: "Wheel Of Vibes",
-    tabName: "Wheel of Vibes",
-    status: "live",
-    url: "https://wheelofvibes.com/",
-    icon: Disc3,
-    description: "An interactive name-randomizer. Drop in a list of names or ETH wallet addresses, hit spin, and the wheel lands on a random winner with a celebration overlay. It's wired into the GVC ecosystem so entries can be filtered or weighted by the badges a holder has unlocked through their NFTs.",
-  },
-  {
-    id: "pin-drop",
-    name: "Pin Drop",
-    status: "soon",
-    url: "https://pindropgame.com",
-    icon: Puzzle,
-    description: "A new puzzle game from Good Vibes Club. Players can match pins, score big, and win prizes. Climb to the top of the leaderboard and collect all 101 pins!",
-  },
-];
 
 export default function HeroStep({ onNext }: HeroStepProps) {
   const badges = useMemo(() => shuffleArray([...ALL_BADGES]).slice(0, 25), []);
@@ -320,14 +245,23 @@ export default function HeroStep({ onNext }: HeroStepProps) {
           />
 
           {/* Featured Builds */}
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="text-2xl sm:text-3xl font-display font-black text-white mb-6 uppercase tracking-wide"
+            className="w-full max-w-3xl flex items-center justify-between mb-6"
           >
-            Featured Builds
-          </motion.h2>
+            <h2 className="text-2xl sm:text-3xl font-display font-black text-white uppercase tracking-wide">
+              Featured Builds
+            </h2>
+            <Link
+              href="/builds"
+              className="font-body text-xs sm:text-sm text-gvc-gold/70 hover:text-gvc-gold transition-colors inline-flex items-center gap-1 group"
+            >
+              See all
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </motion.div>
 
           {/* Tabs — row 1: 3 across, row 2: 4 across (2 cols on mobile) */}
           <motion.div
