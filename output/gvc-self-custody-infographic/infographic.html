@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GVC Self Custody Infographic</title>
+  <style>
+    @font-face {
+      font-family: Brice;
+      src: url("assets/Brice-Bold.otf") format("opentype");
+      font-weight: 700;
+    }
+
+    @font-face {
+      font-family: Brice;
+      src: url("assets/Brice-Black.otf") format("opentype");
+      font-weight: 900;
+    }
+
+    @font-face {
+      font-family: Mundial;
+      src: url("assets/Mundial-Regular.otf") format("opentype");
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: Mundial;
+      src: url("assets/Mundial-Bold.otf") format("opentype");
+      font-weight: 800;
+    }
+
+    :root {
+      --black: #050505;
+      --ink: #080706;
+      --surface: #121212;
+      --surface-2: #1b1b1b;
+      --gold: #ffe048;
+      --cream: #fff5c8;
+      --pink: #ff6b9d;
+      --orange: #ff5f1f;
+      --green: #2effa8;
+      --cyan: #7de9ff;
+      --purple: #a36bff;
+      --white: #fffaf0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background: #15120b;
+      color: var(--white);
+      font-family: Mundial, Arial, sans-serif;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    #poster {
+      position: relative;
+      width: 1440px;
+      height: 3000px;
+      margin: 0 auto;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(180deg, #050505 0%, #0e0d09 52%, #080706 100%);
+      background-size: 72px 72px, 100% 100%;
+      border: 14px solid var(--gold);
+      box-shadow: 0 18px 0 #000, 0 30px 90px rgba(0, 0, 0, 0.55);
+      isolation: isolate;
+    }
+
+    .hero {
+      position: relative;
+      height: 448px;
+      padding: 52px 66px 0;
+      overflow: hidden;
+      border-bottom: 8px solid var(--gold);
+      background:
+        linear-gradient(90deg, rgba(5, 5, 5, 0.88), rgba(5, 5, 5, 0.48), rgba(5, 5, 5, 0.86)),
+        url("assets/vibetown-wide.jpg") center 50% / cover no-repeat;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 224, 72, 0.16), transparent 46%),
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 4px, transparent 4px 12px);
+      pointer-events: none;
+    }
+
+    .logo {
+      position: absolute;
+      top: 54px;
+      right: 68px;
+      width: 208px;
+      padding: 16px 18px;
+      background: #000;
+      border: 6px solid var(--gold);
+      z-index: 3;
+    }
+
+    .shaka {
+      position: absolute;
+      right: 82px;
+      bottom: -28px;
+      width: 210px;
+      opacity: 0.96;
+      transform: rotate(-8deg);
+      filter: drop-shadow(9px 12px 0 rgba(0, 0, 0, 0.55));
+      z-index: 2;
+    }
+
+    .kicker {
+      position: relative;
+      z-index: 3;
+      display: inline-block;
+      margin: 0 0 22px;
+      padding: 12px 18px 9px;
+      color: var(--black);
+      background: var(--gold);
+      border: 5px solid #000;
+      font-family: Brice, Impact, sans-serif;
+      font-size: 30px;
+      line-height: 1;
+      text-transform: uppercase;
+      box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.45);
+    }
+
+    h1 {
+      position: relative;
+      z-index: 3;
+      max-width: 980px;
+      margin: 0;
+      color: var(--gold);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 92px;
+      line-height: 0.86;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 7px 7px 0 #000, 12px 12px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .subhead {
+      position: relative;
+      z-index: 3;
+      max-width: 990px;
+      margin: 24px 0 0;
+      color: var(--white);
+      font-size: 30px;
+      line-height: 1.18;
+      font-weight: 800;
+      text-shadow: 3px 4px 0 rgba(0, 0, 0, 0.8);
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 44px 58px 36px;
+    }
+
+    .strip-title,
+    .section-title {
+      margin: 0;
+      color: var(--gold);
+      font-family: Brice, Impact, sans-serif;
+      line-height: 0.95;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 4px 5px 0 #000;
+    }
+
+    .strip-title {
+      font-size: 48px;
+    }
+
+    .section-title {
+      font-size: 54px;
+    }
+
+    .dictionary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 26px;
+    }
+
+    .mini-card,
+    .wallet-card,
+    .rule-card,
+    .stack-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.055);
+      border: 5px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 10px 12px 0 rgba(0, 0, 0, 0.55);
+    }
+
+    .mini-card {
+      min-height: 208px;
+      padding: 24px 22px;
+      border-radius: 18px;
+    }
+
+    .mini-card.address {
+      border-color: rgba(125, 233, 255, 0.45);
+      background: linear-gradient(180deg, rgba(125, 233, 255, 0.18), rgba(255, 255, 255, 0.045));
+    }
+
+    .mini-card.wallet {
+      border-color: rgba(255, 107, 157, 0.48);
+      background: linear-gradient(180deg, rgba(255, 107, 157, 0.16), rgba(255, 255, 255, 0.045));
+    }
+
+    .mini-card.secret {
+      border-color: rgba(255, 224, 72, 0.55);
+      background: linear-gradient(180deg, rgba(255, 224, 72, 0.18), rgba(255, 255, 255, 0.045));
+    }
+
+    .mini-label {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 33px;
+      line-height: 0.95;
+      text-transform: uppercase;
+    }
+
+    .mini-card p {
+      margin: 0;
+      color: rgba(255, 250, 240, 0.9);
+      font-size: 27px;
+      line-height: 1.14;
+      font-weight: 800;
+    }
+
+    .icon-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .icon {
+      width: 82px;
+      height: 82px;
+      flex: 0 0 auto;
+      filter: drop-shadow(5px 6px 0 rgba(0, 0, 0, 0.45));
+    }
+
+    .safe-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 9px 12px 7px;
+      color: var(--black);
+      background: var(--green);
+      border: 4px solid #000;
+      border-radius: 999px;
+      font-family: Brice, Impact, sans-serif;
+      font-size: 19px;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .wallets {
+      margin-top: 48px;
+    }
+
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 26px;
+    }
+
+    .wallet-card {
+      min-height: 735px;
+      padding: 28px 26px 24px;
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+        var(--surface);
+    }
+
+    .wallet-card.hot {
+      border-color: rgba(255, 95, 31, 0.6);
+    }
+
+    .wallet-card.hardware {
+      border-color: rgba(125, 233, 255, 0.6);
+    }
+
+    .wallet-card.safe {
+      border-color: rgba(46, 255, 168, 0.62);
+    }
+
+    .wallet-title {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 44px;
+      line-height: 0.9;
+      text-transform: uppercase;
+      text-shadow: 4px 5px 0 #000;
+    }
+
+    .wallet-subtitle {
+      margin: 0 0 22px;
+      color: rgba(255, 250, 240, 0.88);
+      font-size: 24px;
+      line-height: 1.14;
+      font-weight: 800;
+    }
+
+    .wallet-card h3:not(.wallet-title) {
+      margin: 22px 0 10px;
+      color: var(--black);
+      background: var(--gold);
+      border: 4px solid #000;
+      display: inline-block;
+      padding: 8px 12px 6px;
+      font-family: Brice, Impact, sans-serif;
+      font-size: 25px;
+      line-height: 1;
+      text-transform: uppercase;
+      box-shadow: 5px 6px 0 rgba(0, 0, 0, 0.45);
+    }
+
+    .wallet-card ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .wallet-card li,
+    .tiny-note {
+      color: rgba(255, 250, 240, 0.92);
+      font-size: 25px;
+      line-height: 1.13;
+      font-weight: 800;
+    }
+
+    .wallet-card li {
+      position: relative;
+      padding-left: 31px;
+    }
+
+    .wallet-card li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 17px;
+      height: 17px;
+      border: 3px solid #000;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55);
+    }
+
+    .tiny-note {
+      margin: 12px 0 0;
+      color: rgba(255, 250, 240, 0.78);
+    }
+
+    .danger {
+      color: var(--pink);
+    }
+
+    .safe-badge.danger {
+      color: var(--black);
+      background: var(--pink);
+    }
+
+    .stack {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 48px;
+      align-items: stretch;
+    }
+
+    .stack-left {
+      min-height: 500px;
+      padding: 30px;
+      border-radius: 20px;
+      background:
+        linear-gradient(180deg, rgba(255, 224, 72, 0.14), rgba(255, 255, 255, 0.04)),
+        var(--surface-2);
+      border-color: rgba(255, 224, 72, 0.54);
+    }
+
+    .stack-left p {
+      margin: 16px 0 0;
+      color: rgba(255, 250, 240, 0.9);
+      font-size: 28px;
+      line-height: 1.17;
+      font-weight: 800;
+    }
+
+    .path {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr) 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      margin-top: 30px;
+    }
+
+    .path-step {
+      min-height: 166px;
+      padding: 18px 10px 14px;
+      color: var(--black);
+      background: var(--cream);
+      border: 5px solid #000;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 6px 7px 0 rgba(0, 0, 0, 0.45);
+    }
+
+    .path-step strong {
+      display: block;
+      color: var(--black);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 26px;
+      line-height: 0.95;
+      text-transform: uppercase;
+    }
+
+    .path-step span {
+      display: block;
+      margin-top: 8px;
+      font-size: 21px;
+      line-height: 1.02;
+      font-weight: 800;
+    }
+
+    .arrow {
+      color: var(--gold);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 50px;
+      line-height: 1;
+      text-align: center;
+      text-shadow: 4px 5px 0 #000;
+    }
+
+    .stack-right {
+      min-height: 500px;
+      padding: 28px;
+      border-radius: 20px;
+      background:
+        linear-gradient(90deg, rgba(5, 5, 5, 0.86), rgba(5, 5, 5, 0.46)),
+        url("assets/craig-daytime.png") 53% 48% / cover no-repeat;
+      border-color: rgba(255, 107, 157, 0.42);
+    }
+
+    .speech {
+      width: 448px;
+      padding: 24px 24px 22px;
+      color: var(--black);
+      background: var(--white);
+      border: 6px solid #000;
+      border-radius: 22px;
+      box-shadow: 8px 9px 0 rgba(0, 0, 0, 0.58);
+    }
+
+    .speech strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--pink);
+      font-family: Brice, Impact, sans-serif;
+      font-size: 25px;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .speech p {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.08;
+      font-weight: 800;
+    }
+
+    .rules {
+      margin-top: 48px;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .rule-card {
+      min-height: 168px;
+      padding: 22px 18px;
+      border-radius: 18px;
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .rule-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 14px;
+      color: var(--black);
+      background: var(--gold);
+      border: 4px solid #000;
+      border-radius: 50%;
+      font-family: Brice, Impact, sans-serif;
+      font-size: 25px;
+      box-shadow: 4px 5px 0 rgba(0, 0, 0, 0.48);
+    }
+
+    .rule-card p {
+      margin: 0;
+      color: rgba(255, 250, 240, 0.92);
+      font-size: 24px;
+      line-height: 1.13;
+      font-weight: 800;
+    }
+
+    .footer {
+      position: relative;
+      margin: 34px 58px 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      color: rgba(255, 250, 240, 0.58);
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 800;
+      z-index: 2;
+    }
+
+    .footer strong {
+      color: rgba(255, 224, 72, 0.86);
+    }
+
+    .mark {
+      color: var(--black);
+      background: var(--gold);
+      border: 4px solid #000;
+      padding: 9px 12px 7px;
+      font-family: Brice, Impact, sans-serif;
+      font-size: 24px;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    svg {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <main id="poster" aria-label="GVC self custody infographic">
+    <section class="hero">
+      <img class="logo" src="assets/gvc-logotype.svg" alt="Good Vibes Club" />
+      <img class="shaka" src="assets/shaka.png" alt="" />
+      <p class="kicker">Self custody for GVC legends</p>
+      <h1>Keep Your Keys, Keep Your Vibes</h1>
+      <p class="subhead">Pretend your wallet is a toy box with two sides: a public address people can see, and a private key that acts like the password.</p>
+    </section>
+
+    <section class="content">
+      <h2 class="strip-title">A wallet has two sides</h2>
+      <div class="dictionary">
+        <article class="mini-card wallet">
+          <div class="icon-row">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="20" y="11" width="60" height="78" rx="12" fill="#ff6b9d" stroke="#000" stroke-width="6" />
+              <rect x="30" y="25" width="40" height="34" rx="5" fill="#fff5c8" stroke="#000" stroke-width="5" />
+              <circle cx="50" cy="74" r="6" fill="#ffe048" stroke="#000" stroke-width="4" />
+            </svg>
+            <span class="safe-badge">Account</span>
+          </div>
+          <h3 class="mini-label">Wallet</h3>
+          <p>Your toy box account. It has a public address and a private key.</p>
+        </article>
+
+        <article class="mini-card address">
+          <div class="icon-row">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="12" y="32" width="76" height="48" rx="8" fill="#7de9ff" stroke="#000" stroke-width="6" />
+              <path d="M16 38l34 25 34-25" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+              <rect x="28" y="18" width="44" height="18" rx="7" fill="#ffe048" stroke="#000" stroke-width="5" />
+            </svg>
+            <span class="safe-badge">OK to share</span>
+          </div>
+          <h3 class="mini-label">Address</h3>
+          <p>The public side. People can send things here. It cannot spend them.</p>
+        </article>
+
+        <article class="mini-card secret">
+          <div class="icon-row">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="34" cy="45" r="20" fill="#ffe048" stroke="#000" stroke-width="6" />
+              <circle cx="34" cy="45" r="7" fill="#050505" />
+              <path d="M50 45h35v13h-9v9H65v9H54z" fill="#ffe048" stroke="#000" stroke-width="6" stroke-linejoin="round" />
+            </svg>
+            <span class="safe-badge danger">Never share</span>
+          </div>
+          <h3 class="mini-label">Private key</h3>
+          <p>The password side. It proves you can spend or sign. Never share it.</p>
+        </article>
+      </div>
+
+      <section class="wallets">
+        <h2 class="section-title">Pick the right setup</h2>
+        <div class="wallet-grid">
+          <article class="wallet-card hot">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="18" y="12" width="58" height="78" rx="14" fill="#ff5f1f" stroke="#000" stroke-width="6" />
+              <rect x="30" y="24" width="34" height="38" rx="5" fill="#fff5c8" stroke="#000" stroke-width="5" />
+              <path d="M68 30c12 10 15 26 5 38-9 12-29 13-37 1 13 2 18-10 14-21 7 4 13-2 18-18z" fill="#ffe048" stroke="#000" stroke-width="5" stroke-linejoin="round" />
+            </svg>
+            <h3 class="wallet-title">Hot wallet</h3>
+            <p class="wallet-subtitle">A software wallet on your browser or phone. Its private key is on an internet device.</p>
+            <h3>Use for</h3>
+            <ul>
+              <li>Small spending money</li>
+              <li>Trying new apps</li>
+              <li>Low-risk mints</li>
+              <li>Burner activity</li>
+            </ul>
+            <h3>Not for</h3>
+            <p class="tiny-note">Your best GVCs, big ETH, team money, or long-term savings.</p>
+            <h3>Rule</h3>
+            <p class="tiny-note">Keep it small. If a link feels weird, use a fresh wallet.</p>
+          </article>
+
+          <article class="wallet-card hardware">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="11" y="25" width="78" height="50" rx="12" fill="#7de9ff" stroke="#000" stroke-width="6" />
+              <rect x="24" y="36" width="34" height="18" rx="5" fill="#050505" stroke="#000" stroke-width="4" />
+              <circle cx="72" cy="50" r="8" fill="#ffe048" stroke="#000" stroke-width="5" />
+              <path d="M23 76h54" stroke="#000" stroke-width="6" stroke-linecap="round" />
+            </svg>
+            <h3 class="wallet-title">Hardware signer</h3>
+            <p class="wallet-subtitle">Often called a hardware wallet. It is a device that keeps the private key offline and signs.</p>
+            <h3>Use for</h3>
+            <ul>
+              <li>Main GVCs and NFTs</li>
+              <li>Long-term ETH or tokens</li>
+              <li>Important signatures</li>
+              <li>Signing for a Safe</li>
+            </ul>
+            <h3>Not for</h3>
+            <p class="tiny-note">Fast clicking on risky sites or typing the seed into a computer.</p>
+            <h3>Rule</h3>
+            <p class="tiny-note">Write the seed on paper or metal. Confirm on the device screen.</p>
+          </article>
+
+          <article class="wallet-card safe">
+            <svg class="icon" viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="12" y="19" width="76" height="62" rx="12" fill="#2effa8" stroke="#000" stroke-width="6" />
+              <circle cx="50" cy="50" r="19" fill="#fff5c8" stroke="#000" stroke-width="6" />
+              <path d="M50 35v30M35 50h30" stroke="#000" stroke-width="6" stroke-linecap="round" />
+              <circle cx="25" cy="35" r="5" fill="#000" />
+              <circle cx="75" cy="35" r="5" fill="#000" />
+            </svg>
+            <h3 class="wallet-title">Gnosis Safe</h3>
+            <p class="wallet-subtitle">Now Safe{Wallet}. A smart wallet shared by signers, like a chest that needs 2-of-3 approvals.</p>
+            <h3>Use for</h3>
+            <ul>
+              <li>Team or DAO treasury</li>
+              <li>Shared project funds</li>
+              <li>Very valuable assets</li>
+              <li>Multi-person approvals</li>
+            </ul>
+            <h3>Not for</h3>
+            <p class="tiny-note">Tiny quick buys, or apps/chains you have not checked first.</p>
+            <h3>Rule</h3>
+            <p class="tiny-note">Use multiple signer wallets, ideally hardware signers, for serious funds.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="stack">
+        <article class="stack-card stack-left">
+          <h2 class="section-title">The GVC stack</h2>
+          <p>Small play money lives in a hot wallet. Favorite Citizens use a hardware signer. Club money lives in a shared Safe.</p>
+          <div class="path">
+            <div class="path-step">
+              <strong>Pocket</strong>
+              <span>Software wallet for tiny moves</span>
+            </div>
+            <div class="arrow">></div>
+            <div class="path-step">
+              <strong>Signer</strong>
+              <span>Hardware device for keepers</span>
+            </div>
+            <div class="arrow">></div>
+            <div class="path-step">
+              <strong>Safe</strong>
+              <span>Shared treasure</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="stack-card stack-right">
+          <div class="speech">
+            <strong>Craig says</strong>
+            <p>If one private key can move everything, everything is in the wrong setup.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="rules">
+        <h2 class="section-title">Safety chant</h2>
+        <div class="rule-grid">
+          <article class="rule-card">
+            <span class="rule-number">1</span>
+            <p>Never type a seed phrase or private key into a website.</p>
+          </article>
+          <article class="rule-card">
+            <span class="rule-number">2</span>
+            <p>Never screenshot your seed or save it in the cloud.</p>
+          </article>
+          <article class="rule-card">
+            <span class="rule-number">3</span>
+            <p>Read the transaction before you sign. Big moves get a tiny test first.</p>
+          </article>
+          <article class="rule-card">
+            <span class="rule-number">4</span>
+            <p>Use hardware signers as Safe signers for the serious stuff.</p>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <footer class="footer">
+      <div>
+        <strong>Sources:</strong>
+        ethereum.org/wallets, ethereum.org/security, help.safe.global, safe.global/wallet.
+        Educational only. Use your own threat model before moving valuable assets.
+      </div>
+      <div class="mark">GVC self custody</div>
+    </footer>
+  </main>
+</body>
+</html>

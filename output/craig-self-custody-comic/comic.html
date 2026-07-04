@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Craig Keeps the Keys</title>
+  <style>
+    @font-face {
+      font-family: "Brice Black";
+      src: url("assets/Brice-Black.otf") format("opentype");
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Mundial";
+      src: url("assets/Mundial-Regular.otf") format("opentype");
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Mundial";
+      src: url("assets/Mundial-Bold.otf") format("opentype");
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    :root {
+      --page-w: 1440px;
+      --page-h: 2160px;
+      --ink: #111;
+      --paper: #fff9e9;
+      --gold: #ffe34d;
+      --caption: #f6bd3f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #121212;
+      color: var(--ink);
+      font-family: "Mundial", Arial, sans-serif;
+    }
+
+    body.single {
+      width: var(--page-w);
+      height: var(--page-h);
+      overflow: hidden;
+      background: #000;
+    }
+
+    body.book {
+      display: grid;
+      gap: 40px;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .page {
+      position: relative;
+      width: var(--page-w);
+      height: var(--page-h);
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 24px 70px rgb(0 0 0 / 0.42);
+    }
+
+    body.single .page {
+      box-shadow: none;
+    }
+
+    .art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .title-lockup {
+      position: absolute;
+      left: 52px;
+      top: 34px;
+      max-width: 690px;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 84px;
+      line-height: 0.86;
+      text-transform: uppercase;
+      text-shadow:
+        5px 5px 0 #000,
+        9px 9px 0 rgb(0 0 0 / 0.28);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      bottom: 58px;
+      padding: 24px 28px 20px;
+      border: 6px solid #fff;
+      background: #070707;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 42px;
+      line-height: 0.98;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .gvc-tag {
+      position: absolute;
+      right: 58px;
+      top: 54px;
+      padding: 12px 18px 10px;
+      border: 5px solid var(--gold);
+      background: #050505;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+
+    .bubble,
+    .caption,
+    .final-card {
+      position: absolute;
+      z-index: 2;
+      border: 5px solid #0b0b0b;
+      color: #111;
+      filter: drop-shadow(7px 8px 0 rgb(0 0 0 / 0.28));
+    }
+
+    .bubble {
+      min-height: 78px;
+      padding: 18px 22px 16px;
+      border-radius: 38px / 28px;
+      background: var(--paper);
+      font-family: "Mundial", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 31px;
+      line-height: 1.06;
+      text-align: center;
+    }
+
+    .bubble.small {
+      font-size: 27px;
+      line-height: 1.05;
+      padding: 15px 18px 13px;
+    }
+
+    .caption {
+      padding: 14px 18px 12px;
+      border-radius: 4px;
+      background: var(--caption);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 30px;
+      line-height: 1;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .final-card {
+      padding: 18px 22px 16px;
+      border-radius: 8px;
+      background: #080808;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 34px;
+      line-height: 1;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .page-num {
+      position: absolute;
+      right: 28px;
+      bottom: 18px;
+      z-index: 3;
+      padding: 4px 9px;
+      border: 3px solid #111;
+      background: #fff;
+      color: #111;
+      font-family: "Mundial", Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main id="book"></main>
+
+  <script>
+    const pages = [
+      {
+        number: 1,
+        art: "generated-art/page-01-title-art.png",
+        title: true,
+      },
+      {
+        number: 2,
+        art: "generated-art/page-02-art.png",
+        notes: [
+          ["caption", "Craig loved his game world.", 5, 3, 35],
+          ["bubble small", "My team built this together!", 55, 8, 34],
+          ["bubble small", "Every badge has a story.", 7, 36, 31],
+          ["bubble small", "That's me. That's us.", 58, 37, 30],
+          ["bubble small", "Our clubhouse is home.", 6, 69, 32],
+          ["bubble", "No company should own our friendships.", 52, 69, 40],
+        ],
+      },
+      {
+        number: 3,
+        art: "generated-art/page-03-art.png",
+        notes: [
+          ["bubble small", "Time to play!", 6, 5, 25],
+          ["bubble small", "Wait... why is everything gone?", 51, 6, 39],
+          ["bubble small", "My gear. My name. My team.", 5, 36, 39],
+          ["caption", "They flipped a switch.", 56, 36, 34],
+          ["bubble small", "Our world just vanished.", 7, 69, 33],
+          ["bubble", "I won't build where someone else can erase us.", 49, 68, 44],
+        ],
+      },
+      {
+        number: 4,
+        art: "generated-art/page-04-art.png",
+        notes: [
+          ["caption", "Craig drew a new kind of game.", 5, 4, 41],
+          ["bubble small", "Players choose together.", 59, 8, 31],
+          ["bubble small", "He found 6529: a place for open digital communities.", 4, 35, 44],
+          ["bubble small", "There it was: a meme card of Craig!", 55, 36, 39],
+          ["bubble small", "One card can be a first step.", 6, 69, 36],
+          ["bubble", "Then Punk6529 called.", 56, 71, 33],
+        ],
+      },
+      {
+        number: 5,
+        art: "generated-art/page-05-art.png",
+        notes: [
+          ["caption", "Craig moved fast... too fast.", 5, 4, 39],
+          ["bubble small", "Never leave secret words where eyes can see.", 53, 7, 41],
+          ["bubble small", "Never show your screen to strangers.", 4, 36, 41],
+          ["bubble small", "Not every shiny site is safe.", 58, 36, 34],
+          ["bubble small", "Do I click this?", 8, 70, 26],
+          ["bubble", "Pause, Craig. Let's keep the keys.", 51, 69, 42],
+        ],
+      },
+      {
+        number: 6,
+        art: "generated-art/page-06-art.png",
+        notes: [
+          ["bubble small", "Your private key is like one key to your treasure.", 5, 5, 43],
+          ["bubble small", "So whoever gets it can take my stuff?", 58, 8, 36],
+          ["bubble small", "Keep seed words offline and private.", 5, 36, 38],
+          ["bubble small", "The key controls the card.", 57, 38, 34],
+          ["bubble small", "Bad sites ask for secrets. We say no.", 5, 70, 38],
+          ["bubble small", "Seed words go somewhere safe.", 57, 70, 34],
+        ],
+      },
+      {
+        number: 7,
+        art: "generated-art/page-07-art.png",
+        notes: [
+          ["bubble small", "A hardware wallet keeps the key off your computer.", 5, 5, 43],
+          ["bubble small", "Your laptop can ask. The device must agree.", 56, 7, 39],
+          ["bubble small", "I check the little screen first.", 5, 37, 34],
+          ["bubble small", "If it looks wrong, reject it.", 58, 38, 33],
+          ["bubble small", "Even malware cannot grab the key inside.", 5, 70, 41],
+          ["bubble small", "Small device. Big protection.", 57, 70, 34],
+        ],
+      },
+      {
+        number: 8,
+        art: "generated-art/page-08-art.png",
+        notes: [
+          ["caption", "TAP means three addresses.", 5, 4, 38],
+          ["bubble small", "A is the vault. Treasures live there.", 55, 7, 39],
+          ["bubble small", "B is for trusted buying and selling.", 4, 36, 41],
+          ["bubble small", "C is for minting and unknown sites.", 57, 36, 39],
+          ["bubble small", "Mint with C. Move good stuff to A or B.", 5, 69, 42],
+          ["bubble", "Three pockets. Much safer!", 58, 71, 34],
+        ],
+      },
+      {
+        number: 9,
+        art: "generated-art/page-09-art.png",
+        notes: [
+          ["bubble small", "For extra safety, the vault can be a Safe.", 5, 5, 42],
+          ["bubble small", "A Safe can need more than one key.", 57, 7, 37],
+          ["bubble small", "Friends can approve together.", 5, 37, 34],
+          ["bubble small", "One stolen key is not enough.", 60, 38, 32],
+          ["bubble small", "Good for community treasure.", 6, 70, 34],
+          ["bubble small", "Shared things deserve shared care.", 57, 70, 37],
+        ],
+      },
+      {
+        number: 10,
+        art: "generated-art/page-10-art.png",
+        notes: [
+          ["bubble small", "Freedom to transact means people can trade and build together.", 4, 5, 46],
+          ["bubble small", "It is how we pay, play, create, and help.", 58, 8, 37],
+          ["bubble small", "If one boss can block everyone, freedom is weak.", 5, 36, 43],
+          ["bubble small", "That's what happened to my game.", 59, 38, 35],
+          ["bubble small", "Open systems let communities keep going.", 5, 70, 39],
+          ["bubble", "Then our new arena must be open.", 55, 70, 40],
+        ],
+      },
+      {
+        number: 11,
+        art: "generated-art/page-11-art.png",
+        notes: [
+          ["caption", "Craig invited his friends back.", 5, 4, 40],
+          ["bubble small", "A game world owned by the players.", 57, 8, 36],
+          ["bubble small", "Members vote on the next move.", 5, 37, 35],
+          ["bubble small", "No throne. No off-switch.", 60, 38, 32],
+          ["bubble small", "Tournament season one?", 7, 70, 30],
+          ["bubble", "Together, they opened the arena.", 55, 70, 40],
+        ],
+      },
+      {
+        number: 12,
+        art: "generated-art/page-12-art.png",
+        notes: [
+          ["caption", "Craig set up his 6529 account with TAP.", 5, 4, 47],
+          ["bubble small", "Hardware wallet first. Check every action.", 57, 8, 38],
+          ["bubble small", "One profile can use safe delegation.", 5, 36, 39],
+          ["bubble small", "You kept the keys.", 62, 39, 28],
+          ["bubble small", "Craig joined the 6529 Network.", 6, 70, 35],
+          ["final-card", "Now Craig and his friends can build a world no single boss controls.", 45, 67, 49],
+        ],
+      },
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedPage = Number(params.get("page"));
+    const book = document.getElementById("book");
+    const visiblePages = Number.isInteger(requestedPage) && requestedPage > 0
+      ? pages.filter((page) => page.number === requestedPage)
+      : pages;
+
+    document.body.className = visiblePages.length === 1 ? "single" : "book";
+
+    for (const page of visiblePages) {
+      const pageEl = document.createElement("section");
+      pageEl.className = "page";
+      pageEl.setAttribute("aria-label", `Page ${page.number}`);
+
+      const img = document.createElement("img");
+      img.className = "art";
+      img.src = page.art;
+      img.alt = "";
+      pageEl.append(img);
+
+      if (page.title) {
+        const tag = document.createElement("div");
+        tag.className = "gvc-tag";
+        tag.textContent = "Good Vibes Club";
+        pageEl.append(tag);
+
+        const title = document.createElement("h1");
+        title.className = "title-lockup";
+        title.textContent = "Craig Keeps the Keys";
+        pageEl.append(title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "subtitle";
+        subtitle.textContent = "A fun, educational comic on the importance of self-custody";
+        pageEl.append(subtitle);
+      }
+
+      for (const note of page.notes || []) {
+        const [kind, text, left, top, width] = note;
+        const el = document.createElement("div");
+        el.className = kind;
+        el.textContent = text;
+        el.style.left = `${left}%`;
+        el.style.top = `${top}%`;
+        el.style.width = `${width}%`;
+        pageEl.append(el);
+      }
+
+      const pageNum = document.createElement("div");
+      pageNum.className = "page-num";
+      pageNum.textContent = String(page.number).padStart(2, "0");
+      pageEl.append(pageNum);
+
+      book.append(pageEl);
+    }
+  </script>
+</body>
+</html>
