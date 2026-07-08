@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Craig Keeps the Keys: Short Edition</title>
+  <style>
+    @font-face {
+      font-family: "Brice Black";
+      src: url("../craig-self-custody-comic/assets/Brice-Black.otf") format("opentype");
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Mundial";
+      src: url("../craig-self-custody-comic/assets/Mundial-Regular.otf") format("opentype");
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Mundial";
+      src: url("../craig-self-custody-comic/assets/Mundial-Bold.otf") format("opentype");
+      font-weight: 700;
+      font-display: swap;
+    }
+
+    :root {
+      --page-w: 1440px;
+      --page-h: 2160px;
+      --ink: #111;
+      --paper: #fff9e9;
+      --gold: #ffe34d;
+      --caption: #f6bd3f;
+      --gutters: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #111;
+      color: var(--ink);
+      font-family: "Mundial", Arial, sans-serif;
+    }
+
+    body.single {
+      width: var(--page-w);
+      height: var(--page-h);
+      overflow: hidden;
+      background: #000;
+    }
+
+    body.book {
+      display: grid;
+      gap: 40px;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .page {
+      position: relative;
+      width: var(--page-w);
+      height: var(--page-h);
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 24px 70px rgb(0 0 0 / 0.42);
+    }
+
+    body.single .page {
+      box-shadow: none;
+    }
+
+    .cover-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: var(--gutters);
+      padding: var(--gutters);
+      background: #000;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      background-image: var(--src);
+      background-size: 200% 300%;
+      background-position: var(--pos);
+      background-repeat: no-repeat;
+    }
+
+    .panel.tone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 45%, rgb(0 0 0 / 0.28));
+      pointer-events: none;
+    }
+
+    .title-lockup {
+      position: absolute;
+      left: 52px;
+      top: 34px;
+      max-width: 720px;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 82px;
+      line-height: 0.86;
+      text-transform: uppercase;
+      text-shadow:
+        5px 5px 0 #000,
+        9px 9px 0 rgb(0 0 0 / 0.28);
+      letter-spacing: 0;
+    }
+
+    .short-tag {
+      position: absolute;
+      right: 58px;
+      top: 54px;
+      padding: 12px 18px 10px;
+      border: 5px solid var(--gold);
+      background: #050505;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 21px;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      bottom: 58px;
+      padding: 24px 28px 20px;
+      border: 6px solid #fff;
+      background: #070707;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 40px;
+      line-height: 0.98;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .caption,
+    .bubble,
+    .final-card {
+      position: absolute;
+      z-index: 2;
+      border: 5px solid #0b0b0b;
+      color: #111;
+      filter: drop-shadow(7px 8px 0 rgb(0 0 0 / 0.28));
+    }
+
+    .caption {
+      left: 10%;
+      top: 8%;
+      width: 80%;
+      padding: 14px 18px 12px;
+      border-radius: 4px;
+      background: var(--caption);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 29px;
+      line-height: 1;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .bubble {
+      left: 8%;
+      top: 8%;
+      width: 84%;
+      min-height: 78px;
+      padding: 16px 20px 14px;
+      border-radius: 38px / 28px;
+      background: var(--paper);
+      font-family: "Mundial", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      line-height: 1.05;
+      text-align: center;
+    }
+
+    .bubble.low,
+    .caption.low {
+      top: auto;
+      bottom: 8%;
+    }
+
+    .bubble.mid {
+      top: 38%;
+    }
+
+    .final-card {
+      left: 7%;
+      right: 7%;
+      bottom: 7%;
+      padding: 18px 22px 16px;
+      border-radius: 8px;
+      background: #080808;
+      color: var(--gold);
+      font-family: "Brice Black", Impact, sans-serif;
+      font-size: 34px;
+      line-height: 1;
+      text-align: center;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .page-num {
+      position: absolute;
+      right: 28px;
+      bottom: 18px;
+      z-index: 3;
+      padding: 4px 9px;
+      border: 3px solid #111;
+      background: #fff;
+      color: #111;
+      font-family: "Mundial", Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main id="book"></main>
+
+  <script>
+    const art = (page) => `url("../craig-self-custody-comic/generated-art/${page}")`;
+    const pos = {
+      tl: "left top",
+      tr: "right top",
+      ml: "left center",
+      mr: "right center",
+      bl: "left bottom",
+      br: "right bottom",
+    };
+
+    const pages = [
+      {
+        number: 1,
+        cover: "../craig-self-custody-comic/generated-art/page-01-title-art.png",
+      },
+      {
+        number: 2,
+        panels: [
+          ["page-02-art.png", "tl", "caption", "Craig loved his game world."],
+          ["page-02-art.png", "bl", "bubble", "His friends built a clubhouse together."],
+          ["page-03-art.png", "tr", "caption", "Then the company shut it down."],
+          ["page-03-art.png", "bl", "bubble", "The gear, name, and team vanished."],
+          ["page-03-art.png", "br", "bubble", "No one should erase our lives."],
+          ["page-04-art.png", "tr", "bubble", "Craig drew a new game players could run together."],
+        ],
+      },
+      {
+        number: 3,
+        panels: [
+          ["page-04-art.png", "ml", "bubble", "Craig found 6529: people building together online."],
+          ["page-04-art.png", "mr", "bubble", "Craig created a meme card to fund his community!"],
+          ["page-05-art.png", "tl", "caption", "But Craig moved too fast."],
+          ["page-05-art.png", "tr", "bubble", "Secret words never go where eyes can see."],
+          ["page-05-art.png", "mr", "bubble", "Not every shiny site is safe."],
+          ["page-05-art.png", "br", "bubble", "Punk6529 arrived: pause, Craig."],
+        ],
+      },
+      {
+        number: 4,
+        panels: [
+          ["page-06-art.png", "tl", "bubble", "Your private key is like one key to your treasure."],
+          ["page-06-art.png", "tr", "bubble", "Whoever gets it can take your stuff."],
+          ["page-06-art.png", "ml", "bubble", "Keep seed words offline and private."],
+          ["page-07-art.png", "tl", "bubble", "A hardware wallet keeps the key off your computer."],
+          ["page-07-art.png", "mr", "bubble", "Check the little screen before you approve."],
+          ["page-07-art.png", "bl", "bubble", "Even malware cannot grab the key inside."],
+        ],
+      },
+      {
+        number: 5,
+        panels: [
+          ["page-08-art.png", "tl", "caption", "TAP means three addresses."],
+          ["page-08-art.png", "tr", "bubble", "A is the vault. Treasures live there."],
+          ["page-08-art.png", "ml", "bubble", "B is for trusted buying and selling."],
+          ["page-08-art.png", "mr", "bubble", "C is for minting and unknown sites."],
+          ["page-09-art.png", "tr", "bubble", "A Safe can need more than one key."],
+          ["page-09-art.png", "mr", "bubble", "One stolen key is not enough."],
+        ],
+      },
+      {
+        number: 6,
+        panels: [
+          ["page-10-art.png", "tl", "bubble", "Freedom to transact means people can trade and build."],
+          ["page-10-art.png", "ml", "bubble", "If one boss can block everyone, freedom is weak."],
+          ["page-11-art.png", "tr", "bubble", "Craig's new arena is owned by the players."],
+          ["page-11-art.png", "ml", "bubble", "Members vote on the next move together."],
+          ["page-12-art.png", "tl", "bubble", "Craig set up his 6529 account with TAP."],
+          ["page-12-art.png", "br", "final", "Now Craig and his friends can build a world no single boss controls."],
+        ],
+      },
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedPage = Number(params.get("page"));
+    const visiblePages = Number.isInteger(requestedPage) && requestedPage > 0
+      ? pages.filter((page) => page.number === requestedPage)
+      : pages;
+    const book = document.getElementById("book");
+
+    document.body.className = visiblePages.length === 1 ? "single" : "book";
+
+    for (const page of visiblePages) {
+      const pageEl = document.createElement("section");
+      pageEl.className = "page";
+      pageEl.setAttribute("aria-label", `Page ${page.number}`);
+
+      if (page.cover) {
+        const img = document.createElement("img");
+        img.className = "cover-art";
+        img.src = page.cover;
+        img.alt = "";
+        pageEl.append(img);
+
+        const tag = document.createElement("div");
+        tag.className = "short-tag";
+        tag.textContent = "6-page edition";
+        pageEl.append(tag);
+
+        const title = document.createElement("h1");
+        title.className = "title-lockup";
+        title.textContent = "Craig Keeps the Keys";
+        pageEl.append(title);
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "subtitle";
+        subtitle.textContent = "A short comic on self-custody, TAP, and freedom to transact";
+        pageEl.append(subtitle);
+      } else {
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        for (const [src, panelPos, kind, text] of page.panels) {
+          const panel = document.createElement("article");
+          panel.className = "panel tone";
+          panel.style.setProperty("--src", art(src));
+          panel.style.setProperty("--pos", pos[panelPos]);
+
+          const label = document.createElement("div");
+          label.className = kind === "caption" ? "caption" : kind === "final" ? "final-card" : "bubble";
+          label.textContent = text;
+          panel.append(label);
+          grid.append(panel);
+        }
+        pageEl.append(grid);
+      }
+
+      const pageNum = document.createElement("div");
+      pageNum.className = "page-num";
+      pageNum.textContent = String(page.number).padStart(2, "0");
+      pageEl.append(pageNum);
+
+      book.append(pageEl);
+    }
+  </script>
+</body>
+</html>
