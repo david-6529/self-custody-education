@@ -340,6 +340,35 @@
       box-shadow: 5px 6px 0 rgba(0, 0, 0, 0.45);
     }
 
+    .wallet-card h3.not-for {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .prohibition-mark {
+      position: relative;
+      width: 27px;
+      height: 27px;
+      flex: 0 0 27px;
+      border: 4px solid #e51b23;
+      border-radius: 50%;
+      background: var(--cream);
+    }
+
+    .prohibition-mark::after {
+      content: "";
+      position: absolute;
+      left: 1px;
+      top: 8px;
+      width: 18px;
+      height: 4px;
+      border-radius: 999px;
+      background: #e51b23;
+      transform: rotate(-45deg);
+      transform-origin: center;
+    }
+
     .wallet-card ul {
       margin: 0;
       padding: 0;
@@ -645,7 +674,7 @@
               <li>Low-risk mints</li>
               <li>Burner activity</li>
             </ul>
-            <h3>Not for</h3>
+            <h3 class="not-for"><span class="prohibition-mark" aria-hidden="true"></span>Not for</h3>
             <p class="tiny-note">Your best GVCs, big ETH, team money, or long-term savings.</p>
             <h3>Rule</h3>
             <p class="tiny-note">Keep it small. If a link feels weird, use a fresh wallet.</p>
@@ -665,9 +694,9 @@
               <li>Main GVCs and NFTs</li>
               <li>Long-term ETH or tokens</li>
               <li>Important signatures</li>
-              <li>Signing for a Safe</li>
+              <li>Signing for a multisig vault</li>
             </ul>
-            <h3>Not for</h3>
+            <h3 class="not-for"><span class="prohibition-mark" aria-hidden="true"></span>Not for</h3>
             <p class="tiny-note">Fast clicking on risky sites or typing the seed into a computer.</p>
             <h3>Rule</h3>
             <p class="tiny-note">Write the seed on paper or metal. Confirm on the device screen.</p>
@@ -681,8 +710,8 @@
               <circle cx="25" cy="35" r="5" fill="#000" />
               <circle cx="75" cy="35" r="5" fill="#000" />
             </svg>
-            <h3 class="wallet-title">Gnosis Safe</h3>
-            <p class="wallet-subtitle">Now Safe{Wallet}. A smart wallet shared by signers, like a chest that needs 2-of-3 approvals.</p>
+            <h3 class="wallet-title">Multisig Vault</h3>
+            <p class="wallet-subtitle">A smart wallet shared by signers, like a chest that needs 2-of-3 approvals.</p>
             <h3>Use for</h3>
             <ul>
               <li>Team or DAO treasury</li>
@@ -690,7 +719,7 @@
               <li>Very valuable assets</li>
               <li>Multi-person approvals</li>
             </ul>
-            <h3>Not for</h3>
+            <h3 class="not-for"><span class="prohibition-mark" aria-hidden="true"></span>Not for</h3>
             <p class="tiny-note">Tiny quick buys, or apps/chains you have not checked first.</p>
             <h3>Rule</h3>
             <p class="tiny-note">Use multiple signer wallets, ideally hardware signers, for serious funds.</p>
@@ -701,7 +730,7 @@
       <section class="stack">
         <article class="stack-card stack-left">
           <h2 class="section-title">The GVC stack</h2>
-          <p>Small play money lives in a hot wallet. Favorite Citizens use a hardware signer. Club money lives in a shared Safe.</p>
+          <p>Small play money lives in a hot wallet. Favorite Citizens use a hardware signer. Club money lives in a shared multisig vault.</p>
           <div class="path">
             <div class="path-step">
               <strong>Pocket</strong>
@@ -714,7 +743,7 @@
             </div>
             <div class="arrow">></div>
             <div class="path-step">
-              <strong>Safe</strong>
+              <strong>Vault</strong>
               <span>Shared treasure</span>
             </div>
           </div>
@@ -745,7 +774,7 @@
           </article>
           <article class="rule-card">
             <span class="rule-number">4</span>
-            <p>Use hardware signers as Safe signers for the serious stuff.</p>
+            <p>Use hardware signers for the multisig vault when protecting serious funds.</p>
           </article>
         </div>
       </section>
